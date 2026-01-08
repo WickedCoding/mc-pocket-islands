@@ -522,8 +522,7 @@ Register in mod initializer:
 ```java
 Registry.register(Registries.CHUNK_GENERATOR,
                   Identifier.of("personalworlds", "void"),
-
-VoidChunkGenerator.CODEC);
+                  VoidChunkGenerator.CODEC);
 ```
 
 ### 7. Configuration

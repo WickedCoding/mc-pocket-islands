@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PersonalWorlds** — A Fabric mod for Minecraft 1.21.11 that provides each player with their own isolated, persistent dimension. The primary use case is dimension survival through world resets: when the overworld/nether/end are deleted and regenerated, each player's personal world remains intact.
+**PersonalWorlds** — A Fabric mod for Minecraft 1.20.4 that provides each player with their own isolated, persistent dimension. The primary use case is dimension survival through world resets: when the overworld/nether/end are deleted and regenerated, each player's personal world remains intact.
 
 See `docs/per-player-dimensions-mod-plan.md` for the complete architectural specification.
 
@@ -27,7 +27,7 @@ See `docs/per-player-dimensions-mod-plan.md` for the complete architectural spec
 ./gradlew genSources
 ```
 
-The compiled mod JAR will be located at: `build/libs/modid-1.0.0.jar`
+The compiled mod JAR will be located at: `build/libs/personalworlds-0.1.0.jar`
 
 ## Project Structure
 
@@ -48,11 +48,11 @@ This is a standard Fabric mod project with split environment source sets:
 
 The project is currently a template. The actual PersonalWorlds implementation follows the architecture in `docs/per-player-dimensions-mod-plan.md`:
 
-- **Fantasy dependency** — Required for runtime dimension creation (`xyz.nucleoid:fantasy:0.4.10+1.20`)
+- **Fantasy dependency** — Required for runtime dimension creation (`xyz.nucleoid:fantasy:0.5.0+1.20.4`)
   - Must be added to `build.gradle` repositories: `maven { url = 'https://maven.nucleoid.xyz/' }`
-  - Must be added to dependencies: `modImplementation include("xyz.nucleoid:fantasy:0.4.10+1.20")`
+  - Must be added to dependencies: `modImplementation include("xyz.nucleoid:fantasy:0.5.0+1.20.4")`
 
-- **Package structure** (to be created under `src/main/java/com/yourname/personalworlds/`):
+- **Package structure** (under `src/main/java/com/wickedsik/personalworlds/`):
   - `dimension/` — Dimension creation, registry, lifecycle management (uses Fantasy)
   - `portal/` — Portal block, frame detection, activation, teleportation
   - `player/` — Player data, invitations, return positions (PersistentState)
@@ -159,13 +159,27 @@ Create 15 player dimensions (maximum expected concurrent players) and verify:
 
 ## Minecraft Version Notes
 
-The mod currently targets Minecraft 1.21.11 (latest at time of writing). The plan document references 1.20.1+ because the architecture is version-agnostic.
+The mod targets **Minecraft 1.20.4** for compatibility with existing modded servers. This version uses:
+- **Java 17** (not Java 21)
+- **Yarn mappings** (not Mojang mappings)
+- **Fantasy 0.5.0+1.20.4** for runtime dimension creation
+- **FabricDimensions.teleport()** for cross-dimension teleportation
+
+**Key API differences from 1.21.x:**
+- `Identifier` instead of `ResourceLocation`
+- `new Identifier(namespace, path)` instead of `Identifier.of()`
+- `ServerWorld` instead of `ServerLevel`
+- `ServerPlayerEntity` instead of `ServerPlayer`
+- `NbtCompound` instead of `CompoundTag`
+- `PersistentState` instead of `SavedData`
+- `Text.literal()` instead of `Component.literal()`
 
 **If updating Minecraft versions:**
 1. Update `minecraft_version` in `gradle.properties`
 2. Update `fabric_version` to match (check https://fabricmc.net/develop)
 3. Verify Fantasy compatibility (may need version update)
 4. Check for API changes in Fabric API dimension/teleportation modules
+5. For 1.21+: Switch to Mojang mappings and update class names accordingly
 
 ## Reference Documentation
 
