@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds;
 
 import com.wickedsik.personalworlds.command.TestCommands;
+import com.wickedsik.personalworlds.dimension.generator.ModChunkGenerators;
 import com.wickedsik.personalworlds.event.ModEventHandlers;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
@@ -13,6 +14,9 @@ public class PersonalWorldsMod implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("Personal Worlds initializing...");
+
+        // Register chunk generators FIRST (before dimensions can be created)
+        ModChunkGenerators.register();
 
         // Register event handlers
         ModEventHandlers.register();
