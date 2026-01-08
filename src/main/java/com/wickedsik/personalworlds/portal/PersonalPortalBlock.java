@@ -1,0 +1,130 @@
+package com.wickedsik.personalworlds.portal;
+
+import com.wickedsik.personalworlds.PersonalWorldsMod;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ShapeContext;
+import net.minecraft.entity.Entity;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.EnumProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
+
+/**
+ * The personal portal block that teleports players to/from their personal dimension.
+ *
+ * Properties:
+ * - AXIS: Horizontal axis (X or Z) for portal orientation
+ * - Non-collidable: Entities pass through
+ * - Light level 11: Emits moderate light
+ * - Unbreakable by hand: Cannot be mined
+ *
+ * Behavior:
+ * - onEntityCollision: Triggers teleportation for players
+ * - neighborUpdate: Checks frame validity, breaks if invalid
+ */
+public class PersonalPortalBlock extends Block {
+
+    /**
+     * Axis property for portal orientation (X or Z).
+     * X-axis portal faces north/south, Z-axis portal faces east/west.
+     */
+    public static final EnumProperty<Direction.Axis> AXIS = Properties.HORIZONTAL_AXIS;
+
+    /**
+     * Collision shape for X-axis portals (thin plane facing north/south).
+     */
+    protected static final VoxelShape X_SHAPE = Block.createCuboidShape(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
+
+    /**
+     * Collision shape for Z-axis portals (thin plane facing east/west).
+     */
+    protected static final VoxelShape Z_SHAPE = Block.createCuboidShape(6.0, 0.0, 0.0, 10.0, 16.0, 16.0);
+
+    /**
+     * Portal cooldown in ticks (100 ticks = 5 seconds).
+     * Prevents rapid teleportation flickering.
+     */
+    private static final int PORTAL_COOLDOWN = 100;
+
+    public PersonalPortalBlock(Settings settings) {
+        super(settings);
+        setDefaultState(getStateManager().getDefaultState().with(AXIS, Direction.Axis.X));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(AXIS);
+    }
+
+    @Override
+    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+        return state.get(AXIS) == Direction.Axis.Z ? Z_SHAPE : X_SHAPE;
+    }
+
+    /**
+     * Called when an entity collides with (enters) the portal block.
+     * Triggers teleportation for server-side players who don't have portal cooldown.
+     */
+    @Override
+    public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+        if (world.isClient()) {
+            return;
+        }
+
+        if (!(entity instanceof ServerPlayerEntity player)) {
+            return;
+        }
+
+        // Check portal cooldown to prevent rapid teleportation
+        if (player.hasPortalCooldown()) {
+            return;
+        }
+
+        // Handle the portal entry (teleportation)
+        PortalHelper.handlePortalEntry(player, pos);
+
+        // Set portal cooldown
+        player.setPortalCooldown(PORTAL_COOLDOWN);
+    }
+
+    /**
+     * Called when a neighboring block changes.
+     * Checks if the portal frame is still valid; if not, removes this portal block.
+     */
+    @Override
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
+        if (world.isClient()) {
+            return;
+        }
+
+        Direction.Axis axis = state.get(AXIS);
+
+        // Check if the frame is still valid for this portal block
+        if (!PortalHelper.isFrameValidForPortal(world, pos, axis)) {
+            // Frame broken - remove this portal block
+            world.removeBlock(pos, false);
+            PersonalWorldsMod.LOGGER.debug("Portal block removed at {} - frame broken", pos);
+        }
+    }
+
+    /**
+     * Portal blocks are transparent (not full cubes).
+     */
+    @Override
+    public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+        return true;
+    }
+
+    /**
+     * Get the axis for a block state.
+     */
+    public static Direction.Axis getAxis(BlockState state) {
+        return state.get(AXIS);
+    }
+}

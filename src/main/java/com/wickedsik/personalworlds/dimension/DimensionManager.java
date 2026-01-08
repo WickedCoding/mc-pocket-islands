@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.FixedBiomeSource;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import xyz.nucleoid.fantasy.Fantasy;
@@ -176,6 +177,11 @@ public class DimensionManager {
         // Set chunk generator based on type
         config.setGenerator(createChunkGenerator(server, genType));
 
+        // For void worlds, disable mob spawning to keep the dimension pristine
+        if (genType == WorldGenType.VOID) {
+            config.setGameRule(GameRules.DO_MOB_SPAWNING, false);
+        }
+
         return config;
     }
 
@@ -185,11 +191,12 @@ public class DimensionManager {
     private static ChunkGenerator createChunkGenerator(MinecraftServer server, WorldGenType genType) {
         return switch (genType) {
             case VOID -> {
-                // Create VoidIslandChunkGenerator with Plains biome
+                // Create VoidIslandChunkGenerator with THE_VOID biome
+                // Using THE_VOID prevents structure generation (no villages, etc.)
                 var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
-                RegistryEntry<Biome> plainsBiome = biomeRegistry.getEntry(BiomeKeys.PLAINS)
-                    .orElseThrow(() -> new IllegalStateException("Plains biome not found"));
-                yield new VoidIslandChunkGenerator(new FixedBiomeSource(plainsBiome));
+                RegistryEntry<Biome> voidBiome = biomeRegistry.getEntry(BiomeKeys.THE_VOID)
+                    .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
+                yield new VoidIslandChunkGenerator(new FixedBiomeSource(voidBiome));
             }
             case OVERWORLD -> server.getOverworld().getChunkManager().getChunkGenerator();
             case FLAT -> {
