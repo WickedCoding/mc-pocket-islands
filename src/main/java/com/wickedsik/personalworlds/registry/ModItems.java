@@ -1,8 +1,11 @@
 package com.wickedsik.personalworlds.registry;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 /**
  * Registers all items for the PersonalWorlds mod.
@@ -11,10 +14,10 @@ import net.minecraft.item.Items;
 public class ModItems {
 
     /**
-     * Reference to the activation item (vanilla emerald).
-     * Using a getter allows for future configurability.
+     * Cached activation item reference.
+     * Lazily loaded from config, cleared on config reload.
      */
-    private static final Item ACTIVATION_ITEM = Items.EMERALD;
+    private static Item cachedActivationItem = null;
 
     /**
      * Register all mod items.
@@ -32,11 +35,33 @@ public class ModItems {
 
     /**
      * Get the item used to activate portal frames.
-     * Currently returns vanilla emerald.
+     * Reads from config on first access, with fallback to emerald.
      *
      * @return The activation item
      */
     public static Item getActivationItem() {
-        return ACTIVATION_ITEM;
+        if (cachedActivationItem == null) {
+            String itemId = ModConfig.get().activationItem;
+            Identifier id = new Identifier(itemId);
+            cachedActivationItem = Registries.ITEM.get(id);
+
+            // Validate the item exists (get() returns AIR for unknown IDs)
+            if (cachedActivationItem == Items.AIR && !itemId.equals("minecraft:air")) {
+                PersonalWorldsMod.LOGGER.warn("Invalid activation item '{}', using emerald", itemId);
+                cachedActivationItem = Items.EMERALD;
+            }
+
+            PersonalWorldsMod.LOGGER.debug("Activation item set to: {}", Registries.ITEM.getId(cachedActivationItem));
+        }
+        return cachedActivationItem;
+    }
+
+    /**
+     * Clear the cached activation item.
+     * Called when configuration is reloaded.
+     */
+    public static void clearCache() {
+        cachedActivationItem = null;
+        PersonalWorldsMod.LOGGER.debug("Item cache cleared");
     }
 }

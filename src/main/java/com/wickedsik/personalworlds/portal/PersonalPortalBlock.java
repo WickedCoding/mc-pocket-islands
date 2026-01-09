@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
@@ -111,6 +112,22 @@ public class PersonalPortalBlock extends Block {
             world.removeBlock(pos, false);
             PersonalWorldsMod.LOGGER.debug("Portal block removed at {} - frame broken", pos);
         }
+    }
+
+    /**
+     * Called when this block is replaced (broken, changed, etc.).
+     * Cleans up portal ownership record when the portal is destroyed.
+     */
+    @Override
+    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        // Only clean up if the block is actually being removed (not just state change)
+        if (!state.isOf(newState.getBlock())) {
+            if (world instanceof ServerWorld serverWorld) {
+                PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(serverWorld.getServer());
+                ownershipManager.removePortal(world, pos);
+            }
+        }
+        super.onStateReplaced(state, world, pos, newState, moved);
     }
 
     /**

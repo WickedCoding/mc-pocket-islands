@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.registry;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
@@ -31,10 +32,10 @@ public class ModBlocks {
     );
 
     /**
-     * Reference to the frame block (vanilla nether bricks).
-     * Using a getter allows for future configurability.
+     * Cached frame block reference.
+     * Lazily loaded from config, cleared on config reload.
      */
-    private static final Block FRAME_BLOCK = Blocks.NETHER_BRICKS;
+    private static Block cachedFrameBlock = null;
 
     /**
      * Register all mod blocks.
@@ -52,11 +53,33 @@ public class ModBlocks {
 
     /**
      * Get the block used for portal frames.
-     * Currently returns vanilla nether bricks.
+     * Reads from config on first access, with fallback to nether bricks.
      *
      * @return The frame block
      */
     public static Block getFrameBlock() {
-        return FRAME_BLOCK;
+        if (cachedFrameBlock == null) {
+            String blockId = ModConfig.get().frameBlock;
+            Identifier id = new Identifier(blockId);
+            cachedFrameBlock = Registries.BLOCK.get(id);
+
+            // Validate the block exists (get() returns AIR for unknown IDs)
+            if (cachedFrameBlock == Blocks.AIR && !blockId.equals("minecraft:air")) {
+                PersonalWorldsMod.LOGGER.warn("Invalid frame block '{}', using nether_bricks", blockId);
+                cachedFrameBlock = Blocks.NETHER_BRICKS;
+            }
+
+            PersonalWorldsMod.LOGGER.debug("Frame block set to: {}", Registries.BLOCK.getId(cachedFrameBlock));
+        }
+        return cachedFrameBlock;
+    }
+
+    /**
+     * Clear the cached frame block.
+     * Called when configuration is reloaded.
+     */
+    public static void clearCache() {
+        cachedFrameBlock = null;
+        PersonalWorldsMod.LOGGER.debug("Block cache cleared");
     }
 }

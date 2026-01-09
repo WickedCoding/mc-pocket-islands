@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds;
 
-import com.wickedsik.personalworlds.command.TestCommands;
+import com.wickedsik.personalworlds.command.ModCommands;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.ModChunkGenerators;
 import com.wickedsik.personalworlds.event.ModEventHandlers;
 import com.wickedsik.personalworlds.registry.ModBlocks;
@@ -17,7 +18,10 @@ public class PersonalWorldsMod implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Personal Worlds initializing...");
 
-        // Register blocks and items FIRST (before anything that might reference them)
+        // Load configuration FIRST (other components may depend on it)
+        ModConfig.load();
+
+        // Register blocks and items (before anything that might reference them)
         ModBlocks.register();
         ModItems.register();
 
@@ -27,8 +31,8 @@ public class PersonalWorldsMod implements ModInitializer {
         // Register event handlers (includes portal activation callback)
         ModEventHandlers.register();
 
-        // Register test commands (temporary for development)
-        TestCommands.register();
+        // Register commands
+        ModCommands.register();
 
         LOGGER.info("Personal Worlds initialized!");
     }

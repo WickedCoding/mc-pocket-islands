@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.util.DataValidator;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -32,6 +33,13 @@ public class DimensionRegistry extends PersistentState {
     // --- Dimension Registration ---
 
     public void registerDimension(PlayerDimensionData data) {
+        // Validate before storing
+        if (!DataValidator.isValidDimensionData(data)) {
+            PersonalWorldsMod.LOGGER.error("Attempted to register invalid dimension data for {}",
+                data.ownerUuid());
+            data = DataValidator.sanitizeDimensionData(data, data.ownerUuid());
+        }
+
         dimensions.put(data.ownerUuid(), data);
         markDirty();
         PersonalWorldsMod.LOGGER.info("Registered dimension for player: {} ({})",
@@ -87,11 +95,30 @@ public class DimensionRegistry extends PersistentState {
     public static DimensionRegistry fromNbt(NbtCompound nbt) {
         DimensionRegistry registry = new DimensionRegistry();
         NbtList dimensionList = nbt.getList("Dimensions", NbtElement.COMPOUND_TYPE);
+        int skipped = 0;
+
         for (int i = 0; i < dimensionList.size(); i++) {
-            PlayerDimensionData data = PlayerDimensionData.fromNbt(dimensionList.getCompound(i));
-            registry.dimensions.put(data.ownerUuid(), data);
+            try {
+                PlayerDimensionData data = PlayerDimensionData.fromNbt(dimensionList.getCompound(i));
+
+                // Validate loaded data
+                if (!DataValidator.isValidDimensionData(data)) {
+                    PersonalWorldsMod.LOGGER.warn("Skipping invalid dimension data for {}",
+                        data.ownerUuid());
+                    skipped++;
+                    continue;
+                }
+
+                registry.dimensions.put(data.ownerUuid(), data);
+            } catch (Exception e) {
+                PersonalWorldsMod.LOGGER.error("Failed to load dimension data at index {}: {}",
+                    i, e.getMessage());
+                skipped++;
+            }
         }
-        PersonalWorldsMod.LOGGER.info("Loaded {} dimensions from registry", registry.dimensions.size());
+
+        PersonalWorldsMod.LOGGER.info("Loaded {} dimensions from registry ({} skipped)",
+            registry.dimensions.size(), skipped);
         return registry;
     }
 

@@ -4,6 +4,7 @@ import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
+import com.wickedsik.personalworlds.util.VisualEffects;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -80,6 +81,10 @@ public class InvitationManager {
                 .append(Text.literal(ownerName).formatted(Formatting.YELLOW))
                 .append(" invited you to their dimension!"), false);
 
+            // Play notification sounds
+            VisualEffects.playInvitationSentEffect(owner);
+            VisualEffects.playInvitationReceivedEffect(guest);
+
             PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension",
                 ownerName, guest.getName().getString());
         } else {
@@ -153,6 +158,9 @@ public class InvitationManager {
         }
 
         // Guest is in owner's dimension - eject them
+        // Play warning sound before ejection
+        VisualEffects.playInvitationRevokedEffect(guest);
+
         guest.sendMessage(Text.literal("Your invitation was revoked. Returning to overworld...")
             .formatted(Formatting.GOLD), false);
 

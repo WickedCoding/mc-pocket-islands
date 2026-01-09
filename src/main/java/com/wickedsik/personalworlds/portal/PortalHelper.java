@@ -9,6 +9,8 @@ import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.registry.ModBlocks;
+import com.wickedsik.personalworlds.util.SafeSpawnFinder;
+import com.wickedsik.personalworlds.util.VisualEffects;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -100,6 +102,9 @@ public class PortalHelper {
             1.0f
         );
 
+        // Play particle effects
+        VisualEffects.playPortalActivationEffects(world, portalFrame.getCenter());
+
         PersonalWorldsMod.LOGGER.info("Portal activated at {} by {} (ownership registered)",
             clickedPos, player.getName().getString());
 
@@ -121,14 +126,24 @@ public class PortalHelper {
             return;
         }
 
-        ServerWorld currentWorld = player.getServerWorld();
+        // Acquire teleport lock to prevent race conditions
+        if (!ConcurrentPortalGuard.tryAcquire(player, portalPos)) {
+            // Already processing or on cooldown
+            return;
+        }
 
-        if (isInPersonalDimension(currentWorld)) {
-            // Going back to overworld (or original dimension)
-            teleportToReturnPosition(player, server);
-        } else {
-            // Going to personal dimension - check permission first
-            handleForwardPortalEntry(player, server, currentWorld, portalPos);
+        try {
+            ServerWorld currentWorld = player.getServerWorld();
+
+            if (isInPersonalDimension(currentWorld)) {
+                // Going back to overworld (or original dimension)
+                teleportToReturnPosition(player, server);
+            } else {
+                // Going to personal dimension - check permission first
+                handleForwardPortalEntry(player, server, currentWorld, portalPos);
+            }
+        } finally {
+            ConcurrentPortalGuard.release(player, portalPos);
         }
     }
 
@@ -185,8 +200,9 @@ public class PortalHelper {
      * @param server The Minecraft server
      * @param fromWorld The world the player is leaving
      * @param ownerUuid The UUID of the dimension owner
+     * @return true if teleportation succeeded, false if it failed
      */
-    private static void teleportToOwnerDimension(
+    private static boolean teleportToOwnerDimension(
             ServerPlayerEntity player,
             MinecraftServer server,
             ServerWorld fromWorld,
@@ -194,6 +210,39 @@ public class PortalHelper {
     ) {
         UUID playerUuid = player.getUuid();
         boolean isOwnDimension = playerUuid.equals(ownerUuid);
+
+        // Get dimension data for the owner
+        DimensionRegistry registry = DimensionRegistry.get(server);
+        Optional<PlayerDimensionData> dimDataOpt = registry.getDimensionData(ownerUuid);
+
+        String ownerName;
+        WorldGenType genType;
+
+        if (dimDataOpt.isPresent()) {
+            // Dimension exists in registry
+            PlayerDimensionData dimData = dimDataOpt.get();
+            ownerName = dimData.ownerName();
+            genType = dimData.generatorType();
+        } else if (isOwnDimension) {
+            // Player's own dimension not yet created - allow first-time creation
+            ownerName = player.getName().getString();
+            genType = WorldGenType.VOID;
+        } else {
+            // Visitor trying to access a dimension that doesn't exist
+            // This means the dimension was deleted - don't recreate it!
+            PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
+            String deletedOwnerName = ownershipManager.getOwnerName(server, ownerUuid);
+            player.sendMessage(
+                Text.literal("This portal's dimension no longer exists. ")
+                    .append(Text.literal(deletedOwnerName).formatted(Formatting.YELLOW))
+                    .append("'s world was deleted.")
+                    .formatted(Formatting.RED),
+                false
+            );
+            PersonalWorldsMod.LOGGER.info("Player {} tried to enter deleted dimension of {}",
+                player.getName().getString(), deletedOwnerName);
+            return false;
+        }
 
         // Store return position BEFORE teleporting
         PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -205,23 +254,6 @@ public class PortalHelper {
         );
         dataManager.setReturnData(playerUuid, returnData);
 
-        // Get dimension data for the owner
-        DimensionRegistry registry = DimensionRegistry.get(server);
-        Optional<PlayerDimensionData> dimDataOpt = registry.getDimensionData(ownerUuid);
-
-        String ownerName;
-        WorldGenType genType;
-
-        if (dimDataOpt.isPresent()) {
-            PlayerDimensionData dimData = dimDataOpt.get();
-            ownerName = dimData.ownerName();
-            genType = dimData.generatorType();
-        } else {
-            // Dimension not registered yet - use defaults
-            ownerName = getPlayerName(server, ownerUuid);
-            genType = WorldGenType.VOID;
-        }
-
         // Get or create the owner's dimension
         ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(
             server, ownerUuid, ownerName, genType
@@ -232,6 +264,9 @@ public class PortalHelper {
             .map(portalPos -> findSafePositionNearPortal(targetWorld, portalPos))
             .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType));
 
+        // Play departure effects
+        VisualEffects.playTeleportDepartureEffects(player);
+
         TeleportTarget target = new TeleportTarget(
             Vec3d.ofCenter(destinationPos),
             Vec3d.ZERO,
@@ -239,6 +274,10 @@ public class PortalHelper {
             player.getPitch()
         );
         FabricDimensions.teleport(player, targetWorld, target);
+
+        // Play arrival effects and dimension entry sound
+        VisualEffects.playTeleportArrivalEffects(player);
+        VisualEffects.playDimensionEntryEffect(player);
 
         // Send appropriate message
         if (isOwnDimension) {
@@ -252,6 +291,8 @@ public class PortalHelper {
             PersonalWorldsMod.LOGGER.info("Player {} entered {}'s personal dimension",
                 player.getName().getString(), ownerName);
         }
+
+        return true;
     }
 
     /**
@@ -283,13 +324,22 @@ public class PortalHelper {
             targetWorld = server.getWorld(returnData.dimension());
 
             if (targetWorld == null) {
-                // Fallback to overworld if dimension doesn't exist
+                // Dimension deleted - use overworld
                 PersonalWorldsMod.LOGGER.warn("Return dimension not found for player {}, using overworld",
                     player.getName().getString());
                 targetWorld = server.getOverworld();
-                targetPos = Vec3d.ofCenter(targetWorld.getSpawnPos());
+                targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
+                    targetWorld, targetWorld.getSpawnPos()));
                 yaw = player.getYaw();
                 pitch = player.getPitch();
+            } else if (!SafeSpawnFinder.isSafeSpawn(targetWorld, returnData.position())) {
+                // Position no longer safe - find nearby safe spot
+                BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, returnData.position());
+                targetPos = Vec3d.ofCenter(safePos);
+                yaw = returnData.yaw();
+                pitch = returnData.pitch();
+                PersonalWorldsMod.LOGGER.info("Return position unsafe, relocated player {} to {}",
+                    player.getName().getString(), safePos);
             } else {
                 targetPos = Vec3d.ofCenter(returnData.position());
                 yaw = returnData.yaw();
@@ -303,13 +353,21 @@ public class PortalHelper {
             PersonalWorldsMod.LOGGER.debug("No return data for player {}, using overworld spawn",
                 player.getName().getString());
             targetWorld = server.getOverworld();
-            targetPos = Vec3d.ofCenter(targetWorld.getSpawnPos());
+            targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
+                targetWorld, targetWorld.getSpawnPos()));
             yaw = player.getYaw();
             pitch = player.getPitch();
         }
 
+        // Play departure effects and dimension exit sound
+        VisualEffects.playTeleportDepartureEffects(player);
+        VisualEffects.playDimensionExitEffect(player);
+
         TeleportTarget target = new TeleportTarget(targetPos, Vec3d.ZERO, yaw, pitch);
         FabricDimensions.teleport(player, targetWorld, target);
+
+        // Play arrival effects
+        VisualEffects.playTeleportArrivalEffects(player);
 
         player.sendMessage(Text.literal("Returned to the overworld"), true);
         PersonalWorldsMod.LOGGER.info("Player {} left personal dimension", player.getName().getString());
@@ -339,8 +397,7 @@ public class PortalHelper {
         }
 
         // Use current world as "from" world for return data
-        teleportToOwnerDimension(player, server, currentWorld, ownerUuid);
-        return true;
+        return teleportToOwnerDimension(player, server, currentWorld, ownerUuid);
     }
 
     // --- Dimension Utilities ---

@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.util.DataValidator;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -58,6 +59,12 @@ public class PlayerDataManager extends PersistentState {
      * @param data The return position data
      */
     public void setReturnData(UUID playerUuid, ReturnData data) {
+        if (data == null || !DataValidator.isValidUuid(playerUuid)) {
+            PersonalWorldsMod.LOGGER.warn("Attempted to set invalid return data for {}",
+                playerUuid);
+            return;
+        }
+
         returnPositions.put(playerUuid, data);
         markDirty();
         PersonalWorldsMod.LOGGER.debug("Stored return data for player: {}", playerUuid);
@@ -106,6 +113,9 @@ public class PlayerDataManager extends PersistentState {
      * @return true if invitation was added, false if already exists
      */
     public boolean addInvitation(UUID ownerUuid, String ownerName, UUID guestUuid) {
+        // Sanitize owner name
+        ownerName = DataValidator.sanitizePlayerName(ownerName);
+
         // Check if invitation already exists
         if (hasInvitationFrom(guestUuid, ownerUuid)) {
             return false;
@@ -195,6 +205,53 @@ public class PlayerDataManager extends PersistentState {
      */
     public Set<UUID> getSentInvitations(UUID ownerUuid) {
         return sentInvitations.getOrDefault(ownerUuid, Collections.emptySet());
+    }
+
+    /**
+     * Clear all invitations involving a player (both as owner and as guest).
+     * Used when deleting a player's dimension via admin command.
+     *
+     * @param playerUuid The player's UUID
+     */
+    public void clearAllInvitationsFor(UUID playerUuid) {
+        boolean changed = false;
+
+        // Clear all invitations sent BY this player (as dimension owner)
+        Set<UUID> guests = sentInvitations.remove(playerUuid);
+        if (guests != null && !guests.isEmpty()) {
+            for (UUID guestUuid : guests) {
+                List<InvitationData> guestInvitations = receivedInvitations.get(guestUuid);
+                if (guestInvitations != null) {
+                    guestInvitations.removeIf(inv -> inv.ownerUuid().equals(playerUuid));
+                    if (guestInvitations.isEmpty()) {
+                        receivedInvitations.remove(guestUuid);
+                    }
+                }
+            }
+            changed = true;
+            PersonalWorldsMod.LOGGER.debug("Cleared {} sent invitations for {}", guests.size(), playerUuid);
+        }
+
+        // Clear all invitations received BY this player (as guest)
+        List<InvitationData> received = receivedInvitations.remove(playerUuid);
+        if (received != null && !received.isEmpty()) {
+            // Also remove from owners' sent lists
+            for (InvitationData inv : received) {
+                Set<UUID> ownerSent = sentInvitations.get(inv.ownerUuid());
+                if (ownerSent != null) {
+                    ownerSent.remove(playerUuid);
+                    if (ownerSent.isEmpty()) {
+                        sentInvitations.remove(inv.ownerUuid());
+                    }
+                }
+            }
+            changed = true;
+            PersonalWorldsMod.LOGGER.debug("Cleared {} received invitations for {}", received.size(), playerUuid);
+        }
+
+        if (changed) {
+            markDirty();
+        }
     }
 
     // --- Serialization ---

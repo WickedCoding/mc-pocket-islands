@@ -4,12 +4,16 @@ import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
+import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
+import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
+import com.wickedsik.personalworlds.util.PerformanceMonitor;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -26,6 +30,9 @@ public class ModEventHandlers {
     private static int tickCounter = 0;
     private static final int UNLOAD_CHECK_INTERVAL = 600; // 30 seconds
 
+    private static int guardCleanupCounter = 0;
+    private static final int GUARD_CLEANUP_INTERVAL = 200; // 10 seconds
+
     public static void register() {
         // Server started - restore all dimensions
         ServerLifecycleEvents.SERVER_STARTED.register(ModEventHandlers::onServerStarted);
@@ -38,6 +45,14 @@ public class ModEventHandlers {
 
         // Portal activation via block interaction
         UseBlockCallback.EVENT.register(ModEventHandlers::onUseBlock);
+
+        // Player join - crash recovery
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+            CrashRecoveryHandler.onPlayerJoin(handler.getPlayer()));
+
+        // Player disconnect - release portal locks
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+            ConcurrentPortalGuard.forceRelease(handler.getPlayer().getUuid()));
 
         PersonalWorldsMod.LOGGER.info("Event handlers registered");
     }
@@ -64,6 +79,16 @@ public class ModEventHandlers {
         if (tickCounter >= UNLOAD_CHECK_INTERVAL) {
             tickCounter = 0;
             DimensionManager.unloadEmptyDimensions();
+
+            // Performance monitoring (if enabled)
+            PerformanceMonitor.logStatus(server);
+        }
+
+        // Cleanup concurrent portal guard
+        guardCleanupCounter++;
+        if (guardCleanupCounter >= GUARD_CLEANUP_INTERVAL) {
+            guardCleanupCounter = 0;
+            ConcurrentPortalGuard.cleanup();
         }
     }
 

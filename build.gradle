@@ -15,6 +15,7 @@ repositories {
         name = 'Nucleoid'
         url = 'https://maven.nucleoid.xyz/'
     }
+    mavenCentral()
 }
 
 loom {
@@ -39,6 +40,13 @@ dependencies {
 
     // Fantasy — runtime dimension creation (included in JAR)
     modImplementation include("xyz.nucleoid:fantasy:${project.fantasy_version}")
+
+    // fabric-permissions-api — optional soft dependency for LuckPerms integration (included in JAR)
+    // Falls back to vanilla OP levels when no permission plugin is installed
+    // Exclude the fabric-api-bom to prevent it from overriding our MC 1.20.4 compatible fabric-api
+    modImplementation(include("me.lucko:fabric-permissions-api:0.3.3")) {
+        exclude group: "net.fabricmc.fabric-api", module: "fabric-api-bom"
+    }
 }
 
 processResources {

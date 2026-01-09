@@ -101,6 +101,30 @@ public class PortalOwnershipManager extends PersistentState {
         return portalOwners.containsKey(key);
     }
 
+    /**
+     * Remove all portal ownership records for a specific owner.
+     * Called when a dimension is deleted via admin command.
+     *
+     * @param ownerUuid The owner's UUID whose portals should be cleared
+     * @return The number of portals cleared
+     */
+    public int clearPortalsOwnedBy(UUID ownerUuid) {
+        int removed = 0;
+        var iterator = portalOwners.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            if (entry.getValue().equals(ownerUuid)) {
+                iterator.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            markDirty();
+            PersonalWorldsMod.LOGGER.info("Cleared {} portal ownership records for {}", removed, ownerUuid);
+        }
+        return removed;
+    }
+
     // --- Owner Name Lookup ---
 
     /**
