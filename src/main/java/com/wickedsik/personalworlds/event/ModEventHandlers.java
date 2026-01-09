@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.event;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
+import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.registry.ModBlocks;
@@ -42,7 +43,14 @@ public class ModEventHandlers {
     }
 
     private static void onServerStarted(MinecraftServer server) {
-        PersonalWorldsMod.LOGGER.info("Server started - restoring player dimensions");
+        PersonalWorldsMod.LOGGER.info("Server started - scanning for orphaned dimensions");
+
+        // Scan filesystem for orphaned dimensions and recover them before normal restore
+        // This handles cases where the registry file was corrupted or deleted
+        DimensionRecoveryScanner.scanAndRecover(server);
+
+        // Now restore all registered dimensions (including any just recovered)
+        PersonalWorldsMod.LOGGER.info("Restoring player dimensions from registry");
         DimensionRegistry.get(server).restoreAllDimensions(server);
     }
 

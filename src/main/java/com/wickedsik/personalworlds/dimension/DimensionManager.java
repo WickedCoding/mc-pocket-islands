@@ -54,10 +54,13 @@ public class DimensionManager {
         PersonalWorldsMod.LOGGER.info("Loaded/created dimension for player: {} ({})",
             playerName, playerUuid);
 
-        // Register in persistent state if new
+        // Register in persistent state if new, or get existing data
         DimensionRegistry registry = DimensionRegistry.get(server);
+        PlayerDimensionData data;
+
         if (!registry.hasDimension(playerUuid)) {
-            PlayerDimensionData data = new PlayerDimensionData(
+            // New dimension - create and register
+            data = new PlayerDimensionData(
                 playerUuid,
                 playerName,
                 dimId,
@@ -66,7 +69,28 @@ public class DimensionManager {
                 genType
             );
             registry.registerDimension(data);
+        } else {
+            // Existing dimension - get data and potentially update owner name
+            data = registry.getDimensionData(playerUuid).orElseThrow();
+
+            // Update owner name if it changed (player renamed)
+            if (!data.ownerName().equals(playerName)) {
+                data = new PlayerDimensionData(
+                    data.ownerUuid(),
+                    playerName,  // Updated name
+                    data.dimensionId(),
+                    data.createdAt(),
+                    data.spawnPoint(),
+                    data.generatorType()
+                );
+                registry.registerDimension(data);  // Re-register with updated name
+                PersonalWorldsMod.LOGGER.info("Updated owner name for dimension: {} -> {}",
+                    data.ownerUuid(), playerName);
+            }
         }
+
+        // Write backup metadata to dimension folder (for recovery purposes)
+        DimensionMetadataFile.write(server, data);
 
         return handle.asWorld();
     }
