@@ -6,17 +6,24 @@ import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
+import com.wickedsik.personalworlds.player.InvitationManager;
+import com.wickedsik.personalworlds.player.PlayerDataManager;
+import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.TeleportTarget;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class TestCommands {
@@ -30,10 +37,9 @@ public class TestCommands {
     private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
             CommandManager.literal("pw")
-                .requires(source -> source.hasPermissionLevel(2)) // OP level 2+
-
-                // /pw create [type] - Create and enter your personal dimension
+                // Admin commands (OP level 2+)
                 .then(CommandManager.literal("create")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .executes(ctx -> createDimension(ctx.getSource(), "OVERWORLD"))
                     .then(CommandManager.argument("type", StringArgumentType.word())
                         .executes(ctx -> createDimension(
@@ -43,27 +49,61 @@ public class TestCommands {
                     )
                 )
 
-                // /pw enter - Enter your personal dimension
                 .then(CommandManager.literal("enter")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .executes(ctx -> enterDimension(ctx.getSource()))
                 )
 
-                // /pw leave - Return to overworld
                 .then(CommandManager.literal("leave")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .executes(ctx -> leaveDimension(ctx.getSource()))
                 )
 
-                // /pw list - List all registered dimensions
                 .then(CommandManager.literal("list")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .executes(ctx -> listDimensions(ctx.getSource()))
                 )
 
-                // /pw info - Show info about current dimension status
                 .then(CommandManager.literal("info")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .executes(ctx -> showInfo(ctx.getSource()))
+                )
+
+                // Player commands (no permission required)
+                .then(CommandManager.literal("invite")
+                    .then(CommandManager.argument("player", EntityArgumentType.player())
+                        .executes(ctx -> invitePlayer(
+                            ctx.getSource(),
+                            EntityArgumentType.getPlayer(ctx, "player")
+                        ))
+                    )
+                )
+
+                .then(CommandManager.literal("uninvite")
+                    .then(CommandManager.argument("player", StringArgumentType.word())
+                        .executes(ctx -> uninvitePlayer(
+                            ctx.getSource(),
+                            StringArgumentType.getString(ctx, "player")
+                        ))
+                    )
+                )
+
+                .then(CommandManager.literal("invites")
+                    .executes(ctx -> showInvitations(ctx.getSource()))
+                )
+
+                .then(CommandManager.literal("go")
+                    .then(CommandManager.argument("player", StringArgumentType.word())
+                        .executes(ctx -> goToPlayer(
+                            ctx.getSource(),
+                            StringArgumentType.getString(ctx, "player")
+                        ))
+                    )
                 )
         );
     }
+
+    // --- Admin Commands ---
 
     private static int createDimension(ServerCommandSource source, String typeStr) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
@@ -210,5 +250,111 @@ public class TestCommands {
 
         source.sendFeedback(() -> Text.literal(info), false);
         return 1;
+    }
+
+    // --- Player Commands (Invitation System) ---
+
+    private static int invitePlayer(ServerCommandSource source, ServerPlayerEntity guest) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
+            source.sendError(Text.literal("Command must be run by a player"));
+            return 0;
+        }
+
+        InvitationManager.invite(source.getServer(), owner, guest);
+        return 1;
+    }
+
+    private static int uninvitePlayer(ServerCommandSource source, String guestName) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
+            source.sendError(Text.literal("Command must be run by a player"));
+            return 0;
+        }
+
+        // Find guest UUID by name - check online players first
+        UUID guestUuid = null;
+        String resolvedName = guestName;
+
+        // Try online player
+        ServerPlayerEntity onlineGuest = source.getServer().getPlayerManager().getPlayer(guestName);
+        if (onlineGuest != null) {
+            guestUuid = onlineGuest.getUuid();
+            resolvedName = onlineGuest.getName().getString();
+        } else {
+            // Try to find by sent invitations (for offline players)
+            PlayerDataManager dataManager = PlayerDataManager.get(source.getServer());
+            Set<UUID> sentInvites = dataManager.getSentInvitations(owner.getUuid());
+            DimensionRegistry registry = DimensionRegistry.get(source.getServer());
+
+            for (UUID uuid : sentInvites) {
+                Optional<PlayerDimensionData> data = registry.getDimensionData(uuid);
+                if (data.isPresent() && data.get().ownerName().equalsIgnoreCase(guestName)) {
+                    guestUuid = uuid;
+                    resolvedName = data.get().ownerName();
+                    break;
+                }
+            }
+        }
+
+        if (guestUuid == null) {
+            source.sendError(Text.literal("Player not found: " + guestName));
+            return 0;
+        }
+
+        InvitationManager.uninvite(source.getServer(), owner, guestUuid, resolvedName);
+        return 1;
+    }
+
+    private static int showInvitations(ServerCommandSource source) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
+            source.sendError(Text.literal("Command must be run by a player"));
+            return 0;
+        }
+
+        InvitationManager.showInvitations(player);
+        return 1;
+    }
+
+    private static int goToPlayer(ServerCommandSource source, String targetName) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
+            source.sendError(Text.literal("Command must be run by a player"));
+            return 0;
+        }
+
+        // Find target player's UUID
+        UUID targetUuid = null;
+        String resolvedName = targetName;
+
+        // Try online player
+        ServerPlayerEntity onlineTarget = source.getServer().getPlayerManager().getPlayer(targetName);
+        if (onlineTarget != null) {
+            targetUuid = onlineTarget.getUuid();
+            resolvedName = onlineTarget.getName().getString();
+        } else {
+            // Try to find in dimension registry (for offline players)
+            DimensionRegistry registry = DimensionRegistry.get(source.getServer());
+            for (PlayerDimensionData data : registry.getAllDimensions().values()) {
+                if (data.ownerName().equalsIgnoreCase(targetName)) {
+                    targetUuid = data.ownerUuid();
+                    resolvedName = data.ownerName();
+                    break;
+                }
+            }
+        }
+
+        if (targetUuid == null) {
+            source.sendError(Text.literal("Player not found: " + targetName));
+            return 0;
+        }
+
+        // Check permission
+        if (!InvitationManager.canVisit(source.getServer(), player.getUuid(), targetUuid)) {
+            source.sendError(Text.literal("You have not been invited by ")
+                .append(Text.literal(resolvedName).formatted(Formatting.YELLOW)));
+            return 0;
+        }
+
+        // Teleport
+        boolean success = PortalHelper.teleportToDimension(player, source.getServer(), targetUuid);
+        return success ? 1 : 0;
     }
 }

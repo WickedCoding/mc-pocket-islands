@@ -722,6 +722,15 @@ public class AdminCommands {
 26. Documentation (README, wiki)
 27. Release
 
+### Phase 7: Future Fun
+
+> Items here are pure speculation and ideas that need to be ironed out.
+
+28. Allow different style portals for different style dimensions
+29. Animals / Pets pulled through the portal
+30. Personal Dimension restrictions (mod allowances)
+31. Detailed configuration of the mod
+
 ---
 
 ## Resources

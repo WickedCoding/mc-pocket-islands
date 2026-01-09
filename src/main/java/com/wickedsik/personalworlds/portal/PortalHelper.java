@@ -5,6 +5,7 @@ import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
+import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.registry.ModBlocks;
@@ -18,6 +19,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -31,7 +33,8 @@ import java.util.UUID;
  * Helper class for portal operations including:
  * - Frame detection and validation
  * - Portal activation (filling frame with portal blocks)
- * - Teleportation between overworld and personal dimensions
+ * - Portal ownership registration
+ * - Permission-based teleportation between overworld and personal dimensions
  * - Starter platform creation for void worlds
  */
 public class PortalHelper {
@@ -48,6 +51,7 @@ public class PortalHelper {
 
     /**
      * Attempt to activate a portal by detecting the frame and filling with portal blocks.
+     * Also registers portal ownership for the activating player.
      *
      * @param world The world where the portal is being activated
      * @param clickedPos The position that was clicked (should be air inside frame)
@@ -56,6 +60,11 @@ public class PortalHelper {
      */
     public static boolean tryActivatePortal(World world, BlockPos clickedPos, ServerPlayerEntity player) {
         if (world.isClient()) {
+            return false;
+        }
+
+        MinecraftServer server = player.getServer();
+        if (server == null) {
             return false;
         }
 
@@ -75,6 +84,12 @@ public class PortalHelper {
             world.setBlockState(pos, portalState);
         }
 
+        // Register portal ownership for all portal blocks
+        PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
+        for (BlockPos pos : portalFrame.getInteriorPositions()) {
+            ownershipManager.registerPortal(world, pos, player.getUuid());
+        }
+
         // Play activation sound
         world.playSound(
             null,
@@ -85,7 +100,7 @@ public class PortalHelper {
             1.0f
         );
 
-        PersonalWorldsMod.LOGGER.info("Portal activated at {} by {}",
+        PersonalWorldsMod.LOGGER.info("Portal activated at {} by {} (ownership registered)",
             clickedPos, player.getName().getString());
 
         return true;
@@ -95,7 +110,7 @@ public class PortalHelper {
 
     /**
      * Handle a player entering the portal.
-     * Determines destination and teleports the player.
+     * Determines destination based on current location and permission checks.
      *
      * @param player The player entering the portal
      * @param portalPos The position of the portal block
@@ -112,22 +127,73 @@ public class PortalHelper {
             // Going back to overworld (or original dimension)
             teleportToReturnPosition(player, server);
         } else {
-            // Going to personal dimension
-            teleportToPersonalDimension(player, server, currentWorld);
+            // Going to personal dimension - check permission first
+            handleForwardPortalEntry(player, server, currentWorld, portalPos);
         }
     }
 
     /**
-     * Teleport player to their personal dimension.
-     * Will teleport to an existing portal if one exists, otherwise to spawn.
+     * Handle forward portal entry (overworld -> personal dimension).
+     * Looks up portal owner and checks permission before teleporting.
+     *
+     * @param player The player entering the portal
+     * @param server The Minecraft server
+     * @param fromWorld The world the player is leaving
+     * @param portalPos The position of the portal block
      */
-    private static void teleportToPersonalDimension(
+    private static void handleForwardPortalEntry(
             ServerPlayerEntity player,
             MinecraftServer server,
-            ServerWorld fromWorld
+            ServerWorld fromWorld,
+            BlockPos portalPos
+    ) {
+        PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
+        Optional<UUID> portalOwnerOpt = ownershipManager.getOwner(fromWorld, portalPos);
+
+        if (portalOwnerOpt.isEmpty()) {
+            // Unclaimed portal - auto-claim for the entering player
+            PersonalWorldsMod.LOGGER.warn("Unclaimed portal at {} - auto-claiming for {}",
+                portalPos, player.getName().getString());
+            ownershipManager.registerPortal(fromWorld, portalPos, player.getUuid());
+            teleportToOwnerDimension(player, server, fromWorld, player.getUuid());
+            return;
+        }
+
+        UUID portalOwner = portalOwnerOpt.get();
+        UUID visitorUuid = player.getUuid();
+
+        // Permission check: owner OR has invitation
+        if (InvitationManager.canVisit(server, visitorUuid, portalOwner)) {
+            teleportToOwnerDimension(player, server, fromWorld, portalOwner);
+        } else {
+            String ownerName = ownershipManager.getOwnerName(server, portalOwner);
+            player.sendMessage(
+                Text.literal("You have not been invited by ")
+                    .append(Text.literal(ownerName).formatted(Formatting.YELLOW)),
+                false
+            );
+            PersonalWorldsMod.LOGGER.debug("{} denied entry to {}'s portal at {}",
+                player.getName().getString(), ownerName, portalPos);
+        }
+    }
+
+    /**
+     * Teleport player to an owner's personal dimension.
+     * Stores return position and creates dimension if needed.
+     *
+     * @param player The player being teleported
+     * @param server The Minecraft server
+     * @param fromWorld The world the player is leaving
+     * @param ownerUuid The UUID of the dimension owner
+     */
+    private static void teleportToOwnerDimension(
+            ServerPlayerEntity player,
+            MinecraftServer server,
+            ServerWorld fromWorld,
+            UUID ownerUuid
     ) {
         UUID playerUuid = player.getUuid();
-        String playerName = player.getName().getString();
+        boolean isOwnDimension = playerUuid.equals(ownerUuid);
 
         // Store return position BEFORE teleporting
         PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -139,23 +205,33 @@ public class PortalHelper {
         );
         dataManager.setReturnData(playerUuid, returnData);
 
-        // Get or create the player's dimension
+        // Get dimension data for the owner
         DimensionRegistry registry = DimensionRegistry.get(server);
-        WorldGenType genType = registry.getDimensionData(playerUuid)
-            .map(PlayerDimensionData::generatorType)
-            .orElse(WorldGenType.VOID);
+        Optional<PlayerDimensionData> dimDataOpt = registry.getDimensionData(ownerUuid);
 
+        String ownerName;
+        WorldGenType genType;
+
+        if (dimDataOpt.isPresent()) {
+            PlayerDimensionData dimData = dimDataOpt.get();
+            ownerName = dimData.ownerName();
+            genType = dimData.generatorType();
+        } else {
+            // Dimension not registered yet - use defaults
+            ownerName = getPlayerName(server, ownerUuid);
+            genType = WorldGenType.VOID;
+        }
+
+        // Get or create the owner's dimension
         ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(
-            server, playerUuid, playerName, genType
+            server, ownerUuid, ownerName, genType
         );
 
-        // Try to find an existing portal in the personal dimension
-        // If found, teleport near it; otherwise use spawn/create platform
+        // Find destination and teleport
         BlockPos destinationPos = findExistingPortal(targetWorld)
             .map(portalPos -> findSafePositionNearPortal(targetWorld, portalPos))
             .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType));
 
-        // Teleport
         TeleportTarget target = new TeleportTarget(
             Vec3d.ofCenter(destinationPos),
             Vec3d.ZERO,
@@ -164,8 +240,29 @@ public class PortalHelper {
         );
         FabricDimensions.teleport(player, targetWorld, target);
 
-        player.sendMessage(Text.literal("Welcome to your personal world!"), true);
-        PersonalWorldsMod.LOGGER.info("Player {} entered personal dimension", playerName);
+        // Send appropriate message
+        if (isOwnDimension) {
+            player.sendMessage(Text.literal("Welcome to your personal world!"), true);
+            PersonalWorldsMod.LOGGER.info("Player {} entered their personal dimension",
+                player.getName().getString());
+        } else {
+            player.sendMessage(Text.literal("Entering ")
+                .append(Text.literal(ownerName).formatted(Formatting.YELLOW))
+                .append("'s world"), true);
+            PersonalWorldsMod.LOGGER.info("Player {} entered {}'s personal dimension",
+                player.getName().getString(), ownerName);
+        }
+    }
+
+    /**
+     * Get a player's display name by UUID.
+     */
+    private static String getPlayerName(MinecraftServer server, UUID playerUuid) {
+        ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+        if (player != null) {
+            return player.getName().getString();
+        }
+        return playerUuid.toString().substring(0, 8);
     }
 
     /**
@@ -218,6 +315,34 @@ public class PortalHelper {
         PersonalWorldsMod.LOGGER.info("Player {} left personal dimension", player.getName().getString());
     }
 
+    // --- Direct Teleport (for /pw go command) ---
+
+    /**
+     * Teleport a player directly to another player's dimension.
+     * Used by the /pw go command. Requires permission check before calling.
+     *
+     * @param player The player being teleported
+     * @param server The Minecraft server
+     * @param ownerUuid The UUID of the dimension owner
+     * @return true if teleport was successful
+     */
+    public static boolean teleportToDimension(ServerPlayerEntity player, MinecraftServer server, UUID ownerUuid) {
+        // Check if player is already in the target dimension
+        ServerWorld currentWorld = player.getServerWorld();
+        if (isInPersonalDimension(currentWorld)) {
+            String dimPath = currentWorld.getRegistryKey().getValue().getPath();
+            String targetPath = "pw_" + ownerUuid.toString();
+            if (dimPath.equals(targetPath)) {
+                player.sendMessage(Text.literal("You are already in this dimension!").formatted(Formatting.RED), false);
+                return false;
+            }
+        }
+
+        // Use current world as "from" world for return data
+        teleportToOwnerDimension(player, server, currentWorld, ownerUuid);
+        return true;
+    }
+
     // --- Dimension Utilities ---
 
     /**
@@ -230,6 +355,28 @@ public class PortalHelper {
         String namespace = world.getRegistryKey().getValue().getNamespace();
         String path = world.getRegistryKey().getValue().getPath();
         return PersonalWorldsMod.MOD_ID.equals(namespace) && path.startsWith("pw_");
+    }
+
+    /**
+     * Get the owner UUID of a personal dimension from its world.
+     *
+     * @param world The personal dimension world
+     * @return Optional containing the owner UUID, or empty if not a personal dimension
+     */
+    public static Optional<UUID> getDimensionOwner(ServerWorld world) {
+        if (!isInPersonalDimension(world)) {
+            return Optional.empty();
+        }
+
+        String path = world.getRegistryKey().getValue().getPath();
+        String uuidStr = path.substring(3); // Remove "pw_" prefix
+
+        try {
+            return Optional.of(UUID.fromString(uuidStr));
+        } catch (IllegalArgumentException e) {
+            PersonalWorldsMod.LOGGER.warn("Invalid UUID in dimension path: {}", path);
+            return Optional.empty();
+        }
     }
 
     // --- Portal Search ---
