@@ -137,10 +137,62 @@ public class ConcurrentPortalGuard {
 
     /**
      * Create a hash for a block position (for use as map key).
+     * Package-private for testing.
      */
-    private static long hashPosition(BlockPos pos) {
+    static long hashPosition(BlockPos pos) {
         return ((long) pos.getX() & 0x3FFFFFFL) << 38 |
                ((long) pos.getY() & 0xFFFFL) << 20 |
                ((long) pos.getZ() & 0xFFFFFFL);
+    }
+
+    // ========== Test-only methods ==========
+
+    /**
+     * Try to acquire a lock using UUID directly (for testing).
+     * Package-private - only for unit tests.
+     */
+    static boolean tryAcquire(UUID playerUuid, BlockPos portalPos) {
+        long now = System.currentTimeMillis();
+        long portalHash = hashPosition(portalPos);
+
+        // Check if player is already in transit
+        Long lastTeleport = playersInTransit.get(playerUuid);
+        if (lastTeleport != null) {
+            if (now - lastTeleport < TELEPORT_COOLDOWN_MS) {
+                return false;
+            }
+        }
+
+        // Check if portal is being processed by another player
+        UUID processingPlayer = portalsProcessing.get(portalHash);
+        if (processingPlayer != null && !processingPlayer.equals(playerUuid)) {
+            Long processingTime = playersInTransit.get(processingPlayer);
+            if (processingTime != null && now - processingTime < MAX_LOCK_TIME_MS) {
+                return false;
+            }
+        }
+
+        // Acquire locks
+        playersInTransit.put(playerUuid, now);
+        portalsProcessing.put(portalHash, playerUuid);
+        return true;
+    }
+
+    /**
+     * Release a lock using UUID directly (for testing).
+     * Package-private - only for unit tests.
+     */
+    static void release(UUID playerUuid, BlockPos portalPos) {
+        long portalHash = hashPosition(portalPos);
+        portalsProcessing.remove(portalHash, playerUuid);
+    }
+
+    /**
+     * Clear all locks (for testing only).
+     * Package-private - only for unit tests.
+     */
+    static void clearAllForTesting() {
+        playersInTransit.clear();
+        portalsProcessing.clear();
     }
 }

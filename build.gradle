@@ -47,6 +47,11 @@ dependencies {
     modImplementation(include("me.lucko:fabric-permissions-api:0.3.3")) {
         exclude group: "net.fabricmc.fabric-api", module: "fabric-api-bom"
     }
+
+    // Testing — JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 processResources {
@@ -65,6 +70,16 @@ java {
     withSourcesJar()
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
 }
 
 jar {
