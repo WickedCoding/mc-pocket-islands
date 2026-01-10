@@ -1,7 +1,7 @@
 {
   "textures": {
-    "particle": "personalworlds:block/personal_portal",
-    "portal": "personalworlds:block/personal_portal"
+    "particle": "personalworlds:block/personal_portal_red",
+    "portal": "personalworlds:block/personal_portal_red"
   },
   "elements": [
     {
