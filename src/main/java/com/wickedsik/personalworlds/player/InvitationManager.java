@@ -63,7 +63,7 @@ public class InvitationManager {
 
         // Validation
         if (ownerUuid.equals(guestUuid)) {
-            owner.sendMessage(Text.literal("You cannot invite yourself!").formatted(Formatting.RED), false);
+            owner.sendMessage(Text.translatable("personalworlds.message.cannot_invite_self").formatted(Formatting.RED), false);
             return false;
         }
 
@@ -73,13 +73,8 @@ public class InvitationManager {
         boolean added = dataManager.addInvitation(ownerUuid, ownerName, guestUuid);
 
         if (added) {
-            owner.sendMessage(Text.literal("Invited ")
-                .append(Text.literal(guest.getName().getString()).formatted(Formatting.YELLOW))
-                .append(" to your dimension"), false);
-
-            guest.sendMessage(Text.literal("")
-                .append(Text.literal(ownerName).formatted(Formatting.YELLOW))
-                .append(" invited you to their dimension!"), false);
+            owner.sendMessage(Text.translatable("personalworlds.message.invite_sent", guest.getName().getString()), false);
+            guest.sendMessage(Text.translatable("personalworlds.message.invite_received", ownerName), false);
 
             // Play notification sounds
             VisualEffects.playInvitationSentEffect(owner);
@@ -88,9 +83,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension",
                 ownerName, guest.getName().getString());
         } else {
-            owner.sendMessage(Text.literal("")
-                .append(Text.literal(guest.getName().getString()).formatted(Formatting.YELLOW))
-                .append(" is already invited to your dimension"), false);
+            owner.sendMessage(Text.translatable("personalworlds.message.already_invited", guest.getName().getString()), false);
         }
 
         return added;
@@ -113,9 +106,7 @@ public class InvitationManager {
         boolean removed = dataManager.removeInvitation(ownerUuid, guestUuid);
 
         if (removed) {
-            owner.sendMessage(Text.literal("Revoked ")
-                .append(Text.literal(guestName).formatted(Formatting.YELLOW))
-                .append("'s invitation"), false);
+            owner.sendMessage(Text.translatable("personalworlds.message.invite_revoked", guestName), false);
 
             // Check if guest is online and eject if in owner's dimension
             ServerPlayerEntity guest = server.getPlayerManager().getPlayer(guestUuid);
@@ -126,9 +117,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} revoked {}'s invitation",
                 owner.getName().getString(), guestName);
         } else {
-            owner.sendMessage(Text.literal("")
-                .append(Text.literal(guestName).formatted(Formatting.YELLOW))
-                .append(" is not invited to your dimension"), false);
+            owner.sendMessage(Text.translatable("personalworlds.message.not_invited", guestName), false);
         }
 
         return removed;
@@ -161,7 +150,7 @@ public class InvitationManager {
         // Play warning sound before ejection
         VisualEffects.playInvitationRevokedEffect(guest);
 
-        guest.sendMessage(Text.literal("Your invitation was revoked. Returning to overworld...")
+        guest.sendMessage(Text.translatable("personalworlds.message.ejected")
             .formatted(Formatting.GOLD), false);
 
         // Try to return to stored position, fallback to overworld spawn
@@ -216,54 +205,54 @@ public class InvitationManager {
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         UUID playerUuid = player.getUuid();
 
-        player.sendMessage(Text.literal("=== Invitations ===").formatted(Formatting.GOLD), false);
+        player.sendMessage(Text.translatable("personalworlds.invitations.header").formatted(Formatting.GOLD), false);
 
         // Sent invitations (players who can visit you)
         Set<UUID> sent = dataManager.getSentInvitations(playerUuid);
         player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.literal("Sent (players who can visit you):").formatted(Formatting.GREEN), false);
+        player.sendMessage(Text.translatable("personalworlds.invitations.sent.header").formatted(Formatting.GREEN), false);
 
         if (sent.isEmpty()) {
-            player.sendMessage(Text.literal("  (none)").formatted(Formatting.GRAY), false);
+            player.sendMessage(Text.translatable("personalworlds.invitations.sent.none").formatted(Formatting.GRAY), false);
         } else {
             for (UUID guestUuid : sent) {
                 String guestName = getPlayerName(server, guestUuid);
 
                 // Create clickable [Revoke] button
-                MutableText revokeButton = Text.literal("[Revoke]")
+                MutableText revokeButton = Text.translatable("personalworlds.invitations.sent.revoke_button")
                     .formatted(Formatting.RED)
                     .styled(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw uninvite " + guestName))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Text.literal("Click to revoke invitation")))
+                            Text.translatable("personalworlds.invitations.sent.revoke_tooltip")))
                     );
 
-                player.sendMessage(Text.literal("  - ")
-                    .append(Text.literal(guestName).formatted(Formatting.YELLOW))
-                    .append(" ")
-                    .append(revokeButton), false);
+                player.sendMessage(Text.translatable("personalworlds.invitations.sent.entry",
+                    Text.literal(guestName).formatted(Formatting.YELLOW)
+                        .append(" ")
+                        .append(revokeButton)), false);
             }
         }
 
         // Received invitations (dimensions you can visit)
         List<InvitationData> received = dataManager.getReceivedInvitations(playerUuid);
         player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.literal("Received (dimensions you can visit):").formatted(Formatting.AQUA), false);
+        player.sendMessage(Text.translatable("personalworlds.invitations.received.header").formatted(Formatting.AQUA), false);
 
         if (received.isEmpty()) {
-            player.sendMessage(Text.literal("  (none)").formatted(Formatting.GRAY), false);
+            player.sendMessage(Text.translatable("personalworlds.invitations.received.none").formatted(Formatting.GRAY), false);
         } else {
             for (InvitationData inv : received) {
                 // Create clickable world name to teleport there
-                MutableText worldLink = Text.literal(inv.ownerName() + "'s World")
+                MutableText worldLink = Text.translatable("personalworlds.invitations.received.world_name", inv.ownerName())
                     .formatted(Formatting.YELLOW)
                     .styled(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw go " + inv.ownerName()))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Text.literal("Click to visit " + inv.ownerName() + "'s dimension")))
+                            Text.translatable("personalworlds.invitations.received.visit_tooltip", inv.ownerName())))
                     );
 
-                player.sendMessage(Text.literal("  - ").append(worldLink), false);
+                player.sendMessage(Text.translatable("personalworlds.invitations.received.entry", worldLink), false);
             }
         }
     }

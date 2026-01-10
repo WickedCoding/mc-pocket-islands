@@ -73,16 +73,32 @@ public class ModConfig {
     @Deprecated
     public String activationItem = null;
 
+    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
+    @Deprecated
+    public String messageInviteSent = null;
+
+    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
+    @Deprecated
+    public String messageInviteReceived = null;
+
+    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
+    @Deprecated
+    public String messageRevoked = null;
+
+    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
+    @Deprecated
+    public String messageEjected = null;
+
+    /** @deprecated Removed - defaultWorldType is hardcoded to VOID. This field is used only for migration warnings. */
+    @Deprecated
+    public String defaultWorldType = null;
+
+    /** @deprecated Removed - not implemented. This field is used only for migration warnings. */
+    @Deprecated
+    public Boolean allowPlayerWorldTypeChoice = null;
+
     /** Whether the activation item is consumed on use. Default: false */
     public boolean consumeActivationItem = false;
-
-    // ==================== World Generation ====================
-
-    /** Default world generation type for new dimensions. Options: VOID, OVERWORLD, FLAT */
-    public String defaultWorldType = "VOID";
-
-    /** Allow players to choose their world type (not yet implemented). Default: false */
-    public boolean allowPlayerWorldTypeChoice = false;
 
     // ==================== Invitations ====================
 
@@ -110,13 +126,6 @@ public class ModConfig {
 
     /** Enable invitation notification sounds. Default: true */
     public boolean enableInvitationNotifications = true;
-
-    // ==================== Messages (Customizable) ====================
-
-    public String messageInviteSent = "Invited %player% to your dimension";
-    public String messageInviteReceived = "%player% invited you to their dimension";
-    public String messageRevoked = "Revoked %player%'s invitation";
-    public String messageEjected = "Your invitation was revoked. Returning to overworld.";
 
     // ==================== Static Access ====================
 
@@ -174,6 +183,20 @@ public class ModConfig {
                     PersonalWorldsMod.LOGGER.info("No portal types defined, adding default");
                     INSTANCE.portalTypes.add(new PortalConfig());
                     save();
+                }
+
+                // Warn about deprecated message fields
+                if (INSTANCE.messageInviteSent != null || INSTANCE.messageInviteReceived != null ||
+                    INSTANCE.messageRevoked != null || INSTANCE.messageEjected != null) {
+                    PersonalWorldsMod.LOGGER.warn("Custom messages in config are deprecated and ignored!");
+                    PersonalWorldsMod.LOGGER.warn("Use language files instead: src/main/resources/assets/personalworlds/lang/en_us.json");
+                    PersonalWorldsMod.LOGGER.warn("See README for translation guide");
+                }
+
+                // Warn about deprecated world type fields
+                if (INSTANCE.defaultWorldType != null || INSTANCE.allowPlayerWorldTypeChoice != null) {
+                    PersonalWorldsMod.LOGGER.warn("World type configuration is deprecated and ignored!");
+                    PersonalWorldsMod.LOGGER.warn("World type is hardcoded to VOID (architectural requirement)");
                 }
 
                 PersonalWorldsMod.LOGGER.info("Configuration loaded from {}", CONFIG_PATH);
@@ -282,14 +305,6 @@ public class ModConfig {
                         i, j, portalTypes.get(i).frameBlock);
                 }
             }
-        }
-
-        // Validate world type
-        if (!defaultWorldType.equals("VOID") &&
-            !defaultWorldType.equals("OVERWORLD") &&
-            !defaultWorldType.equals("FLAT")) {
-            PersonalWorldsMod.LOGGER.warn("Invalid defaultWorldType '{}', using VOID", defaultWorldType);
-            defaultWorldType = "VOID";
         }
 
         // Validate invitation limit

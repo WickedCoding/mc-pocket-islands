@@ -180,7 +180,7 @@ public class ModCommands {
                             .executes(ctx -> {
                                 PerformanceMonitor.enable();
                                 ctx.getSource().sendFeedback(() ->
-                                    Text.literal("Performance monitoring enabled")
+                                    Text.translatable("personalworlds.command.perf.enabled")
                                         .formatted(Formatting.GREEN), true);
                                 return 1;
                             }))
@@ -188,7 +188,7 @@ public class ModCommands {
                             .executes(ctx -> {
                                 PerformanceMonitor.disable();
                                 ctx.getSource().sendFeedback(() ->
-                                    Text.literal("Performance monitoring disabled")
+                                    Text.translatable("personalworlds.command.perf.disabled")
                                         .formatted(Formatting.YELLOW), true);
                                 return 1;
                             }))
@@ -205,7 +205,7 @@ public class ModCommands {
                             .executes(ctx -> {
                                 PerformanceMonitor.resetCounters();
                                 ctx.getSource().sendFeedback(() ->
-                                    Text.literal("Performance counters reset")
+                                    Text.translatable("personalworlds.command.perf.reset")
                                         .formatted(Formatting.YELLOW), true);
                                 return 1;
                             }))
@@ -218,7 +218,7 @@ public class ModCommands {
 
     private static int createDimension(ServerCommandSource source, String typeStr) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -243,20 +243,20 @@ public class ModCommands {
             );
             FabricDimensions.teleport(player, dimension, target);
 
-            source.sendFeedback(() -> Text.literal(
-                "Created dimension with " + type.name() + " generator. Welcome to your world!"
+            source.sendFeedback(() -> Text.translatable(
+                "personalworlds.command.info.dimension_created", type.name()
             ), true);
 
             return 1;
         } catch (Exception e) {
-            source.sendError(Text.literal("Failed to create dimension: " + e.getMessage()));
+            source.sendError(Text.translatable("personalworlds.command.error.create_failed", e.getMessage()));
             return 0;
         }
     }
 
     private static int enterDimension(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -264,15 +264,15 @@ public class ModCommands {
         DimensionRegistry registry = DimensionRegistry.get(source.getServer());
 
         if (!registry.hasDimension(playerUuid)) {
-            source.sendError(Text.literal(
-                "You don't have a pocket island. Use /pi create first."
+            source.sendError(Text.translatable(
+                "personalworlds.command.error.no_dimension"
             ));
             return 0;
         }
 
         PlayerDimensionData data = registry.getDimensionData(playerUuid).orElse(null);
         if (data == null) {
-            source.sendError(Text.literal("Failed to load dimension data"));
+            source.sendError(Text.translatable("personalworlds.command.error.load_failed"));
             return 0;
         }
 
@@ -297,17 +297,17 @@ public class ModCommands {
             );
             FabricDimensions.teleport(player, dimension, target);
 
-            source.sendFeedback(() -> Text.literal("Entered your pocket island"), true);
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.enter.success"), true);
             return 1;
         } catch (Exception e) {
-            source.sendError(Text.literal("Failed to enter dimension: " + e.getMessage()));
+            source.sendError(Text.translatable("personalworlds.command.error.enter_failed", e.getMessage()));
             return 0;
         }
     }
 
     private static int leaveDimension(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -321,7 +321,7 @@ public class ModCommands {
 
     private static int invitePlayer(ServerCommandSource source, ServerPlayerEntity guest) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -331,7 +331,7 @@ public class ModCommands {
 
     private static int uninvitePlayer(ServerCommandSource source, String guestName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -358,7 +358,7 @@ public class ModCommands {
         }
 
         if (guestUuid == null) {
-            source.sendError(Text.literal("Player not found: " + guestName));
+            source.sendError(Text.translatable("personalworlds.command.error.player_not_found", guestName));
             return 0;
         }
 
@@ -368,7 +368,7 @@ public class ModCommands {
 
     private static int showInvitations(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -378,7 +378,7 @@ public class ModCommands {
 
     private static int goToPlayer(ServerCommandSource source, String targetName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -401,13 +401,12 @@ public class ModCommands {
         }
 
         if (targetUuid == null) {
-            source.sendError(Text.literal("Player not found: " + targetName));
+            source.sendError(Text.translatable("personalworlds.command.error.player_not_found", targetName));
             return 0;
         }
 
         if (!InvitationManager.canVisit(source.getServer(), player.getUuid(), targetUuid)) {
-            source.sendError(Text.literal("You have not been invited by ")
-                .append(Text.literal(resolvedName).formatted(Formatting.YELLOW)));
+            source.sendError(Text.translatable("personalworlds.command.error.not_invited", resolvedName));
             return 0;
         }
 
@@ -425,7 +424,7 @@ public class ModCommands {
         Map<UUID, PlayerDimensionData> dimensions = registry.getAllDimensions();
 
         if (dimensions.isEmpty()) {
-            source.sendFeedback(() -> Text.literal("No player dimensions registered")
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.list.empty")
                 .formatted(Formatting.GRAY), false);
             return 1;
         }
@@ -435,12 +434,8 @@ public class ModCommands {
             .filter(d -> DimensionManager.isDimensionLoaded(d.ownerUuid()))
             .count();
 
-        MutableText header = Text.literal("=== Player Dimensions (")
-            .formatted(Formatting.GOLD)
-            .append(Text.literal(String.valueOf(total)).formatted(Formatting.WHITE))
-            .append(Text.literal(" total, ").formatted(Formatting.GOLD))
-            .append(Text.literal(String.valueOf(loadedCount)).formatted(Formatting.GREEN))
-            .append(Text.literal(" loaded) ===").formatted(Formatting.GOLD));
+        MutableText header = Text.translatable("personalworlds.command.list.header")
+            .formatted(Formatting.GOLD);
 
         source.sendFeedback(() -> header, false);
 
@@ -460,7 +455,7 @@ public class ModCommands {
                     .formatted(Formatting.DARK_GRAY));
 
             if (loaded) {
-                line.append(Text.literal("[LOADED")
+                line.append(Text.translatable("personalworlds.command.list.loaded")
                     .formatted(Formatting.GREEN));
                 if (playerCount > 0) {
                     line.append(Text.literal(", " + playerCount + " player" + (playerCount > 1 ? "s" : ""))
@@ -468,7 +463,7 @@ public class ModCommands {
                 }
                 line.append(Text.literal("]").formatted(Formatting.GREEN));
             } else {
-                line.append(Text.literal("[unloaded]").formatted(Formatting.GRAY));
+                line.append(Text.translatable("personalworlds.command.list.unloaded").formatted(Formatting.GRAY));
             }
 
             source.sendFeedback(() -> line, false);
@@ -494,7 +489,7 @@ public class ModCommands {
         }
 
         if (data == null) {
-            source.sendError(Text.literal("No dimension found for player: " + playerName));
+            source.sendError(Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName));
             return 0;
         }
 
@@ -511,53 +506,39 @@ public class ModCommands {
         int inviteCount = sentInvites.size();
 
         // Build info display
-        MutableText header = Text.literal("=== " + dimData.ownerName() + "'s Dimension ===")
-            .formatted(Formatting.GOLD);
-        source.sendFeedback(() -> header, false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.header",
+            dimData.ownerName()).formatted(Formatting.GOLD), false);
 
         // Owner info
-        source.sendFeedback(() -> Text.literal("Owner: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal(dimData.ownerName()).formatted(Formatting.WHITE))
-            .append(Text.literal(" (" + dimData.ownerUuid().toString().substring(0, 8) + "...)")
-                .formatted(Formatting.DARK_GRAY)), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.owner",
+            dimData.ownerName()), false);
 
         // Created date
         String createdStr = DATE_FORMAT.format(new Date(dimData.createdAt()));
-        source.sendFeedback(() -> Text.literal("Created: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal(createdStr).formatted(Formatting.WHITE)), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.created",
+            createdStr), false);
 
         // World type
-        source.sendFeedback(() -> Text.literal("World type: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal(dimData.generatorType().name()).formatted(Formatting.AQUA)), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.world_type",
+            dimData.generatorType().name()), false);
 
         // Status
-        MutableText statusLine = Text.literal("Status: ").formatted(Formatting.GRAY);
         if (loaded) {
-            statusLine.append(Text.literal("LOADED").formatted(Formatting.GREEN));
-            if (playerCount > 0) {
-                statusLine.append(Text.literal(" (" + playerCount + " player" + (playerCount > 1 ? "s" : "") + " inside)")
-                    .formatted(Formatting.YELLOW));
-            }
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.status_loaded",
+                playerCount), false);
         } else {
-            statusLine.append(Text.literal("Unloaded").formatted(Formatting.GRAY));
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.status_unloaded"), false);
         }
-        source.sendFeedback(() -> statusLine, false);
 
         // Invitations
-        source.sendFeedback(() -> Text.literal("Invitations sent: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal(String.valueOf(inviteCount)).formatted(Formatting.WHITE)), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.invitations",
+            inviteCount), false);
 
         // Spawn point
-        source.sendFeedback(() -> Text.literal("Spawn point: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal(String.format("(%d, %d, %d)",
-                dimData.spawnPoint().getX(),
-                dimData.spawnPoint().getY(),
-                dimData.spawnPoint().getZ())).formatted(Formatting.WHITE)), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.spawn",
+            dimData.spawnPoint().getX(),
+            dimData.spawnPoint().getY(),
+            dimData.spawnPoint().getZ()), false);
 
         return 1;
     }
@@ -578,47 +559,35 @@ public class ModCommands {
         }
 
         if (data == null) {
-            source.sendError(Text.literal("No dimension found for player: " + playerName));
+            source.sendError(Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName));
             return 0;
         }
+
+        // Capture as final for lambda usage
+        final PlayerDimensionData finalData = data;
 
         // Play warning sound if admin is a player
         if (source.getEntity() instanceof ServerPlayerEntity admin) {
             VisualEffects.playAdminWarningEffect(admin);
         }
 
-        boolean loaded = DimensionManager.isDimensionLoaded(data.ownerUuid());
-        ServerWorld world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
+        boolean loaded = DimensionManager.isDimensionLoaded(finalData.ownerUuid());
+        ServerWorld world = loaded ? DimensionManager.getLoadedDimension(finalData.ownerUuid()) : null;
         int playerCount = world != null ? world.getPlayers().size() : 0;
 
         // Warning message
-        MutableText warning = Text.literal("WARNING: ").formatted(Formatting.RED, Formatting.BOLD)
-            .append(Text.literal("This will permanently delete ")
-                .formatted(Formatting.RED))
-            .append(Text.literal(data.ownerName() + "'s").formatted(Formatting.YELLOW))
-            .append(Text.literal(" dimension!").formatted(Formatting.RED));
-
-        source.sendFeedback(() -> warning, false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.warning",
+            finalData.ownerName()), false);
 
         if (playerCount > 0) {
-            source.sendFeedback(() -> Text.literal("  " + playerCount + " player(s) will be ejected!")
-                .formatted(Formatting.GOLD), false);
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.players_ejected",
+                playerCount).formatted(Formatting.GOLD), false);
         }
 
         // Confirmation button
-        final String finalName = data.ownerName();
-        MutableText confirmLine = Text.literal("Run: ")
-            .formatted(Formatting.GRAY)
-            .append(Text.literal("[CONFIRM DELETE]")
-                .formatted(Formatting.RED, Formatting.BOLD)
-                .styled(style -> style
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                        "/pi admin delete " + finalName + " confirm"))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        Text.literal("Click to permanently delete this dimension")
-                            .formatted(Formatting.RED)))));
-
-        source.sendFeedback(() -> confirmLine, false);
+        final String finalName = finalData.ownerName();
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.confirm",
+            finalName), false);
 
         return 1;
     }
@@ -640,7 +609,7 @@ public class ModCommands {
         }
 
         if (data == null) {
-            source.sendError(Text.literal("No dimension found for player: " + playerName));
+            source.sendError(Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName));
             return 0;
         }
 
@@ -664,7 +633,7 @@ public class ModCommands {
                         player.getPitch()
                     );
                     FabricDimensions.teleport(player, overworld, target);
-                    player.sendMessage(Text.literal("You have been ejected - dimension deleted by admin")
+                    player.sendMessage(Text.translatable("personalworlds.message.admin_ejected")
                         .formatted(Formatting.RED), false);
                 }
             }
@@ -682,8 +651,8 @@ public class ModCommands {
         PortalOwnershipManager portalManager = PortalOwnershipManager.get(server);
         int portalsCleared = portalManager.clearPortalsOwnedBy(ownerUuid);
         if (portalsCleared > 0) {
-            source.sendFeedback(() -> Text.literal("Cleared " + portalsCleared + " portal ownership record(s)")
-                .formatted(Formatting.GRAY), false);
+            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.cleared_portals",
+                portalsCleared).formatted(Formatting.GRAY), false);
         }
 
         // Delete the dimension and its folder
@@ -697,8 +666,8 @@ public class ModCommands {
             VisualEffects.playAdminSuccessEffect(admin);
         }
 
-        source.sendFeedback(() -> Text.literal("Deleted " + ownerName + "'s dimension")
-            .formatted(Formatting.GREEN), true);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.deleted",
+            ownerName).formatted(Formatting.GREEN), true);
 
         return 1;
     }
@@ -708,7 +677,7 @@ public class ModCommands {
      */
     private static int adminTeleport(ServerCommandSource source, String playerName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity admin)) {
-            source.sendError(Text.literal("Command must be run by a player"));
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return 0;
         }
 
@@ -725,7 +694,7 @@ public class ModCommands {
         }
 
         if (data == null) {
-            source.sendError(Text.literal("No dimension found for player: " + playerName));
+            source.sendError(Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName));
             return 0;
         }
 
@@ -768,8 +737,8 @@ public class ModCommands {
 
         VisualEffects.playTeleportArrivalEffects(admin);
 
-        source.sendFeedback(() -> Text.literal("Teleported to " + dimData.ownerName() + "'s dimension")
-            .formatted(Formatting.GREEN), true);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.teleported",
+            dimData.ownerName()).formatted(Formatting.GREEN), true);
 
         return 1;
     }
@@ -785,12 +754,12 @@ public class ModCommands {
         ModBlocks.clearCache();
         ModItems.clearCache();
 
-        source.sendFeedback(() -> Text.literal("Configuration reloaded")
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.config_reloaded")
             .formatted(Formatting.GREEN), true);
 
         // Show config file path
-        source.sendFeedback(() -> Text.literal("Config file: " + ModConfig.getConfigPath())
-            .formatted(Formatting.GRAY), false);
+        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.config_path",
+            ModConfig.getConfigPath()).formatted(Formatting.GRAY), false);
 
         return 1;
     }

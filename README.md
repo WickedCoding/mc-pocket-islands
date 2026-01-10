@@ -70,15 +70,181 @@ Enter the portal in your pocket island to return to your original location.
 
 ## Configuration
 
-Config file: `config/personalworlds.json`
+**Config file:** `config/personalworlds.json`
+
+Pocket Islands offers extensive customization options, particularly for **island composition**. You can define multiple portal types, each creating islands with different materials and properties.
+
+### Example Configuration
 
 ```json
 {
-  "frameBlock": "minecraft:nether_bricks",
-  "activationItem": "minecraft:emerald",
-  "portalCooldownTicks": 60
+  "portalTypes": [
+    {
+      "frameBlock": "minecraft:nether_bricks",
+      "activationItem": "minecraft:emerald",
+      "islandLayers": [
+        "minecraft:grass_block",
+        "minecraft:dirt",
+        "minecraft:stone"
+      ]
+    }
+  ],
+  "consumeActivationItem": false,
+  "maxInvitationsPerPlayer": 20,
+  "unloadEmptyDimensionDelayTicks": 600,
+  "cleanupIntervalTicks": 600,
+  "enableTeleportParticles": true,
+  "enableTeleportSounds": true,
+  "enablePortalActivationEffects": true,
+  "enableInvitationNotifications": true
 }
 ```
+
+### Configuration Options
+
+#### Portal Types (Island Customization)
+
+Define multiple portal types to create islands with different materials:
+
+- **`frameBlock`** — Block used for portal frames (e.g., `"minecraft:nether_bricks"`)
+- **`activationItem`** — Item used to activate portals (e.g., `"minecraft:emerald"`)
+- **`islandLayers`** — **Customize your starter island platform** (up to 5 layers, top to bottom)
+  - Example: `["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]`
+  - Create themed islands: grass/dirt/stone, netherrack/soul_sand/basalt, end_stone, etc.
+  - Each portal type creates a unique island composition
+
+**Note:** World generation type is hardcoded to `VOID` (architectural requirement). This is not configurable.
+
+#### Invitations
+
+- **`maxInvitationsPerPlayer`** — Maximum invitations per player (`-1` for unlimited)
+
+#### Performance
+
+- **`unloadEmptyDimensionDelayTicks`** — Delay before unloading empty dimensions (default: `600` = 30 seconds)
+- **`cleanupIntervalTicks`** — How often to check for empty dimensions (default: `600` = 30 seconds)
+
+#### Visual Effects
+
+- **`enableTeleportParticles`** — Show particle effects during teleportation
+- **`enableTeleportSounds`** — Play sound effects during teleportation
+- **`enablePortalActivationEffects`** — Show effects when activating portals
+- **`enableInvitationNotifications`** — Play sounds for invitation notifications
+
+#### Advanced Options
+
+- **`consumeActivationItem`** — Whether the activation item is consumed on portal activation (default: `false`)
+
+### Creating Multiple Portal Types
+
+You can define multiple portal types to create different island themes. Players can choose which type of island they want by using different portal materials:
+
+```json
+{
+  "portalTypes": [
+    {
+      "frameBlock": "minecraft:nether_bricks",
+      "activationItem": "minecraft:emerald",
+      "islandLayers": ["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]
+    },
+    {
+      "frameBlock": "minecraft:blackstone",
+      "activationItem": "minecraft:nether_star",
+      "islandLayers": ["minecraft:netherrack", "minecraft:soul_sand", "minecraft:basalt"]
+    },
+    {
+      "frameBlock": "minecraft:end_stone_bricks",
+      "activationItem": "minecraft:ender_pearl",
+      "islandLayers": ["minecraft:end_stone"]
+    }
+  ]
+}
+```
+
+**Note:** The first portal type a player uses determines their island composition permanently.
+
+### Reloading Configuration
+
+Use `/pi admin reload` to reload the configuration without restarting the server. Changes to portal types only affect newly created islands.
+
+## Translations
+
+Pocket Islands uses Fabric's standard language file system for all user-facing messages. This allows server admins and modpack creators to customize messages or add translations for different languages.
+
+### Language File Location
+
+Language files are located at:
+```
+src/main/resources/assets/personalworlds/lang/
+```
+
+The mod includes an English (US) translation by default:
+```
+lang/en_us.json
+```
+
+### Adding Custom Languages
+
+To add support for another language (e.g., German, Dutch, Spanish):
+
+1. Create a new language file with the appropriate locale code:
+   - `de_de.json` for German
+   - `nl_nl.json` for Dutch
+   - `es_es.json` for Spanish
+   - See [Minecraft Wiki - Language](https://minecraft.wiki/w/Language) for all locale codes
+
+2. Copy the contents of `en_us.json` as a template
+
+3. Translate the message values (keep the keys unchanged):
+
+```json
+{
+  "personalworlds.message.invite_sent": "Eingeladen %s zu deiner Dimension",
+  "personalworlds.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
+  ...
+}
+```
+
+4. Place the file in `assets/personalworlds/lang/` in your resource pack or mod JAR
+
+### Customizing Messages
+
+To customize messages while keeping the English language:
+
+1. Create a resource pack or edit `assets/personalworlds/lang/en_us.json` directly
+2. Modify the translation values (right side of each line)
+3. Keep translation keys (left side) unchanged
+4. Use `%s` for string parameters, `%d` for numbers
+
+**Example:**
+```json
+{
+  "personalworlds.message.invite_sent": "🎉 You invited %s to your island!",
+  "personalworlds.message.invite_received": "✨ %s wants you to visit their island!"
+}
+```
+
+### Available Translation Keys
+
+All translation keys are documented in `lang/en_us.json`. Key categories include:
+
+- **`personalworlds.message.*`** — Player-facing messages (invitations, ejections, teleports)
+- **`personalworlds.command.*`** — Command feedback and info
+- **`personalworlds.command.error.*`** — Error messages
+- **`personalworlds.invitations.*`** — Invitation list UI text
+- **`personalworlds.command.perf.*`** — Performance monitoring messages
+- **`personalworlds.command.list.*`** — Admin list command output
+- **`personalworlds.command.info.*`** — Admin info command output
+- **`personalworlds.command.delete.*`** — Admin delete command warnings
+
+### Migration from Old Config
+
+**Important:** Pocket Islands no longer supports custom messages in `config/personalworlds.json`. If you have custom messages in your config file, they will be ignored with a warning in the server log.
+
+To migrate custom messages:
+1. Copy your custom message values from the config file
+2. Create a language file or resource pack as described above
+3. Remove the message fields from your config file
 
 ## World Reset Procedure
 

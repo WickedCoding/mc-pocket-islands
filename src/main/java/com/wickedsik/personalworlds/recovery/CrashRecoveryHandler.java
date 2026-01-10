@@ -85,7 +85,7 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} no longer has permission to {}'s dimension, evacuating",
                 player.getName().getString(), ownerUuid);
 
-            player.sendMessage(Text.literal("Your invitation was revoked while you were offline.")
+            player.sendMessage(Text.translatable("personalworlds.message.ejected_offline")
                 .formatted(Formatting.GOLD), false);
 
             evacuateToReturnPosition(player, server);
@@ -154,7 +154,7 @@ public class CrashRecoveryHandler {
         TeleportTarget target = new TeleportTarget(targetPos, Vec3d.ZERO, yaw, pitch);
         FabricDimensions.teleport(player, targetWorld, target);
 
-        player.sendMessage(Text.literal("Returned to the overworld."), true);
+        player.sendMessage(Text.translatable("personalworlds.message.returned_overworld"), true);
     }
 
     /**
@@ -167,7 +167,7 @@ public class CrashRecoveryHandler {
         TeleportTarget target = new TeleportTarget(spawnPos, Vec3d.ZERO, player.getYaw(), player.getPitch());
         FabricDimensions.teleport(player, overworld, target);
 
-        player.sendMessage(Text.literal("Emergency teleport: " + reason)
+        player.sendMessage(Text.translatable("personalworlds.message.emergency_teleport", reason)
             .formatted(Formatting.RED), false);
 
         // Clear any corrupt return data
