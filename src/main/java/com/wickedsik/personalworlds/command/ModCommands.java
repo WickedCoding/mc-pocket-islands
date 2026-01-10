@@ -38,23 +38,23 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * Command registration and handlers for PersonalWorlds.
+ * Command registration and handlers for Pocket Islands.
  *
  * Commands:
- * - /pw create [type]       - Create personal dimension (OP 2)
- * - /pw enter               - Enter your dimension (OP 2)
- * - /pw leave               - Leave to overworld (OP 2)
- * - /pw list                - List all dimensions (OP 2)
- * - /pw info                - Show dimension count (OP 2)
- * - /pw invite <player>     - Invite a player (no permission)
- * - /pw uninvite <player>   - Revoke invitation (no permission)
- * - /pw invites             - Show your invitations (no permission)
- * - /pw go <player>         - Visit player's dimension (no permission)
- * - /pw admin list          - Admin list all dimensions
- * - /pw admin info <player> - Admin view dimension details
- * - /pw admin delete <player> [confirm] - Admin delete dimension
- * - /pw admin tp <player>   - Admin teleport to dimension
- * - /pw admin reload        - Reload configuration
+ * - /pi create [type]       - Create pocket island (OP 2)
+ * - /pi enter               - Enter your island (OP 2)
+ * - /pi leave               - Leave to overworld (OP 2)
+ * - /pi list                - List all islands (OP 2)
+ * - /pi info                - Show island count (OP 2)
+ * - /pi invite <player>     - Invite a player (no permission)
+ * - /pi uninvite <player>   - Revoke invitation (no permission)
+ * - /pi invites             - Show your invitations (no permission)
+ * - /pi go <player>         - Visit player's island (no permission)
+ * - /pi admin list          - Admin list all islands
+ * - /pi admin info <player> - Admin view island details
+ * - /pi admin delete <player> [confirm] - Admin delete island
+ * - /pi admin tp <player>   - Admin teleport to island
+ * - /pi admin reload        - Reload configuration
  */
 public class ModCommands {
 
@@ -68,7 +68,7 @@ public class ModCommands {
 
     private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
-            CommandManager.literal("pw")
+            CommandManager.literal("pi")
                 // === Development/Testing Commands (OP level 2+) ===
                 .then(CommandManager.literal("create")
                     .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
@@ -265,7 +265,7 @@ public class ModCommands {
 
         if (!registry.hasDimension(playerUuid)) {
             source.sendError(Text.literal(
-                "You don't have a personal dimension. Use /pw create first."
+                "You don't have a pocket island. Use /pi create first."
             ));
             return 0;
         }
@@ -297,7 +297,7 @@ public class ModCommands {
             );
             FabricDimensions.teleport(player, dimension, target);
 
-            source.sendFeedback(() -> Text.literal("Entered your personal dimension"), true);
+            source.sendFeedback(() -> Text.literal("Entered your pocket island"), true);
             return 1;
         } catch (Exception e) {
             source.sendError(Text.literal("Failed to enter dimension: " + e.getMessage()));
@@ -613,7 +613,7 @@ public class ModCommands {
                 .formatted(Formatting.RED, Formatting.BOLD)
                 .styled(style -> style
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                        "/pw admin delete " + finalName + " confirm"))
+                        "/pi admin delete " + finalName + " confirm"))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         Text.literal("Click to permanently delete this dimension")
                             .formatted(Formatting.RED)))));

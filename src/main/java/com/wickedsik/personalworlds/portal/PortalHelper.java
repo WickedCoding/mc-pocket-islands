@@ -302,13 +302,13 @@ public class PortalHelper {
 
         // Send appropriate message
         if (isOwnDimension) {
-            player.sendMessage(Text.literal("Welcome to your personal world!"), true);
+            player.sendMessage(Text.literal("Welcome to your pocket island!"), true);
             PersonalWorldsMod.LOGGER.info("Player {} entered their personal dimension",
                 player.getName().getString());
         } else {
             player.sendMessage(Text.literal("Entering ")
                 .append(Text.literal(ownerName).formatted(Formatting.YELLOW))
-                .append("'s world"), true);
+                .append("'s island"), true);
             PersonalWorldsMod.LOGGER.info("Player {} entered {}'s personal dimension",
                 player.getName().getString(), ownerName);
         }

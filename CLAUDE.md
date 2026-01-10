@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PersonalWorlds** — A Fabric mod for Minecraft 1.20.4 that provides each player with their own isolated, persistent dimension. The primary use case is dimension survival through world resets: when the overworld/nether/end are deleted and regenerated, each player's personal world remains intact.
+**Pocket Islands** — A Fabric mod for Minecraft 1.20.4 that provides each player with their own isolated, persistent pocket dimension island. The primary use case is dimension survival through world resets: when the overworld/nether/end are deleted and regenerated, each player's pocket island remains intact.
 
 See `docs/per-player-dimensions-mod-plan.md` for the complete architectural specification.
 

@@ -1,13 +1,13 @@
-# PersonalWorlds
+# Pocket Islands
 
-A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent dimension.
+A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent pocket dimension island.
 
 ## Features
 
-- **Personal Dimensions**: Each player gets their own isolated world
-- **Persistence**: Dimensions survive main world resets
+- **Pocket Islands**: Each player gets their own isolated island dimension
+- **Persistence**: Islands survive main world resets
 - **Portal-Based Access**: Build a portal frame, activate with emerald
-- **Invitation System**: Invite friends to visit your dimension
+- **Invitation System**: Invite friends to visit your island
 - **Void Generation**: Clean slate void worlds with starter platforms
 
 ## Requirements
@@ -19,7 +19,7 @@ A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent di
 ## Installation
 
 1. Install Fabric Loader
-2. Download PersonalWorlds from releases
+2. Download Pocket Islands from releases
 3. Place in `mods/` folder
 4. Launch Minecraft
 
@@ -39,34 +39,34 @@ N N N N
 
 Right-click inside the frame with an Emerald to activate.
 
-### Entering Your Dimension
+### Entering Your Island
 
-Walk into the activated portal to enter your personal dimension. On first entry, a starter platform with grass blocks and a return portal frame will be created.
+Walk into the activated portal to enter your pocket island. On first entry, a starter platform with grass blocks and a return portal frame will be created.
 
 ### Returning
 
-Enter the portal in your personal dimension to return to your original location.
+Enter the portal in your pocket island to return to your original location.
 
 ### Commands
 
 **Player commands:**
-- `/pw invites` - View your invitations (sent and received)
-- `/pw invite <player>` - Invite a player to your dimension
-- `/pw uninvite <player>` - Revoke a player's invitation
-- `/pw go <player>` - Visit someone's dimension (requires invitation)
+- `/pi invites` - View your invitations (sent and received)
+- `/pi invite <player>` - Invite a player to your island
+- `/pi uninvite <player>` - Revoke a player's invitation
+- `/pi go <player>` - Visit someone's island (requires invitation)
 
 **Admin commands (op level 2+):**
-- `/pw admin list` - List all dimensions
-- `/pw admin info <player>` - View dimension details
-- `/pw admin tp <player>` - Teleport to a dimension
-- `/pw admin delete <player> [confirm]` - Delete a dimension (op 4)
-- `/pw admin reload` - Reload configuration
+- `/pi admin list` - List all islands
+- `/pi admin info <player>` - View island details
+- `/pi admin tp <player>` - Teleport to an island
+- `/pi admin delete <player> [confirm]` - Delete an island (op 4)
+- `/pi admin reload` - Reload configuration
 
 **Debug commands (op level 4):**
-- `/pw debug perf enable` - Enable performance monitoring
-- `/pw debug perf disable` - Disable performance monitoring
-- `/pw debug perf status` - Show performance status
-- `/pw debug perf reset` - Reset performance counters
+- `/pi debug perf enable` - Enable performance monitoring
+- `/pi debug perf disable` - Disable performance monitoring
+- `/pi debug perf status` - Show performance status
+- `/pi debug perf reset` - Reset performance counters
 
 ## Configuration
 
@@ -82,20 +82,20 @@ Config file: `config/personalworlds.json`
 
 ## World Reset Procedure
 
-To reset the main world while preserving player dimensions:
+To reset the main world while preserving pocket islands:
 
 1. Stop the server
 2. Delete: `world/region/`, `world/DIM-1/`, `world/DIM1/`
 3. Keep: `world/dimensions/`, `world/data/`
 4. Start server
 
-Player dimensions are stored in `world/dimensions/personalworlds/` and their registry data is in `world/data/`.
+Pocket islands are stored in `world/dimensions/personalworlds/` and their registry data is in `world/data/`.
 
 ## Technical Details
 
 ### Dimension Storage
 
-Each player dimension is stored at:
+Each pocket island is stored at:
 ```
 world/dimensions/personalworlds/pw_<uuid>/
 ```
@@ -114,7 +114,7 @@ Each dimension folder contains a `.metadata` file that enables recovery if the m
 
 ### Edge Cases Handled
 
-- **Player disconnects in personal dimension**: Position preserved, permission checked on reconnect
+- **Player disconnects in pocket island**: Position preserved, permission checked on reconnect
 - **Server crashes**: Recovery handler checks permissions and evacuates if needed
 - **Two players enter portal simultaneously**: Concurrent portal guard prevents race conditions
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
@@ -122,9 +122,9 @@ Each dimension folder contains a `.metadata` file that enables recovery if the m
 
 ## Performance
 
-The mod is designed to handle 15+ concurrent dimensions efficiently:
+The mod is designed to handle 15+ concurrent islands efficiently:
 
-- Dimensions unload automatically when empty (after 30 second delay)
+- Islands unload automatically when empty (after 30 second delay)
 - Memory-efficient chunk generation for void worlds
 - Performance monitoring available via debug commands
 
