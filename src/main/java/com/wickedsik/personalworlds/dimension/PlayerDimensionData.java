@@ -12,7 +12,8 @@ public record PlayerDimensionData(
     Identifier dimensionId,
     long createdAt,
     BlockPos spawnPoint,
-    WorldGenType generatorType
+    WorldGenType generatorType,
+    int portalTypeIndex  // Index into ModConfig.portalTypes array
 ) {
 
     public NbtCompound toNbt() {
@@ -25,10 +26,16 @@ public record PlayerDimensionData(
         nbt.putInt("SpawnY", spawnPoint.getY());
         nbt.putInt("SpawnZ", spawnPoint.getZ());
         nbt.putString("GeneratorType", generatorType.name());
+        nbt.putInt("PortalTypeIndex", portalTypeIndex);
         return nbt;
     }
 
     public static PlayerDimensionData fromNbt(NbtCompound nbt) {
+        // Backward compatibility: default to portal type 0 if not present
+        int portalTypeIndex = nbt.contains("PortalTypeIndex")
+            ? nbt.getInt("PortalTypeIndex")
+            : 0;
+
         return new PlayerDimensionData(
             nbt.getUuid("OwnerUuid"),
             nbt.getString("OwnerName"),
@@ -39,7 +46,8 @@ public record PlayerDimensionData(
                 nbt.getInt("SpawnY"),
                 nbt.getInt("SpawnZ")
             ),
-            WorldGenType.fromString(nbt.getString("GeneratorType"))
+            WorldGenType.fromString(nbt.getString("GeneratorType")),
+            portalTypeIndex
         );
     }
 }

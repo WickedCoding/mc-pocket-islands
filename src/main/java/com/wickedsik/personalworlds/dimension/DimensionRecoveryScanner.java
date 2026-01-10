@@ -267,7 +267,8 @@ public class DimensionRecoveryScanner {
             dimensionId,
             createdAt,
             spawnPoint,
-            genType
+            genType,
+            0  // Default portal type for recovered dimensions
         );
     }
 

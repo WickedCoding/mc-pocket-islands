@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.event;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
@@ -113,18 +114,25 @@ public class ModEventHandlers {
             return ActionResult.PASS;
         }
 
-        // Check if player is holding the activation item (emerald)
+        // Get the item being used - let portal detection handle validation
         ItemStack heldItem = player.getStackInHand(hand);
-        if (heldItem.getItem() != ModItems.getActivationItem()) {
-            return ActionResult.PASS;
-        }
 
         BlockPos clickedPos = hitResult.getBlockPos();
         BlockState clickedState = world.getBlockState(clickedPos);
 
         // Determine the target position for portal activation
         BlockPos targetPos;
-        if (clickedState.getBlock() == ModBlocks.getFrameBlock()) {
+
+        // Check if clicked on any portal frame type
+        boolean clickedOnFrame = false;
+        for (int i = 0; i < ModConfig.get().portalTypes.size(); i++) {
+            if (clickedState.getBlock() == ModBlocks.getFrameBlock(i)) {
+                clickedOnFrame = true;
+                break;
+            }
+        }
+
+        if (clickedOnFrame) {
             // Player clicked on frame block - check the block on the clicked face
             targetPos = clickedPos.offset(hitResult.getSide());
         } else {
@@ -137,9 +145,9 @@ public class ModEventHandlers {
             return ActionResult.PASS;
         }
 
-        // Attempt to activate the portal
-        if (PortalHelper.tryActivatePortal(world, targetPos, serverPlayer)) {
-            // Success - don't consume the emerald (swing arm for feedback)
+        // Attempt to activate the portal with activation item
+        if (PortalHelper.tryActivatePortal(world, targetPos, serverPlayer, heldItem.getItem())) {
+            // Success - don't consume the activation item (swing arm for feedback)
             return ActionResult.SUCCESS;
         }
 

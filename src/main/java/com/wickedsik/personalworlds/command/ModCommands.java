@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
+import com.wickedsik.personalworlds.dimension.DimensionMetadataFile;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
@@ -13,6 +14,7 @@ import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.portal.PortalOwnershipManager;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
+import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.util.PerformanceMonitor;
 import com.wickedsik.personalworlds.util.PermissionHelper;
 import com.wickedsik.personalworlds.util.VisualEffects;
@@ -229,7 +231,8 @@ public class ModCommands {
                 source.getServer(),
                 playerUuid,
                 playerName,
-                type
+                type,
+                0  // Default portal type for /pw create command
             );
 
             TeleportTarget target = new TeleportTarget(
@@ -278,7 +281,8 @@ public class ModCommands {
                 source.getServer(),
                 playerUuid,
                 player.getName().getString(),
-                data.generatorType()
+                data.generatorType(),
+                data.portalTypeIndex()  // Use portal type from dimension data
             );
 
             TeleportTarget target = new TeleportTarget(
@@ -307,18 +311,9 @@ public class ModCommands {
             return 0;
         }
 
-        ServerWorld overworld = source.getServer().getOverworld();
-        Vec3d spawnPos = Vec3d.ofCenter(overworld.getSpawnPos());
+        // Use PortalHelper to properly handle return position
+        PortalHelper.teleportToReturnPosition(player, source.getServer());
 
-        TeleportTarget target = new TeleportTarget(
-            spawnPos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
-        );
-        FabricDimensions.teleport(player, overworld, target);
-
-        source.sendFeedback(() -> Text.literal("Returned to overworld"), true);
         return 1;
     }
 
@@ -675,10 +670,8 @@ public class ModCommands {
             }
         }
 
-        // Unload dimension
-        DimensionManager.unloadIfEmpty(ownerUuid);
-
-        // Remove from registry
+        // Remove from registry FIRST (before deletion)
+        // This prevents the dimension from being restored on next startup
         registry.removeDimension(ownerUuid);
 
         // Clean up invitations (both sent and received)
@@ -692,6 +685,12 @@ public class ModCommands {
             source.sendFeedback(() -> Text.literal("Cleared " + portalsCleared + " portal ownership record(s)")
                 .formatted(Formatting.GRAY), false);
         }
+
+        // Delete the dimension and its folder
+        // For loaded dimensions: Fantasy handles safe unload + folder deletion
+        // For unloaded dimensions: Direct folder deletion (no race condition)
+        // Note: This also deletes the metadata file inside the dimension folder
+        DimensionManager.deleteDimension(server, ownerUuid);
 
         // Success feedback
         if (source.getEntity() instanceof ServerPlayerEntity admin) {
@@ -738,7 +737,8 @@ public class ModCommands {
             server,
             dimData.ownerUuid(),
             dimData.ownerName(),
-            dimData.generatorType()
+            dimData.generatorType(),
+            dimData.portalTypeIndex()  // Use portal type from dimension data
         );
 
         // Store return position

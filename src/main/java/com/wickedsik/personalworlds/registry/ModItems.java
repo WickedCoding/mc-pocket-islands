@@ -14,10 +14,10 @@ import net.minecraft.util.Identifier;
 public class ModItems {
 
     /**
-     * Cached activation item reference.
+     * Cached activation items for all portal types.
      * Lazily loaded from config, cleared on config reload.
      */
-    private static Item cachedActivationItem = null;
+    private static Item[] cachedActivationItems = null;
 
     /**
      * Register all mod items.
@@ -34,34 +34,51 @@ public class ModItems {
     }
 
     /**
-     * Get the item used to activate portal frames.
+     * Get the item used to activate portal frames for a specific portal type.
      * Reads from config on first access, with fallback to emerald.
      *
-     * @return The activation item
+     * @param portalTypeIndex Index into ModConfig.portalTypes array
+     * @return The activation item for this portal type
      */
-    public static Item getActivationItem() {
-        if (cachedActivationItem == null) {
-            String itemId = ModConfig.get().activationItem;
-            Identifier id = new Identifier(itemId);
-            cachedActivationItem = Registries.ITEM.get(id);
+    public static Item getActivationItem(int portalTypeIndex) {
+        if (cachedActivationItems == null) {
+            var configs = ModConfig.get().portalTypes;
+            cachedActivationItems = new Item[configs.size()];
 
-            // Validate the item exists (get() returns AIR for unknown IDs)
-            if (cachedActivationItem == Items.AIR && !itemId.equals("minecraft:air")) {
-                PersonalWorldsMod.LOGGER.warn("Invalid activation item '{}', using emerald", itemId);
-                cachedActivationItem = Items.EMERALD;
+            for (int i = 0; i < configs.size(); i++) {
+                String itemId = configs.get(i).activationItem;
+                Identifier id = Identifier.tryParse(itemId);
+                Item item = id != null ? Registries.ITEM.get(id) : Items.AIR;
+
+                // Validate the item exists (get() returns AIR for unknown IDs)
+                if (item == Items.AIR && !itemId.equals("minecraft:air")) {
+                    PersonalWorldsMod.LOGGER.warn("Invalid activation item '{}' for portal type {}, using emerald",
+                        itemId, i);
+                    item = Items.EMERALD;
+                }
+
+                cachedActivationItems[i] = item;
+                PersonalWorldsMod.LOGGER.debug("Portal type {} activation item set to: {}",
+                    i, Registries.ITEM.getId(item));
             }
-
-            PersonalWorldsMod.LOGGER.debug("Activation item set to: {}", Registries.ITEM.getId(cachedActivationItem));
         }
-        return cachedActivationItem;
+
+        // Bounds check with clamping
+        if (portalTypeIndex < 0 || portalTypeIndex >= cachedActivationItems.length) {
+            PersonalWorldsMod.LOGGER.warn("Portal type index {} out of bounds (0-{}), using 0",
+                portalTypeIndex, cachedActivationItems.length - 1);
+            return cachedActivationItems[0];
+        }
+
+        return cachedActivationItems[portalTypeIndex];
     }
 
     /**
-     * Clear the cached activation item.
+     * Clear the cached activation items.
      * Called when configuration is reloaded.
      */
     public static void clearCache() {
-        cachedActivationItem = null;
+        cachedActivationItems = null;
         PersonalWorldsMod.LOGGER.debug("Item cache cleared");
     }
 }

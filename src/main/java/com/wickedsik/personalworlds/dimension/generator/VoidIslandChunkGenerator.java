@@ -18,6 +18,7 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -28,7 +29,14 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     public static final Codec<VoidIslandChunkGenerator> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource)
+            BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
+            BlockState.CODEC.listOf()
+                .xmap(
+                    list -> list.toArray(new BlockState[0]),
+                    Arrays::asList
+                )
+                .fieldOf("island_layers")
+                .forGetter(generator -> generator.islandLayers)
         ).apply(instance, VoidIslandChunkGenerator::new)
     );
 
@@ -39,16 +47,17 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     private static final int ISLAND_MIN_CHUNK = -4;
     private static final int ISLAND_MAX_CHUNK = 3;
 
-    // Island Y level (single layer of grass)
+    // Island Y level (top layer starts here)
     private static final int ISLAND_Y = 64;
 
-    // Block to use for the island surface
-    private static final BlockState GRASS_BLOCK = Blocks.GRASS_BLOCK.getDefaultState();
+    // Island layer materials (top-to-bottom: Y=64, 63, 62, 61, 60)
+    private final BlockState[] islandLayers;
 
     // ==================== CONSTRUCTOR ====================
 
-    public VoidIslandChunkGenerator(BiomeSource biomeSource) {
+    public VoidIslandChunkGenerator(BiomeSource biomeSource, BlockState[] islandLayers) {
         super(biomeSource);
+        this.islandLayers = islandLayers;
     }
 
     // ==================== CODEC METHOD ====================
@@ -92,18 +101,22 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     }
 
     /**
-     * Generate the grass platform section for this chunk.
-     * Each chunk gets a full 16x16 section of the island at Y=64.
+     * Generate the island platform section for this chunk.
+     * Generates layers top-to-bottom: Y=64 (first layer), Y=63 (second), etc.
+     * Each chunk gets a full 16x16 section of each layer.
      */
     private void generateIslandSection(Chunk chunk) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                BlockPos pos = new BlockPos(
-                    chunk.getPos().getStartX() + x,
-                    ISLAND_Y,
-                    chunk.getPos().getStartZ() + z
-                );
-                chunk.setBlockState(pos, GRASS_BLOCK, false);
+                // Generate layers top-to-bottom
+                for (int layerIdx = 0; layerIdx < islandLayers.length; layerIdx++) {
+                    BlockPos pos = new BlockPos(
+                        chunk.getPos().getStartX() + x,
+                        ISLAND_Y - layerIdx,  // Y=64, 63, 62, 61, 60
+                        chunk.getPos().getStartZ() + z
+                    );
+                    chunk.setBlockState(pos, islandLayers[layerIdx], false);
+                }
             }
         }
     }
@@ -142,7 +155,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     /**
      * Returns the height at the given position for heightmap calculations.
-     * For island chunks, return Y=65 (one above the grass).
+     * For island chunks, return Y=65 (one above the top layer).
      * For void chunks, return minimum Y.
      */
     @Override
@@ -157,6 +170,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
         int chunkZ = z >> 4;
 
         if (isIslandChunk(chunkX, chunkZ)) {
+            // Height is one above the top layer (Y=64 -> height Y=65)
             return ISLAND_Y + 1;
         }
         return world.getBottomY();
@@ -164,6 +178,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     /**
      * Returns a vertical sample of blocks at the given position.
+     * Includes all island layers for proper heightmap calculations.
      */
     @Override
     public VerticalBlockSample getColumnSample(
@@ -184,11 +199,14 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             states[i] = Blocks.AIR.getDefaultState();
         }
 
-        // Add grass block at Y=64 if in island area
+        // Add island layers top-to-bottom if in island area
         if (isIslandChunk(chunkX, chunkZ)) {
-            int grassIndex = ISLAND_Y - bottomY;
-            if (grassIndex >= 0 && grassIndex < height) {
-                states[grassIndex] = GRASS_BLOCK;
+            for (int layerIdx = 0; layerIdx < islandLayers.length; layerIdx++) {
+                int y = ISLAND_Y - layerIdx;  // Y=64, 63, 62, 61, 60
+                int stateIndex = y - bottomY;
+                if (stateIndex >= 0 && stateIndex < height) {
+                    states[stateIndex] = islandLayers[layerIdx];
+                }
             }
         }
 

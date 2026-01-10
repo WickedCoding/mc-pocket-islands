@@ -8,6 +8,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configuration manager for PersonalWorlds.
@@ -17,6 +19,38 @@ import java.nio.file.Path;
  */
 public class ModConfig {
 
+    /**
+     * Portal configuration defining frame material, activation item, and island composition.
+     */
+    public static class PortalConfig {
+        /** Block used for portal frames (e.g., "minecraft:nether_bricks") */
+        public String frameBlock;
+
+        /** Item used to activate portal frames (e.g., "minecraft:emerald") */
+        public String activationItem;
+
+        /** Island layer materials from top to bottom (max 5) */
+        public String[] islandLayers;
+
+        /** Default constructor for GSON */
+        public PortalConfig() {
+            this.frameBlock = "minecraft:nether_bricks";
+            this.activationItem = "minecraft:emerald";
+            this.islandLayers = new String[]{
+                "minecraft:grass_block",
+                "minecraft:dirt",
+                "minecraft:stone"
+            };
+        }
+
+        /** Full constructor for programmatic creation */
+        public PortalConfig(String frameBlock, String activationItem, String[] islandLayers) {
+            this.frameBlock = frameBlock;
+            this.activationItem = activationItem;
+            this.islandLayers = islandLayers;
+        }
+    }
+
     private static ModConfig INSTANCE;
     private static final Path CONFIG_PATH = FabricLoader.getInstance()
             .getConfigDir().resolve("personalworlds.json");
@@ -24,11 +58,20 @@ public class ModConfig {
 
     // ==================== Portal Configuration ====================
 
-    /** Block used for portal frames. Default: minecraft:nether_bricks */
-    public String frameBlock = "minecraft:nether_bricks";
+    /**
+     * Array of portal type configurations.
+     * Each portal type defines frame material, activation item, and island layers.
+     */
+    public List<PortalConfig> portalTypes = new ArrayList<>();
 
-    /** Item used to activate portal frames. Default: minecraft:emerald */
-    public String activationItem = "minecraft:emerald";
+    // DEPRECATED: Kept for backward compatibility migration only
+    /** @deprecated Use portalTypes instead. This field is used only for migration from old configs. */
+    @Deprecated
+    public String frameBlock = null;
+
+    /** @deprecated Use portalTypes instead. This field is used only for migration from old configs. */
+    @Deprecated
+    public String activationItem = null;
 
     /** Whether the activation item is consumed on use. Default: false */
     public boolean consumeActivationItem = false;
@@ -104,6 +147,35 @@ public class ModConfig {
                     save();
                 }
 
+                // Migrate old config format to portalTypes array
+                if (INSTANCE.portalTypes.isEmpty() &&
+                    INSTANCE.frameBlock != null &&
+                    INSTANCE.activationItem != null) {
+
+                    PersonalWorldsMod.LOGGER.info("Migrating old config format to portalTypes array");
+
+                    PortalConfig migratedPortal = new PortalConfig(
+                        INSTANCE.frameBlock,
+                        INSTANCE.activationItem,
+                        new String[]{"minecraft:grass_block", "minecraft:dirt", "minecraft:stone"}
+                    );
+                    INSTANCE.portalTypes.add(migratedPortal);
+
+                    // Clear old fields
+                    INSTANCE.frameBlock = null;
+                    INSTANCE.activationItem = null;
+
+                    // Save migrated config
+                    save();
+                }
+
+                // Ensure at least one portal type exists
+                if (INSTANCE.portalTypes.isEmpty()) {
+                    PersonalWorldsMod.LOGGER.info("No portal types defined, adding default");
+                    INSTANCE.portalTypes.add(new PortalConfig());
+                    save();
+                }
+
                 PersonalWorldsMod.LOGGER.info("Configuration loaded from {}", CONFIG_PATH);
             } catch (IOException e) {
                 PersonalWorldsMod.LOGGER.error("Failed to load configuration, using defaults", e);
@@ -115,6 +187,8 @@ public class ModConfig {
         } else {
             PersonalWorldsMod.LOGGER.info("No configuration file found, creating default at {}", CONFIG_PATH);
             INSTANCE = new ModConfig();
+            // Add default portal type
+            INSTANCE.portalTypes.add(new PortalConfig());
             save();
         }
 
@@ -152,6 +226,64 @@ public class ModConfig {
      * Validate configuration values and apply corrections.
      */
     private void validate() {
+        // Validate portal types
+        if (portalTypes.isEmpty()) {
+            PersonalWorldsMod.LOGGER.warn("No portal types defined, adding default");
+            portalTypes.add(new PortalConfig());
+        }
+
+        for (int i = 0; i < portalTypes.size(); i++) {
+            PortalConfig portal = portalTypes.get(i);
+
+            // Validate frame block ID format
+            if (portal.frameBlock == null || !portal.frameBlock.contains(":")) {
+                PersonalWorldsMod.LOGGER.warn("Portal type {} has invalid frameBlock '{}', using minecraft:nether_bricks",
+                    i, portal.frameBlock);
+                portal.frameBlock = "minecraft:nether_bricks";
+            }
+
+            // Validate activation item ID format
+            if (portal.activationItem == null || !portal.activationItem.contains(":")) {
+                PersonalWorldsMod.LOGGER.warn("Portal type {} has invalid activationItem '{}', using minecraft:emerald",
+                    i, portal.activationItem);
+                portal.activationItem = "minecraft:emerald";
+            }
+
+            // Validate island layers
+            if (portal.islandLayers == null || portal.islandLayers.length == 0) {
+                PersonalWorldsMod.LOGGER.warn("Portal type {} has no island layers, using default",  i);
+                portal.islandLayers = new String[]{"minecraft:grass_block", "minecraft:dirt", "minecraft:stone"};
+            }
+
+            // Limit island layers to max 5
+            if (portal.islandLayers.length > 5) {
+                PersonalWorldsMod.LOGGER.warn("Portal type {} has {} island layers (max 5), truncating",
+                    i, portal.islandLayers.length);
+                String[] truncated = new String[5];
+                System.arraycopy(portal.islandLayers, 0, truncated, 0, 5);
+                portal.islandLayers = truncated;
+            }
+
+            // Validate each island layer ID format
+            for (int j = 0; j < portal.islandLayers.length; j++) {
+                if (portal.islandLayers[j] == null || !portal.islandLayers[j].contains(":")) {
+                    PersonalWorldsMod.LOGGER.warn("Portal type {} layer {} has invalid block ID '{}', using minecraft:grass_block",
+                        i, j, portal.islandLayers[j]);
+                    portal.islandLayers[j] = "minecraft:grass_block";
+                }
+            }
+        }
+
+        // Check for duplicate frame blocks (warn only, first-match wins)
+        for (int i = 0; i < portalTypes.size(); i++) {
+            for (int j = i + 1; j < portalTypes.size(); j++) {
+                if (portalTypes.get(i).frameBlock.equals(portalTypes.get(j).frameBlock)) {
+                    PersonalWorldsMod.LOGGER.warn("Portal types {} and {} both use frame block '{}' - first match will be used",
+                        i, j, portalTypes.get(i).frameBlock);
+                }
+            }
+        }
+
         // Validate world type
         if (!defaultWorldType.equals("VOID") &&
             !defaultWorldType.equals("OVERWORLD") &&
@@ -175,17 +307,6 @@ public class ModConfig {
         if (cleanupIntervalTicks < 20) {
             PersonalWorldsMod.LOGGER.warn("cleanupIntervalTicks {} too low, using minimum 20", cleanupIntervalTicks);
             cleanupIntervalTicks = 20;
-        }
-
-        // Validate block/item IDs (basic format check)
-        if (!frameBlock.contains(":")) {
-            PersonalWorldsMod.LOGGER.warn("Invalid frameBlock '{}', using minecraft:nether_bricks", frameBlock);
-            frameBlock = "minecraft:nether_bricks";
-        }
-
-        if (!activationItem.contains(":")) {
-            PersonalWorldsMod.LOGGER.warn("Invalid activationItem '{}', using minecraft:emerald", activationItem);
-            activationItem = "minecraft:emerald";
         }
     }
 

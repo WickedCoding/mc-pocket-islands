@@ -1,7 +1,12 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
@@ -29,12 +34,20 @@ public class DimensionManager {
     /**
      * Get or create a player's personal dimension.
      * If the dimension doesn't exist, creates it and registers it.
+     *
+     * @param server The Minecraft server
+     * @param playerUuid The player's UUID
+     * @param playerName The player's display name
+     * @param genType The world generation type
+     * @param portalTypeIndex The portal type index from ModConfig.portalTypes
+     * @return The ServerWorld for the player's dimension
      */
     public static ServerWorld getOrCreatePlayerDimension(
             MinecraftServer server,
             UUID playerUuid,
             String playerName,
-            WorldGenType genType
+            WorldGenType genType,
+            int portalTypeIndex
     ) {
         Fantasy fantasy = Fantasy.get(server);
         Identifier dimId = createDimensionId(playerUuid);
@@ -44,15 +57,15 @@ public class DimensionManager {
             return activeHandles.get(playerUuid).asWorld();
         }
 
-        // Create world config
-        RuntimeWorldConfig config = createWorldConfig(server, genType, playerUuid);
+        // Create world config with portal type
+        RuntimeWorldConfig config = createWorldConfig(server, genType, playerUuid, portalTypeIndex);
 
         // Get or create the persistent world
         RuntimeWorldHandle handle = fantasy.getOrOpenPersistentWorld(dimId, config);
         activeHandles.put(playerUuid, handle);
 
-        PersonalWorldsMod.LOGGER.info("Loaded/created dimension for player: {} ({})",
-            playerName, playerUuid);
+        PersonalWorldsMod.LOGGER.info("Loaded/created dimension for player: {} ({}) with portal type {}",
+            playerName, playerUuid, portalTypeIndex);
 
         // Register in persistent state if new, or get existing data
         DimensionRegistry registry = DimensionRegistry.get(server);
@@ -66,7 +79,8 @@ public class DimensionManager {
                 dimId,
                 System.currentTimeMillis(),
                 getSpawnPoint(genType),
-                genType
+                genType,
+                portalTypeIndex
             );
             registry.registerDimension(data);
         } else {
@@ -81,7 +95,8 @@ public class DimensionManager {
                     data.dimensionId(),
                     data.createdAt(),
                     data.spawnPoint(),
-                    data.generatorType()
+                    data.generatorType(),
+                    data.portalTypeIndex()
                 );
                 registry.registerDimension(data);  // Re-register with updated name
                 PersonalWorldsMod.LOGGER.info("Updated owner name for dimension: {} -> {}",
@@ -107,11 +122,17 @@ public class DimensionManager {
             return;
         }
 
-        RuntimeWorldConfig config = createWorldConfig(server, data.generatorType(), data.ownerUuid());
+        RuntimeWorldConfig config = createWorldConfig(
+            server,
+            data.generatorType(),
+            data.ownerUuid(),
+            data.portalTypeIndex()
+        );
         RuntimeWorldHandle handle = fantasy.getOrOpenPersistentWorld(data.dimensionId(), config);
         activeHandles.put(data.ownerUuid(), handle);
 
-        PersonalWorldsMod.LOGGER.debug("Restored dimension: {}", data.dimensionId());
+        PersonalWorldsMod.LOGGER.debug("Restored dimension: {} with portal type {}",
+            data.dimensionId(), data.portalTypeIndex());
     }
 
     /**
@@ -127,6 +148,44 @@ public class DimensionManager {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Delete a dimension, including all stored files.
+     *
+     * For LOADED dimensions: Uses Fantasy's delete() method which safely handles:
+     * - Ejecting any remaining players
+     * - Waiting for all chunks to unload
+     * - Saving world data
+     * - Deleting the dimension folder from disk
+     *
+     * For UNLOADED dimensions: Deletes the folder directly since Fantasy has
+     * no reference to it (no race condition possible).
+     *
+     * @param server The Minecraft server (needed for unloaded dimension deletion)
+     * @param playerUuid The UUID of the dimension owner
+     * @return true if deletion was initiated/completed successfully
+     */
+    public static boolean deleteDimension(MinecraftServer server, UUID playerUuid) {
+        RuntimeWorldHandle handle = activeHandles.get(playerUuid);
+        if (handle != null) {
+            // Dimension is loaded - use Fantasy's safe deletion
+            // Fantasy will wait for chunks to unload, save data, then delete folder
+            handle.delete();
+            activeHandles.remove(playerUuid);
+            PersonalWorldsMod.LOGGER.info("Queued loaded dimension for deletion: {}", playerUuid);
+            return true;
+        } else {
+            // Dimension is NOT loaded - Fantasy has no reference to it
+            // Safe to delete folder directly (no race condition)
+            boolean deleted = DimensionMetadataFile.deleteDimensionFolder(server, playerUuid);
+            if (deleted) {
+                PersonalWorldsMod.LOGGER.info("Deleted unloaded dimension folder for: {}", playerUuid);
+            } else {
+                PersonalWorldsMod.LOGGER.warn("No dimension folder found to delete for: {}", playerUuid);
+            }
+            return deleted;
+        }
     }
 
     /**
@@ -190,7 +249,8 @@ public class DimensionManager {
     private static RuntimeWorldConfig createWorldConfig(
             MinecraftServer server,
             WorldGenType genType,
-            UUID playerUuid
+            UUID playerUuid,
+            int portalTypeIndex
     ) {
         RuntimeWorldConfig config = new RuntimeWorldConfig()
             .setDimensionType(DimensionTypes.OVERWORLD)
@@ -198,8 +258,8 @@ public class DimensionManager {
             .setDifficulty(server.getSaveProperties().getDifficulty())
             .setShouldTickTime(true);
 
-        // Set chunk generator based on type
-        config.setGenerator(createChunkGenerator(server, genType));
+        // Set chunk generator based on type and portal config
+        config.setGenerator(createChunkGenerator(server, genType, portalTypeIndex));
 
         // For void worlds, disable mob spawning to keep the dimension pristine
         if (genType == WorldGenType.VOID) {
@@ -211,8 +271,17 @@ public class DimensionManager {
 
     /**
      * Create the appropriate ChunkGenerator for the given world type.
+     *
+     * @param server The Minecraft server
+     * @param genType The world generation type
+     * @param portalTypeIndex The portal type index (determines island materials for VOID)
+     * @return The configured chunk generator
      */
-    private static ChunkGenerator createChunkGenerator(MinecraftServer server, WorldGenType genType) {
+    private static ChunkGenerator createChunkGenerator(
+            MinecraftServer server,
+            WorldGenType genType,
+            int portalTypeIndex
+    ) {
         return switch (genType) {
             case VOID -> {
                 // Create VoidIslandChunkGenerator with THE_VOID biome
@@ -220,7 +289,11 @@ public class DimensionManager {
                 var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
                 RegistryEntry<Biome> voidBiome = biomeRegistry.getEntry(BiomeKeys.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
-                yield new VoidIslandChunkGenerator(new FixedBiomeSource(voidBiome));
+
+                // Convert island layer strings to BlockStates
+                BlockState[] islandLayers = convertIslandLayers(portalTypeIndex);
+
+                yield new VoidIslandChunkGenerator(new FixedBiomeSource(voidBiome), islandLayers);
             }
             case OVERWORLD -> server.getOverworld().getChunkManager().getChunkGenerator();
             case FLAT -> {
@@ -228,6 +301,43 @@ public class DimensionManager {
                 yield server.getOverworld().getChunkManager().getChunkGenerator();
             }
         };
+    }
+
+    /**
+     * Convert island layer string IDs to BlockStates.
+     *
+     * @param portalTypeIndex The portal type index
+     * @return Array of BlockStates for island layers
+     */
+    private static BlockState[] convertIslandLayers(int portalTypeIndex) {
+        ModConfig.PortalConfig config = ModConfig.get().portalTypes.get(portalTypeIndex);
+        String[] layerIds = config.islandLayers;
+
+        int layerCount = Math.min(layerIds.length, 5); // Max 5 layers
+
+        if (layerCount == 0) {
+            // Fallback to grass if no layers specified
+            PersonalWorldsMod.LOGGER.warn("Portal type {} has no island layers, using grass",  portalTypeIndex);
+            return new BlockState[] { Blocks.GRASS_BLOCK.getDefaultState() };
+        }
+
+        BlockState[] islandLayers = new BlockState[layerCount];
+
+        for (int i = 0; i < layerCount; i++) {
+            String blockId = layerIds[i];
+            Identifier id = Identifier.tryParse(blockId);
+            Block block = id != null ? Registries.BLOCK.get(id) : Blocks.AIR;
+
+            if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {
+                PersonalWorldsMod.LOGGER.warn("Invalid island layer block '{}' for portal type {}, using grass_block",
+                    blockId, portalTypeIndex);
+                block = Blocks.GRASS_BLOCK;
+            }
+
+            islandLayers[i] = block.getDefaultState();
+        }
+
+        return islandLayers;
     }
 
     /**

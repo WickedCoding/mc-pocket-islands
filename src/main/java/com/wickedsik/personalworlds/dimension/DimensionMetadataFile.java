@@ -41,6 +41,7 @@ public class DimensionMetadataFile {
         int spawnY;
         int spawnZ;
         String generatorType;
+        Integer portalTypeIndex;  // Integer (nullable) for backward compatibility
         int metadataVersion;
 
         static MetadataJson fromPlayerData(PlayerDimensionData data) {
@@ -53,18 +54,23 @@ public class DimensionMetadataFile {
             json.spawnY = data.spawnPoint().getY();
             json.spawnZ = data.spawnPoint().getZ();
             json.generatorType = data.generatorType().name();
+            json.portalTypeIndex = data.portalTypeIndex();
             json.metadataVersion = METADATA_VERSION;
             return json;
         }
 
         PlayerDimensionData toPlayerData() {
+            // Backward compatibility: default to portal type 0 if not present
+            int portalType = (portalTypeIndex != null) ? portalTypeIndex : 0;
+
             return new PlayerDimensionData(
                 UUID.fromString(ownerUuid),
                 ownerName,
                 new Identifier(dimensionId),
                 createdAt,
                 new BlockPos(spawnX, spawnY, spawnZ),
-                WorldGenType.fromString(generatorType)
+                WorldGenType.fromString(generatorType),
+                portalType
             );
         }
     }
@@ -231,5 +237,61 @@ public class DimensionMetadataFile {
         return worldRoot
             .resolve("dimensions")
             .resolve(PersonalWorldsMod.MOD_ID);
+    }
+
+    /**
+     * Permanently delete a dimension's entire folder from disk.
+     * This includes all world data, region files, and metadata.
+     * CRITICAL: This is irreversible - all dimension data will be lost!
+     *
+     * @param server The Minecraft server
+     * @param playerUuid The UUID of the dimension owner
+     * @return true if the folder was successfully deleted, false otherwise
+     */
+    public static boolean deleteDimensionFolder(MinecraftServer server, UUID playerUuid) {
+        Path dimensionFolder = getDimensionFolderPath(server, playerUuid);
+
+        if (!Files.exists(dimensionFolder)) {
+            PersonalWorldsMod.LOGGER.debug("Dimension folder does not exist: {}", dimensionFolder);
+            return false;
+        }
+
+        try {
+            // Recursively delete the entire dimension folder
+            deleteDirectoryRecursively(dimensionFolder);
+            PersonalWorldsMod.LOGGER.info("Permanently deleted dimension folder for {}: {}",
+                playerUuid, dimensionFolder);
+            return true;
+        } catch (IOException e) {
+            PersonalWorldsMod.LOGGER.error("Failed to delete dimension folder for {}: {}",
+                playerUuid, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Recursively delete a directory and all its contents.
+     * Uses reverse-ordered stream to delete children before parents.
+     *
+     * @param directory The directory to delete
+     * @throws IOException If deletion fails
+     */
+    private static void deleteDirectoryRecursively(Path directory) throws IOException {
+        if (!Files.exists(directory)) {
+            return;
+        }
+
+        // Walk the file tree in reverse order (children before parents)
+        try (var stream = Files.walk(directory)) {
+            stream.sorted((a, b) -> b.compareTo(a))  // Reverse order
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                        PersonalWorldsMod.LOGGER.debug("Deleted: {}", path);
+                    } catch (IOException e) {
+                        PersonalWorldsMod.LOGGER.warn("Failed to delete: {} - {}", path, e.getMessage());
+                    }
+                });
+        }
     }
 }

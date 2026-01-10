@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Tracks which player owns which portal.
+ * Tracks which player owns which portal and which portal type was used.
  * Ownership is established when a player activates a portal.
  *
  * Portals are identified by a compound key: "worldId:x,y,z"
@@ -37,9 +37,22 @@ public class PortalOwnershipManager extends PersistentState {
     );
 
     /**
-     * Portal ownership map: "worldId:x,y,z" -> Owner UUID
+     * Portal ownership data: stores owner UUID and portal type index.
      */
-    private final Map<String, UUID> portalOwners = new HashMap<>();
+    private static class PortalOwnershipData {
+        UUID ownerUuid;
+        int portalTypeIndex;
+
+        PortalOwnershipData(UUID ownerUuid, int portalTypeIndex) {
+            this.ownerUuid = ownerUuid;
+            this.portalTypeIndex = portalTypeIndex;
+        }
+    }
+
+    /**
+     * Portal ownership map: "worldId:x,y,z" -> PortalOwnershipData
+     */
+    private final Map<String, PortalOwnershipData> portalOwners = new HashMap<>();
 
     public PortalOwnershipManager() {
         // Default constructor for new state
@@ -48,18 +61,20 @@ public class PortalOwnershipManager extends PersistentState {
     // --- Portal Registration ---
 
     /**
-     * Register a portal as owned by a player.
+     * Register a portal as owned by a player with a specific portal type.
      * Called when a player activates a portal frame.
      *
      * @param world The world containing the portal
      * @param pos The position of the portal block
      * @param ownerUuid The UUID of the owning player
+     * @param portalTypeIndex The portal type index from ModConfig.portalTypes array
      */
-    public void registerPortal(World world, BlockPos pos, UUID ownerUuid) {
+    public void registerPortal(World world, BlockPos pos, UUID ownerUuid, int portalTypeIndex) {
         String key = makeKey(world, pos);
-        portalOwners.put(key, ownerUuid);
+        portalOwners.put(key, new PortalOwnershipData(ownerUuid, portalTypeIndex));
         markDirty();
-        PersonalWorldsMod.LOGGER.debug("Registered portal at {} owned by {}", key, ownerUuid);
+        PersonalWorldsMod.LOGGER.debug("Registered portal type {} at {} owned by {}",
+            portalTypeIndex, key, ownerUuid);
     }
 
     /**
@@ -71,7 +86,21 @@ public class PortalOwnershipManager extends PersistentState {
      */
     public Optional<UUID> getOwner(World world, BlockPos pos) {
         String key = makeKey(world, pos);
-        return Optional.ofNullable(portalOwners.get(key));
+        PortalOwnershipData data = portalOwners.get(key);
+        return data != null ? Optional.of(data.ownerUuid) : Optional.empty();
+    }
+
+    /**
+     * Get the portal type index for a portal.
+     *
+     * @param world The world containing the portal
+     * @param pos The position of the portal block
+     * @return Optional containing portal type index, or empty if unowned
+     */
+    public Optional<Integer> getPortalType(World world, BlockPos pos) {
+        String key = makeKey(world, pos);
+        PortalOwnershipData data = portalOwners.get(key);
+        return data != null ? Optional.of(data.portalTypeIndex) : Optional.empty();
     }
 
     /**
@@ -113,7 +142,7 @@ public class PortalOwnershipManager extends PersistentState {
         var iterator = portalOwners.entrySet().iterator();
         while (iterator.hasNext()) {
             var entry = iterator.next();
-            if (entry.getValue().equals(ownerUuid)) {
+            if (entry.getValue().ownerUuid.equals(ownerUuid)) {
                 iterator.remove();
                 removed++;
             }
@@ -174,8 +203,11 @@ public class PortalOwnershipManager extends PersistentState {
     @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtCompound portalsNbt = new NbtCompound();
-        for (Map.Entry<String, UUID> entry : portalOwners.entrySet()) {
-            portalsNbt.putUuid(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
+            NbtCompound portalData = new NbtCompound();
+            portalData.putUuid("OwnerUuid", entry.getValue().ownerUuid);
+            portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
+            portalsNbt.put(entry.getKey(), portalData);
         }
         nbt.put("PortalOwners", portalsNbt);
         return nbt;
@@ -188,8 +220,23 @@ public class PortalOwnershipManager extends PersistentState {
             NbtCompound portalsNbt = nbt.getCompound("PortalOwners");
             for (String key : portalsNbt.getKeys()) {
                 try {
-                    UUID uuid = portalsNbt.getUuid(key);
-                    manager.portalOwners.put(key, uuid);
+                    NbtElement element = portalsNbt.get(key);
+
+                    // Backward compatibility: check if old format (UUID) or new format (Compound)
+                    if (element instanceof NbtCompound) {
+                        // New format: portal data with UUID and portal type index
+                        NbtCompound portalData = (NbtCompound) element;
+                        UUID uuid = portalData.getUuid("OwnerUuid");
+                        int portalTypeIndex = portalData.contains("PortalTypeIndex")
+                            ? portalData.getInt("PortalTypeIndex")
+                            : 0;  // Default to first portal type
+                        manager.portalOwners.put(key, new PortalOwnershipData(uuid, portalTypeIndex));
+                    } else {
+                        // Old format: just UUID - migrate to new format with default portal type
+                        UUID uuid = portalsNbt.getUuid(key);
+                        manager.portalOwners.put(key, new PortalOwnershipData(uuid, 0));
+                        PersonalWorldsMod.LOGGER.debug("Migrated old portal ownership data for key: {}", key);
+                    }
                 } catch (Exception e) {
                     PersonalWorldsMod.LOGGER.warn("Invalid portal ownership data for key: {}", key);
                 }

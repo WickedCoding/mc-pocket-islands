@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -9,12 +10,15 @@ import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.registry.ModBlocks;
+import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
 import com.wickedsik.personalworlds.util.VisualEffects;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -22,12 +26,14 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,14 +59,15 @@ public class PortalHelper {
 
     /**
      * Attempt to activate a portal by detecting the frame and filling with portal blocks.
-     * Also registers portal ownership for the activating player.
+     * Also registers portal ownership and portal type for the activating player.
      *
      * @param world The world where the portal is being activated
      * @param clickedPos The position that was clicked (should be air inside frame)
      * @param player The player activating the portal
+     * @param activationItem The item used to activate the portal
      * @return true if portal was successfully activated
      */
-    public static boolean tryActivatePortal(World world, BlockPos clickedPos, ServerPlayerEntity player) {
+    public static boolean tryActivatePortal(World world, BlockPos clickedPos, ServerPlayerEntity player, Item activationItem) {
         if (world.isClient()) {
             return false;
         }
@@ -70,8 +77,16 @@ public class PortalHelper {
             return false;
         }
 
-        // Detect frame structure
-        Optional<PortalFrame> frame = detectFrame(world, clickedPos);
+        // Detect which portal type is being activated
+        Optional<Integer> portalTypeOpt = detectPortalType(world, clickedPos, activationItem);
+        if (portalTypeOpt.isEmpty()) {
+            return false;
+        }
+
+        int portalTypeIndex = portalTypeOpt.get();
+
+        // Get frame for this portal type
+        Optional<PortalFrame> frame = detectFrame(world, clickedPos, portalTypeIndex);
         if (frame.isEmpty()) {
             return false;
         }
@@ -86,10 +101,10 @@ public class PortalHelper {
             world.setBlockState(pos, portalState);
         }
 
-        // Register portal ownership for all portal blocks
+        // Register portal ownership AND portal type for all portal blocks
         PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
         for (BlockPos pos : portalFrame.getInteriorPositions()) {
-            ownershipManager.registerPortal(world, pos, player.getUuid());
+            ownershipManager.registerPortal(world, pos, player.getUuid(), portalTypeIndex);
         }
 
         // Play activation sound
@@ -105,8 +120,8 @@ public class PortalHelper {
         // Play particle effects
         VisualEffects.playPortalActivationEffects(world, portalFrame.getCenter());
 
-        PersonalWorldsMod.LOGGER.info("Portal activated at {} by {} (ownership registered)",
-            clickedPos, player.getName().getString());
+        PersonalWorldsMod.LOGGER.info("Portal type {} activated at {} by {} (ownership registered)",
+            portalTypeIndex, clickedPos, player.getName().getString());
 
         return true;
     }
@@ -167,19 +182,23 @@ public class PortalHelper {
 
         if (portalOwnerOpt.isEmpty()) {
             // Unclaimed portal - auto-claim for the entering player
-            PersonalWorldsMod.LOGGER.warn("Unclaimed portal at {} - auto-claiming for {}",
+            // Default to portal type 0 for auto-claimed portals
+            PersonalWorldsMod.LOGGER.warn("Unclaimed portal at {} - auto-claiming for {} with default portal type",
                 portalPos, player.getName().getString());
-            ownershipManager.registerPortal(fromWorld, portalPos, player.getUuid());
-            teleportToOwnerDimension(player, server, fromWorld, player.getUuid());
+            ownershipManager.registerPortal(fromWorld, portalPos, player.getUuid(), 0);
+            teleportToOwnerDimension(player, server, fromWorld, player.getUuid(), 0);
             return;
         }
 
         UUID portalOwner = portalOwnerOpt.get();
         UUID visitorUuid = player.getUuid();
 
+        // Get portal type from ownership manager
+        int portalTypeIndex = ownershipManager.getPortalType(fromWorld, portalPos).orElse(0);
+
         // Permission check: owner OR has invitation
         if (InvitationManager.canVisit(server, visitorUuid, portalOwner)) {
-            teleportToOwnerDimension(player, server, fromWorld, portalOwner);
+            teleportToOwnerDimension(player, server, fromWorld, portalOwner, portalTypeIndex);
         } else {
             String ownerName = ownershipManager.getOwnerName(server, portalOwner);
             player.sendMessage(
@@ -200,13 +219,15 @@ public class PortalHelper {
      * @param server The Minecraft server
      * @param fromWorld The world the player is leaving
      * @param ownerUuid The UUID of the dimension owner
+     * @param portalTypeIndex The portal type index (determines island materials)
      * @return true if teleportation succeeded, false if it failed
      */
     private static boolean teleportToOwnerDimension(
             ServerPlayerEntity player,
             MinecraftServer server,
             ServerWorld fromWorld,
-            UUID ownerUuid
+            UUID ownerUuid,
+            int portalTypeIndex
     ) {
         UUID playerUuid = player.getUuid();
         boolean isOwnDimension = playerUuid.equals(ownerUuid);
@@ -256,13 +277,13 @@ public class PortalHelper {
 
         // Get or create the owner's dimension
         ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(
-            server, ownerUuid, ownerName, genType
+            server, ownerUuid, ownerName, genType, portalTypeIndex
         );
 
         // Find destination and teleport
         BlockPos destinationPos = findExistingPortal(targetWorld)
             .map(portalPos -> findSafePositionNearPortal(targetWorld, portalPos))
-            .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType));
+            .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType, portalTypeIndex));
 
         // Play departure effects
         VisualEffects.playTeleportDepartureEffects(player);
@@ -308,8 +329,9 @@ public class PortalHelper {
 
     /**
      * Teleport player back to their stored return position.
+     * Public to allow usage by commands (/pw leave) and portal exits.
      */
-    private static void teleportToReturnPosition(ServerPlayerEntity player, MinecraftServer server) {
+    public static void teleportToReturnPosition(ServerPlayerEntity player, MinecraftServer server) {
         UUID playerUuid = player.getUuid();
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
@@ -396,8 +418,14 @@ public class PortalHelper {
             }
         }
 
+        // Get portal type from dimension registry (default to 0 if not found)
+        DimensionRegistry registry = DimensionRegistry.get(server);
+        int portalTypeIndex = registry.getDimensionData(ownerUuid)
+            .map(PlayerDimensionData::portalTypeIndex)
+            .orElse(0);
+
         // Use current world as "from" world for return data
-        return teleportToOwnerDimension(player, server, currentWorld, ownerUuid);
+        return teleportToOwnerDimension(player, server, currentWorld, ownerUuid, portalTypeIndex);
     }
 
     // --- Dimension Utilities ---
@@ -534,21 +562,22 @@ public class PortalHelper {
 
     /**
      * Get or create the spawn platform for a personal dimension.
-     * For void worlds, creates a grass platform if none exists.
+     * For void worlds, creates a platform with configurable materials if none exists.
      *
      * @param world The personal dimension world
      * @param genType The generation type of the world
+     * @param portalTypeIndex The portal type index (determines island materials)
      * @return The spawn position (one block above platform)
      */
-    private static BlockPos getOrCreateSpawnPlatform(ServerWorld world, WorldGenType genType) {
+    private static BlockPos getOrCreateSpawnPlatform(ServerWorld world, WorldGenType genType, int portalTypeIndex) {
         BlockPos spawnPos = new BlockPos(0, PLATFORM_Y + 1, 0);
 
         // For void worlds, check if platform exists
         if (genType == WorldGenType.VOID) {
             BlockPos groundCheck = spawnPos.down();
             if (world.getBlockState(groundCheck).isAir()) {
-                // Create starter platform
-                createStarterPlatform(world, new BlockPos(0, PLATFORM_Y, 0));
+                // Create starter platform with portal type materials
+                createStarterPlatform(world, new BlockPos(0, PLATFORM_Y, 0), portalTypeIndex);
             }
         }
 
@@ -556,19 +585,35 @@ public class PortalHelper {
     }
 
     /**
-     * Create a starter platform with grass blocks and a return portal frame.
+     * Create a starter platform with configurable materials and a return portal frame.
+     * Uses the first island layer material from the portal type configuration.
      *
      * @param world The world to create the platform in
      * @param center The center position of the platform (Y = platform level)
+     * @param portalTypeIndex The portal type index (determines platform material)
      */
-    private static void createStarterPlatform(ServerWorld world, BlockPos center) {
-        PersonalWorldsMod.LOGGER.info("Creating starter platform at {}", center);
+    private static void createStarterPlatform(ServerWorld world, BlockPos center, int portalTypeIndex) {
+        PersonalWorldsMod.LOGGER.info("Creating starter platform at {} with portal type {}", center, portalTypeIndex);
 
-        // Create 5x5 grass platform
+        // Get platform material from portal config (first island layer)
+        BlockState platformMaterial = Blocks.GRASS_BLOCK.getDefaultState(); // Fallback
+
+        ModConfig.PortalConfig config = ModConfig.get().portalTypes.get(portalTypeIndex);
+        if (config.islandLayers.length > 0) {
+            String blockId = config.islandLayers[0];
+            Identifier id = Identifier.tryParse(blockId);
+            Block block = id != null ? Registries.BLOCK.get(id) : Blocks.GRASS_BLOCK;
+
+            if (block != Blocks.AIR || blockId.equals("minecraft:air")) {
+                platformMaterial = block.getDefaultState();
+            }
+        }
+
+        // Create 5x5 platform
         for (int x = -PLATFORM_RADIUS; x <= PLATFORM_RADIUS; x++) {
             for (int z = -PLATFORM_RADIUS; z <= PLATFORM_RADIUS; z++) {
                 BlockPos pos = center.add(x, 0, z);
-                world.setBlockState(pos, Blocks.GRASS_BLOCK.getDefaultState());
+                world.setBlockState(pos, platformMaterial);
             }
         }
 
@@ -579,12 +624,14 @@ public class PortalHelper {
     /**
      * Create a portal frame structure for returning.
      * Frame is built facing the spawn point (Z-axis orientation).
+     * Return portal can be any type - uses first portal type by default.
      *
      * @param world The world to create the frame in
      * @param bottomLeft The bottom-left position of the frame
      */
     private static void createReturnPortalFrame(ServerWorld world, BlockPos bottomLeft) {
-        Block frameBlock = ModBlocks.getFrameBlock();
+        // Return portal uses default portal type (index 0)
+        Block frameBlock = ModBlocks.getFrameBlock(0);
         BlockState frameState = frameBlock.getDefaultState();
 
         // Build 4-wide x 5-tall frame (same as standard portal)
@@ -617,22 +664,65 @@ public class PortalHelper {
     // --- Frame Detection ---
 
     /**
-     * Detect a valid portal frame around the given position.
+     * Detect which portal type the player is activating.
+     * Returns the index in ModConfig.portalTypes array.
+     *
+     * First-match wins: checks portal types in array order.
+     *
+     * @param world The world
+     * @param clickedPos Position clicked by player
+     * @param activationItem The item used to activate
+     * @return Optional containing portal type index, or empty if no valid frame
+     */
+    private static Optional<Integer> detectPortalType(
+            World world,
+            BlockPos clickedPos,
+            Item activationItem
+    ) {
+        List<ModConfig.PortalConfig> portalTypes = ModConfig.get().portalTypes;
+
+        for (int i = 0; i < portalTypes.size(); i++) {
+            // Check if activation item matches
+            Item configItem = ModItems.getActivationItem(i);
+            if (configItem != activationItem) {
+                continue;
+            }
+
+            // Check if frame matches (try both axes)
+            Block configFrame = ModBlocks.getFrameBlock(i);
+            Optional<PortalFrame> frame = detectFrameForAxis(world, clickedPos, configFrame, Direction.Axis.X);
+            if (frame.isEmpty()) {
+                frame = detectFrameForAxis(world, clickedPos, configFrame, Direction.Axis.Z);
+            }
+
+            if (frame.isPresent()) {
+                return Optional.of(i); // Found matching portal type
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Detect a valid portal frame around the given position for a specific portal type.
      * Tries both X and Z axis orientations.
      *
      * @param world The world to search in
      * @param clickedPos The position clicked by the player
+     * @param portalTypeIndex The portal type index
      * @return Optional containing the detected frame, or empty if none found
      */
-    public static Optional<PortalFrame> detectFrame(World world, BlockPos clickedPos) {
+    public static Optional<PortalFrame> detectFrame(World world, BlockPos clickedPos, int portalTypeIndex) {
+        Block frameBlock = ModBlocks.getFrameBlock(portalTypeIndex);
+
         // Try X-axis orientation first
-        Optional<PortalFrame> xFrame = detectFrameForAxis(world, clickedPos, Direction.Axis.X);
+        Optional<PortalFrame> xFrame = detectFrameForAxis(world, clickedPos, frameBlock, Direction.Axis.X);
         if (xFrame.isPresent()) {
             return xFrame;
         }
 
         // Try Z-axis orientation
-        return detectFrameForAxis(world, clickedPos, Direction.Axis.Z);
+        return detectFrameForAxis(world, clickedPos, frameBlock, Direction.Axis.Z);
     }
 
     /**
@@ -640,17 +730,18 @@ public class PortalHelper {
      *
      * @param world The world to search in
      * @param clickedPos The position clicked by the player
+     * @param frameBlock The block type used for the frame
      * @param axis The axis to check (X or Z)
      * @return Optional containing the detected frame, or empty if none found
      */
     private static Optional<PortalFrame> detectFrameForAxis(
             World world,
             BlockPos clickedPos,
+            Block frameBlock,
             Direction.Axis axis
     ) {
         // Direction to search for bottom-left corner
         Direction horizontal = axis == Direction.Axis.X ? Direction.WEST : Direction.NORTH;
-        Block frameBlock = ModBlocks.getFrameBlock();
 
         // Start at clicked position and search for the interior boundaries
         BlockPos searchPos = clickedPos;
@@ -680,7 +771,7 @@ public class PortalHelper {
         // Create frame and validate
         PortalFrame frame = new PortalFrame(bottomLeftFrame, PORTAL_WIDTH, PORTAL_HEIGHT, axis);
 
-        if (isValidFrame(world, frame)) {
+        if (isValidFrame(world, frame, frameBlock)) {
             return Optional.of(frame);
         }
 
@@ -692,11 +783,10 @@ public class PortalHelper {
      *
      * @param world The world to check
      * @param frame The frame to validate
+     * @param frameBlock The block type expected for the frame
      * @return true if the frame is valid
      */
-    private static boolean isValidFrame(World world, PortalFrame frame) {
-        Block frameBlock = ModBlocks.getFrameBlock();
-
+    private static boolean isValidFrame(World world, PortalFrame frame, Block frameBlock) {
         // Check all frame positions have the correct block
         for (BlockPos pos : frame.getFramePositions()) {
             if (world.getBlockState(pos).getBlock() != frameBlock) {
@@ -719,14 +809,23 @@ public class PortalHelper {
      * Check if the frame is still valid for an existing portal block.
      * Used by PersonalPortalBlock.neighborUpdate() to determine if portal should break.
      *
+     * Checks all portal types - if ANY portal type has a valid frame, the portal is valid.
+     *
      * @param world The world to check
      * @param portalPos The position of the portal block
      * @param axis The axis of the portal
      * @return true if frame is still valid
      */
     public static boolean isFrameValidForPortal(World world, BlockPos portalPos, Direction.Axis axis) {
-        // Try to detect a valid frame at this position
-        Optional<PortalFrame> frame = detectFrameForAxis(world, portalPos, axis);
-        return frame.isPresent();
+        // Check all portal types - portal is valid if ANY type has a valid frame
+        for (int i = 0; i < ModConfig.get().portalTypes.size(); i++) {
+            Block frameBlock = ModBlocks.getFrameBlock(i);
+            Optional<PortalFrame> frame = detectFrameForAxis(world, portalPos, frameBlock, axis);
+            if (frame.isPresent()) {
+                return true;  // Found a valid frame for this portal type
+            }
+        }
+
+        return false;  // No valid frame found for any portal type
     }
 }

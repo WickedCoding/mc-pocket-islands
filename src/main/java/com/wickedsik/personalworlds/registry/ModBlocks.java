@@ -32,10 +32,10 @@ public class ModBlocks {
     );
 
     /**
-     * Cached frame block reference.
+     * Cached frame blocks for all portal types.
      * Lazily loaded from config, cleared on config reload.
      */
-    private static Block cachedFrameBlock = null;
+    private static Block[] cachedFrameBlocks = null;
 
     /**
      * Register all mod blocks.
@@ -52,34 +52,51 @@ public class ModBlocks {
     }
 
     /**
-     * Get the block used for portal frames.
+     * Get the block used for portal frames for a specific portal type.
      * Reads from config on first access, with fallback to nether bricks.
      *
-     * @return The frame block
+     * @param portalTypeIndex Index into ModConfig.portalTypes array
+     * @return The frame block for this portal type
      */
-    public static Block getFrameBlock() {
-        if (cachedFrameBlock == null) {
-            String blockId = ModConfig.get().frameBlock;
-            Identifier id = new Identifier(blockId);
-            cachedFrameBlock = Registries.BLOCK.get(id);
+    public static Block getFrameBlock(int portalTypeIndex) {
+        if (cachedFrameBlocks == null) {
+            var configs = ModConfig.get().portalTypes;
+            cachedFrameBlocks = new Block[configs.size()];
 
-            // Validate the block exists (get() returns AIR for unknown IDs)
-            if (cachedFrameBlock == Blocks.AIR && !blockId.equals("minecraft:air")) {
-                PersonalWorldsMod.LOGGER.warn("Invalid frame block '{}', using nether_bricks", blockId);
-                cachedFrameBlock = Blocks.NETHER_BRICKS;
+            for (int i = 0; i < configs.size(); i++) {
+                String blockId = configs.get(i).frameBlock;
+                Identifier id = Identifier.tryParse(blockId);
+                Block block = id != null ? Registries.BLOCK.get(id) : Blocks.AIR;
+
+                // Validate the block exists (get() returns AIR for unknown IDs)
+                if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {
+                    PersonalWorldsMod.LOGGER.warn("Invalid frame block '{}' for portal type {}, using nether_bricks",
+                        blockId, i);
+                    block = Blocks.NETHER_BRICKS;
+                }
+
+                cachedFrameBlocks[i] = block;
+                PersonalWorldsMod.LOGGER.debug("Portal type {} frame block set to: {}",
+                    i, Registries.BLOCK.getId(block));
             }
-
-            PersonalWorldsMod.LOGGER.debug("Frame block set to: {}", Registries.BLOCK.getId(cachedFrameBlock));
         }
-        return cachedFrameBlock;
+
+        // Bounds check with clamping
+        if (portalTypeIndex < 0 || portalTypeIndex >= cachedFrameBlocks.length) {
+            PersonalWorldsMod.LOGGER.warn("Portal type index {} out of bounds (0-{}), using 0",
+                portalTypeIndex, cachedFrameBlocks.length - 1);
+            return cachedFrameBlocks[0];
+        }
+
+        return cachedFrameBlocks[portalTypeIndex];
     }
 
     /**
-     * Clear the cached frame block.
+     * Clear the cached frame blocks.
      * Called when configuration is reloaded.
      */
     public static void clearCache() {
-        cachedFrameBlock = null;
+        cachedFrameBlocks = null;
         PersonalWorldsMod.LOGGER.debug("Block cache cleared");
     }
 }

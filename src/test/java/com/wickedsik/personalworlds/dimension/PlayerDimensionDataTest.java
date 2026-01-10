@@ -44,7 +44,7 @@ class PlayerDimensionDataTest {
         void constructor_allFields_createsRecord() {
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             assertNotNull(data);
             assertEquals(testUuid, data.ownerUuid());
@@ -60,7 +60,7 @@ class PlayerDimensionDataTest {
         void immutability_verified() {
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             // Values cannot change after construction (records are immutable)
             assertEquals(testName, data.ownerName());
@@ -71,13 +71,13 @@ class PlayerDimensionDataTest {
         void constructor_differentGenTypes() {
             PlayerDimensionData voidData = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, WorldGenType.VOID
-            );
+            , 0);
             PlayerDimensionData overworldData = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, WorldGenType.OVERWORLD
-            );
+            , 0);
             PlayerDimensionData flatData = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, WorldGenType.FLAT
-            );
+            , 0);
 
             assertEquals(WorldGenType.VOID, voidData.generatorType());
             assertEquals(WorldGenType.OVERWORLD, overworldData.generatorType());
@@ -94,7 +94,7 @@ class PlayerDimensionDataTest {
         void toNbt_validData_createsCompound() {
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = data.toNbt();
 
@@ -114,7 +114,7 @@ class PlayerDimensionDataTest {
         void toNbt_correctValues() {
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = data.toNbt();
 
@@ -157,7 +157,7 @@ class PlayerDimensionDataTest {
         void roundTrip_preservesAllFields() {
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -208,7 +208,7 @@ class PlayerDimensionDataTest {
             for (WorldGenType genType : WorldGenType.values()) {
                 PlayerDimensionData original = new PlayerDimensionData(
                     testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, genType
-                );
+                , 0);
 
                 NbtCompound nbt = original.toNbt();
                 PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -229,7 +229,7 @@ class PlayerDimensionDataTest {
             Identifier dimId = new Identifier("personalworlds", "pw_abc123");
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = data.toNbt();
 
@@ -242,7 +242,7 @@ class PlayerDimensionDataTest {
             Identifier dimId = new Identifier("my_mod", "my_dimension_name");
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -256,7 +256,7 @@ class PlayerDimensionDataTest {
             Identifier dimId = new Identifier("personalworlds", "pw_550e8400e29b41d4a716446655440000");
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -275,7 +275,7 @@ class PlayerDimensionDataTest {
             BlockPos spawn = new BlockPos(0, 65, 0);
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, spawn, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = data.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -289,7 +289,7 @@ class PlayerDimensionDataTest {
             BlockPos spawn = new BlockPos(-500, -50, -1000);
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, spawn, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -303,7 +303,7 @@ class PlayerDimensionDataTest {
             BlockPos spawn = new BlockPos(10_000_000, 200, -10_000_000);
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, spawn, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -322,7 +322,7 @@ class PlayerDimensionDataTest {
             long now = System.currentTimeMillis();
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, now, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -335,7 +335,7 @@ class PlayerDimensionDataTest {
         void timestamp_zero() {
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, 0L, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -349,7 +349,7 @@ class PlayerDimensionDataTest {
             long historical = 946684800000L; // 2000-01-01
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, historical, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -367,7 +367,7 @@ class PlayerDimensionDataTest {
         void ownerName_standard() {
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, "Steve", testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -380,7 +380,7 @@ class PlayerDimensionDataTest {
         void ownerName_empty() {
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, "", testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -394,7 +394,7 @@ class PlayerDimensionDataTest {
             String unicodeName = "プレイヤー123";
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, unicodeName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -408,7 +408,7 @@ class PlayerDimensionDataTest {
             String specialName = "Player_123-Test";
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, specialName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             NbtCompound nbt = original.toNbt();
             PlayerDimensionData restored = PlayerDimensionData.fromNbt(nbt);
@@ -426,10 +426,10 @@ class PlayerDimensionDataTest {
         void equals_sameValues_areEqual() {
             PlayerDimensionData data1 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
             PlayerDimensionData data2 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             assertEquals(data1, data2);
             assertEquals(data1.hashCode(), data2.hashCode());
@@ -440,10 +440,10 @@ class PlayerDimensionDataTest {
         void equals_differentUuid_notEqual() {
             PlayerDimensionData data1 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
             PlayerDimensionData data2 = new PlayerDimensionData(
                 UUID.randomUUID(), testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
 
             assertNotEquals(data1, data2);
         }
@@ -453,9 +453,9 @@ class PlayerDimensionDataTest {
         void equals_differentSpawn_notEqual() {
             PlayerDimensionData data1 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, testGenType
-            );
+            , 0);
             PlayerDimensionData data2 = new PlayerDimensionData(
-                testUuid, testName, testDimensionId, testCreatedAt, new BlockPos(100, 65, 100), testGenType
+                testUuid, testName, testDimensionId, testCreatedAt, new BlockPos(100, 65, 100), testGenType, 0
             );
 
             assertNotEquals(data1, data2);
@@ -466,10 +466,10 @@ class PlayerDimensionDataTest {
         void equals_differentGenType_notEqual() {
             PlayerDimensionData data1 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, WorldGenType.VOID
-            );
+            , 0);
             PlayerDimensionData data2 = new PlayerDimensionData(
                 testUuid, testName, testDimensionId, testCreatedAt, testSpawnPoint, WorldGenType.OVERWORLD
-            );
+            , 0);
 
             assertNotEquals(data1, data2);
         }

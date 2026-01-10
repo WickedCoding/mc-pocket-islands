@@ -177,7 +177,8 @@ public final class DataValidator {
                 new Identifier(PersonalWorldsMod.MOD_ID, dimPath),
                 System.currentTimeMillis(),
                 new BlockPos(0, 65, 0),
-                WorldGenType.VOID
+                WorldGenType.VOID,
+                0  // Default portal type
             );
         }
 
@@ -192,8 +193,9 @@ public final class DataValidator {
         long createdAt = data.createdAt() > 0 ? data.createdAt() : System.currentTimeMillis();
         BlockPos spawn = sanitizeBlockPos(data.spawnPoint());
         WorldGenType genType = data.generatorType() != null ? data.generatorType() : WorldGenType.VOID;
+        int portalTypeIndex = data.portalTypeIndex();  // Preserve existing portal type
 
-        return new PlayerDimensionData(uuid, name, dimId, createdAt, spawn, genType);
+        return new PlayerDimensionData(uuid, name, dimId, createdAt, spawn, genType, portalTypeIndex);
     }
 
     // --- ReturnData Validation ---
