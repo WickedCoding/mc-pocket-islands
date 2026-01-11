@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Dimension time no longer resets to noon when entering; now syncs with overworld time
+
 ## [0.3.0] - 2025-01-11
 
 ### Added

@@ -256,7 +256,8 @@ public class DimensionManager {
             .setDimensionType(DimensionTypes.OVERWORLD)
             .setSeed(playerUuid.hashCode())
             .setDifficulty(server.getSaveProperties().getDifficulty())
-            .setShouldTickTime(true);
+            .setShouldTickTime(true)
+            .setTimeOfDay(server.getOverworld().getTimeOfDay());
 
         // Set chunk generator based on type and portal config
         config.setGenerator(createChunkGenerator(server, genType, portalTypeIndex));
