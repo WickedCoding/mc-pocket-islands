@@ -1,6 +1,7 @@
 # Pocket Islands
 
-A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent pocket dimension island.
+A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent
+pocket dimension island.
 
 ## Features
 
@@ -15,17 +16,34 @@ A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent po
 - Minecraft 1.20.4
 - Fabric Loader 0.14.22+
 - Fabric API
+- **Both client and server must have the mod installed**
 
 ## Installation
 
+### Server
+
+1. Install Fabric Loader on your server
+2. Download Pocket Islands from releases
+3. Place in the server's `mods/` folder
+    - Make sure Fabric API is also installed here
+4. Start the server
+
+### Client
+
 1. Install Fabric Loader
 2. Download Pocket Islands from releases
-3. Place in `mods/` folder
+3. Place in your `mods/` folder
+    - Make sure Fabric API is also installed here
 4. Launch Minecraft
+
+**Important:** The mod must be installed on both client and server. See
+[FAQ](#faq) for details.
 
 ## Usage
 
 ### Creating a Portal
+
+> This can be configured, this explanation uses the default configuration.
 
 Build a frame using Nether Bricks (4 wide x 5 tall):
 
@@ -37,66 +55,76 @@ N     N
 N N N N
 ```
 
-Right-click inside the frame with an Emerald to activate.
+Right-click the inside of the frame with an Emerald to activate.
 
 ### Entering Your Island
 
-Walk into the activated portal to enter your pocket island. On first entry, a starter platform with grass blocks and a return portal frame will be created.
+Walk into the activated portal to enter your pocket island. On first entry, a
+starter platform with grass blocks and a return portal frame will be created.
 
 ### Returning
 
-Enter the portal in your pocket island to return to your original location.
+Enter the portal on your pocket island to return to your original location.
+
+**Important:** Bring enough materials to build a return portal!
 
 ### Commands
 
 **Player commands:**
+
 - `/pi invites` - View your invitations (sent and received)
 - `/pi invite <player>` - Invite a player to your island
 - `/pi uninvite <player>` - Revoke a player's invitation
 - `/pi go <player>` - Visit someone's island (requires invitation)
 
 **Admin commands (op level 2+):**
+
 - `/pi admin list` - List all islands
 - `/pi admin info <player>` - View island details
 - `/pi admin tp <player>` - Teleport to an island
 - `/pi admin delete <player> [confirm]` - Delete an island (op 4)
-- `/pi admin reload` - Reload configuration
 
 **Debug commands (op level 4):**
+
 - `/pi debug perf enable` - Enable performance monitoring
 - `/pi debug perf disable` - Disable performance monitoring
 - `/pi debug perf status` - Show performance status
 - `/pi debug perf reset` - Reset performance counters
 
+**Note:** You should not need the debug commands, but they may be useful for
+checking.
+
 ## Configuration
 
 **Config file:** `config/personalworlds.json`
 
-Pocket Islands offers extensive customization options, particularly for **island composition**. You can define multiple portal types, each creating islands with different materials and properties.
+Pocket Islands offers extensive customization options, particularly for **island
+composition**. You can define multiple portal types, each creating islands with
+different materials and properties.
 
 ### Example Configuration
 
 ```json
 {
-  "portalTypes": [
-    {
-      "frameBlock": "minecraft:nether_bricks",
-      "activationItem": "minecraft:emerald",
-      "islandLayers": [
-        "minecraft:grass_block",
-        "minecraft:dirt",
-        "minecraft:stone"
-      ]
-    }
-  ],
-  "consumeActivationItem": false,
-  "maxInvitationsPerPlayer": 20,
-  "unloadEmptyDimensionDelayTicks": 600,
-  "cleanupIntervalTicks": 600,
-  "enableTeleportParticles": true,
-  "enableTeleportSounds": true,
-  "enablePortalActivationEffects": true,
-  "enableInvitationNotifications": true
+    "portalTypes": [
+        {
+            "frameBlock": "minecraft:nether_bricks",
+            "activationItem": "minecraft:emerald",
+            "islandLayers": [
+                "minecraft:grass_block",
+                "minecraft:dirt",
+                "minecraft:stone"
+            ]
+        }
+    ],
+    "consumeActivationItem": false,
+    "maxInvitationsPerPlayer": 20,
+    "unloadEmptyDimensionDelayTicks": 600,
+    "cleanupIntervalTicks": 600,
+    "enableTeleportParticles": true,
+    "enableTeleportSounds": true,
+    "enablePortalActivationEffects": true,
+    "enableInvitationNotifications": true
 }
 ```
 
@@ -109,11 +137,10 @@ Define multiple portal types to create islands with different materials:
 - **`frameBlock`** — Block used for portal frames (e.g., `"minecraft:nether_bricks"`)
 - **`activationItem`** — Item used to activate portals (e.g., `"minecraft:emerald"`)
 - **`islandLayers`** — **Customize your starter island platform** (up to 5 layers, top to bottom)
-  - Example: `["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]`
-  - Create themed islands: grass/dirt/stone, netherrack/soul_sand/basalt, end_stone, etc.
-  - Each portal type creates a unique island composition
-
-**Note:** World generation type is hardcoded to `VOID` (architectural requirement). This is not configurable.
+    - Example: `["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]`
+    - Create themed islands: grass/dirt/stone, netherrack/soul_sand/basalt, end_stone, etc.
+    - Each portal type creates a unique island composition
+    - Each layer is 1 block thick, for 2 dirt block layers, repeat the material in the array
 
 #### Invitations
 
@@ -137,48 +164,65 @@ Define multiple portal types to create islands with different materials:
 
 ### Creating Multiple Portal Types
 
-You can define multiple portal types to create different island themes. Players can choose which type of island they want by using different portal materials:
+You can define multiple portal types to create different island themes. Players
+can choose which type of island they want by using different portal materials:
 
 ```json
 {
-  "portalTypes": [
-    {
-      "frameBlock": "minecraft:nether_bricks",
-      "activationItem": "minecraft:emerald",
-      "islandLayers": ["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]
-    },
-    {
-      "frameBlock": "minecraft:blackstone",
-      "activationItem": "minecraft:nether_star",
-      "islandLayers": ["minecraft:netherrack", "minecraft:soul_sand", "minecraft:basalt"]
-    },
-    {
-      "frameBlock": "minecraft:end_stone_bricks",
-      "activationItem": "minecraft:ender_pearl",
-      "islandLayers": ["minecraft:end_stone"]
-    }
-  ]
+    "portalTypes": [
+        {
+            "frameBlock": "minecraft:nether_bricks",
+            "activationItem": "minecraft:emerald",
+            "islandLayers": [
+                "minecraft:grass_block",
+                "minecraft:dirt",
+                "minecraft:stone"
+            ]
+        },
+        {
+            "frameBlock": "minecraft:blackstone",
+            "activationItem": "minecraft:nether_star",
+            "islandLayers": [
+                "minecraft:netherrack",
+                "minecraft:soul_sand",
+                "minecraft:basalt"
+            ]
+        },
+        {
+            "frameBlock": "minecraft:end_stone_bricks",
+            "activationItem": "minecraft:ender_pearl",
+            "islandLayers": [
+                "minecraft:end_stone"
+            ]
+        }
+    ]
 }
 ```
 
-**Note:** The first portal type a player uses determines their island composition permanently.
+**Note:** The first portal type a player uses determines their island
+composition permanently.
 
 ### Reloading Configuration
 
-Use `/pi admin reload` to reload the configuration without restarting the server. Changes to portal types only affect newly created islands.
+Use `/pi admin reload` to reload the configuration without restarting the
+server. Changes to portal types only affect newly created islands.
 
 ## Translations
 
-Pocket Islands uses Fabric's standard language file system for all user-facing messages. This allows server admins and modpack creators to customize messages or add translations for different languages.
+Pocket Islands uses Fabric's standard language file system for all user-facing
+messages. This allows server admins and modpack creators to customize messages
+or add translations for different languages.
 
 ### Language File Location
 
 Language files are located at:
+
 ```
 src/main/resources/assets/personalworlds/lang/
 ```
 
 The mod includes an English (US) translation by default:
+
 ```
 lang/en_us.json
 ```
@@ -188,20 +232,20 @@ lang/en_us.json
 To add support for another language (e.g., German, Dutch, Spanish):
 
 1. Create a new language file with the appropriate locale code:
-   - `de_de.json` for German
-   - `nl_nl.json` for Dutch
-   - `es_es.json` for Spanish
-   - See [Minecraft Wiki - Language](https://minecraft.wiki/w/Language) for all locale codes
+    - `de_de.json` for German
+    - `nl_nl.json` for Dutch
+    - `es_es.json` for Spanish
+    - See [Minecraft Wiki - Language](https://minecraft.wiki/w/Language) for all locale codes
 
 2. Copy the contents of `en_us.json` as a template
 
 3. Translate the message values (keep the keys unchanged):
 
-```json
+```json lines
 {
-  "personalworlds.message.invite_sent": "Eingeladen %s zu deiner Dimension",
-  "personalworlds.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
-  ...
+    "personalworlds.message.invite_sent": "Eingeladen %s zu deiner Dimension",
+    "personalworlds.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
+    // ...
 }
 ```
 
@@ -217,10 +261,11 @@ To customize messages while keeping the English language:
 4. Use `%s` for string parameters, `%d` for numbers
 
 **Example:**
+
 ```json
 {
-  "personalworlds.message.invite_sent": "🎉 You invited %s to your island!",
-  "personalworlds.message.invite_received": "✨ %s wants you to visit their island!"
+    "personalworlds.message.invite_sent": "🎉 You invited %s to your island!",
+    "personalworlds.message.invite_received": "✨ %s wants you to visit their island!"
 }
 ```
 
@@ -237,31 +282,12 @@ All translation keys are documented in `lang/en_us.json`. Key categories include
 - **`personalworlds.command.info.*`** — Admin info command output
 - **`personalworlds.command.delete.*`** — Admin delete command warnings
 
-### Migration from Old Config
-
-**Important:** Pocket Islands no longer supports custom messages in `config/personalworlds.json`. If you have custom messages in your config file, they will be ignored with a warning in the server log.
-
-To migrate custom messages:
-1. Copy your custom message values from the config file
-2. Create a language file or resource pack as described above
-3. Remove the message fields from your config file
-
-## World Reset Procedure
-
-To reset the main world while preserving pocket islands:
-
-1. Stop the server
-2. Delete: `world/region/`, `world/DIM-1/`, `world/DIM1/`
-3. Keep: `world/dimensions/`, `world/data/`
-4. Start server
-
-Pocket islands are stored in `world/dimensions/personalworlds/` and their registry data is in `world/data/`.
-
 ## Technical Details
 
 ### Dimension Storage
 
 Each pocket island is stored at:
+
 ```
 world/dimensions/personalworlds/pw_<uuid>/
 ```
@@ -270,7 +296,9 @@ Where `<uuid>` is the player's UUID without dashes.
 
 ### Metadata Recovery
 
-Each dimension folder contains a `.metadata` file that enables recovery if the main registry is corrupted. This file contains:
+Each dimension folder contains a `.metadata` file that enables recovery if the
+main registry is corrupted. This file contains:
+
 - Owner UUID
 - Owner name
 - Dimension ID
@@ -293,6 +321,49 @@ The mod is designed to handle 15+ concurrent islands efficiently:
 - Islands unload automatically when empty (after 30 second delay)
 - Memory-efficient chunk generation for void worlds
 - Performance monitoring available via debug commands
+
+## FAQ
+
+### Do I need the mod on both client and server?
+
+**Yes.** Pocket Islands must be installed on both the server and all connecting
+clients.
+
+### What happens if a client doesn't have the mod installed?
+
+The client will experience severe rendering issues when looking at a portal.
+Chunks will fail to load properly, causing:
+
+- Invisible or corrupted terrain
+- Falling through the world
+- Visual glitches and flickering
+- Potential client crashes
+
+This happens because the client can not properly load the textures and thus can
+not show the chunks properly.
+
+### Can I use this on a vanilla client?
+
+No. The mod registers custom dimension types that vanilla clients cannot
+understand. Always ensure clients have the mod installed before they attempt to
+use pocket island portals.
+
+### What happens to my island if the main world is reset?
+
+Your island is safe. Pocket islands are stored separately from the main world.
+See [World Reset Procedure](#world-reset-procedure) for details on which
+folders to keep.
+
+### Can I visit other players' islands?
+
+Yes, if they invite you. Use `/pi invite <player>` to invite someone, and
+`/pi go <player>` to visit an island you've been invited to. Or just enter their
+portal after having been invited.
+
+### How do I get back from my island?
+
+Enter the return portal on your island. It teleports you back to the exact
+location you entered from.
 
 ## License
 
