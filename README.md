@@ -114,7 +114,8 @@ different materials and properties.
                 "minecraft:grass_block",
                 "minecraft:dirt",
                 "minecraft:stone"
-            ]
+            ],
+            "portalColor": "red"
         }
     ],
     "consumeActivationItem": false,
@@ -141,6 +142,9 @@ Define multiple portal types to create islands with different materials:
     - Create themed islands: grass/dirt/stone, netherrack/soul_sand/basalt, end_stone, etc.
     - Each portal type creates a unique island composition
     - Each layer is 1 block thick, for 2 dirt block layers, repeat the material in the array
+- **`portalColor`** — Color of the portal effect (default: `"red"`)
+    - Available colors: `"red"`, `"cyan"`
+    - Helps visually distinguish different portal types
 
 #### Invitations
 
@@ -177,7 +181,8 @@ can choose which type of island they want by using different portal materials:
                 "minecraft:grass_block",
                 "minecraft:dirt",
                 "minecraft:stone"
-            ]
+            ],
+            "portalColor": "red"
         },
         {
             "frameBlock": "minecraft:blackstone",
@@ -186,14 +191,16 @@ can choose which type of island they want by using different portal materials:
                 "minecraft:netherrack",
                 "minecraft:soul_sand",
                 "minecraft:basalt"
-            ]
+            ],
+            "portalColor": "red"
         },
         {
             "frameBlock": "minecraft:end_stone_bricks",
             "activationItem": "minecraft:ender_pearl",
             "islandLayers": [
                 "minecraft:end_stone"
-            ]
+            ],
+            "portalColor": "cyan"
         }
     ]
 }

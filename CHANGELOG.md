@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-01-11
+
+### Added
+- Configurable portal colors per portal type (`portalColor` property)
+- `PortalColor` enum with RED and CYAN variants (extensible for future colors)
+- Color caching in ModBlocks for performance
+
+### Changed
+- Portal block now has `COLOR` state property alongside `AXIS`
+- Model files restructured: separate models per color/axis combination
+- Blockstate JSON updated to handle (axis, color) variant combinations
+
+### Removed
+- Deprecated configuration fields (frameBlock, activationItem, message fields, worldType fields)
+- Old portal model files replaced with color-specific variants
+
 ## [0.2.0] - 2025-01-10
 
 ### Changed
