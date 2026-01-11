@@ -50,5 +50,4 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar
-            build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-dev.jar
             build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar
