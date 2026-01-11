@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.portal.PortalColor;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ import java.util.List;
 public class ModConfig {
 
     /**
-     * Portal configuration defining frame material, activation item, and island composition.
+     * Portal configuration defining frame material, activation item, island composition, and portal color.
      */
     public static class PortalConfig {
         /** Block used for portal frames (e.g., "minecraft:nether_bricks") */
@@ -32,6 +33,9 @@ public class ModConfig {
         /** Island layer materials from top to bottom (max 5) */
         public String[] islandLayers;
 
+        /** Portal block color (e.g., "red", "cyan"). See PortalColor enum for valid values. */
+        public String portalColor;
+
         /** Default constructor for GSON */
         public PortalConfig() {
             this.frameBlock = "minecraft:nether_bricks";
@@ -41,13 +45,15 @@ public class ModConfig {
                 "minecraft:dirt",
                 "minecraft:stone"
             };
+            this.portalColor = "red";
         }
 
         /** Full constructor for programmatic creation */
-        public PortalConfig(String frameBlock, String activationItem, String[] islandLayers) {
+        public PortalConfig(String frameBlock, String activationItem, String[] islandLayers, String portalColor) {
             this.frameBlock = frameBlock;
             this.activationItem = activationItem;
             this.islandLayers = islandLayers;
+            this.portalColor = portalColor;
         }
     }
 
@@ -60,42 +66,9 @@ public class ModConfig {
 
     /**
      * Array of portal type configurations.
-     * Each portal type defines frame material, activation item, and island layers.
+     * Each portal type defines frame material, activation item, island layers, and portal color.
      */
     public List<PortalConfig> portalTypes = new ArrayList<>();
-
-    // DEPRECATED: Kept for backward compatibility migration only
-    /** @deprecated Use portalTypes instead. This field is used only for migration from old configs. */
-    @Deprecated
-    public String frameBlock = null;
-
-    /** @deprecated Use portalTypes instead. This field is used only for migration from old configs. */
-    @Deprecated
-    public String activationItem = null;
-
-    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
-    @Deprecated
-    public String messageInviteSent = null;
-
-    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
-    @Deprecated
-    public String messageInviteReceived = null;
-
-    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
-    @Deprecated
-    public String messageRevoked = null;
-
-    /** @deprecated Removed - use language files for translation. This field is used only for migration warnings. */
-    @Deprecated
-    public String messageEjected = null;
-
-    /** @deprecated Removed - defaultWorldType is hardcoded to VOID. This field is used only for migration warnings. */
-    @Deprecated
-    public String defaultWorldType = null;
-
-    /** @deprecated Removed - not implemented. This field is used only for migration warnings. */
-    @Deprecated
-    public Boolean allowPlayerWorldTypeChoice = null;
 
     /** Whether the activation item is consumed on use. Default: false */
     public boolean consumeActivationItem = false;
@@ -156,47 +129,11 @@ public class ModConfig {
                     save();
                 }
 
-                // Migrate old config format to portalTypes array
-                if (INSTANCE.portalTypes.isEmpty() &&
-                    INSTANCE.frameBlock != null &&
-                    INSTANCE.activationItem != null) {
-
-                    PersonalWorldsMod.LOGGER.info("Migrating old config format to portalTypes array");
-
-                    PortalConfig migratedPortal = new PortalConfig(
-                        INSTANCE.frameBlock,
-                        INSTANCE.activationItem,
-                        new String[]{"minecraft:grass_block", "minecraft:dirt", "minecraft:stone"}
-                    );
-                    INSTANCE.portalTypes.add(migratedPortal);
-
-                    // Clear old fields
-                    INSTANCE.frameBlock = null;
-                    INSTANCE.activationItem = null;
-
-                    // Save migrated config
-                    save();
-                }
-
                 // Ensure at least one portal type exists
                 if (INSTANCE.portalTypes.isEmpty()) {
                     PersonalWorldsMod.LOGGER.info("No portal types defined, adding default");
                     INSTANCE.portalTypes.add(new PortalConfig());
                     save();
-                }
-
-                // Warn about deprecated message fields
-                if (INSTANCE.messageInviteSent != null || INSTANCE.messageInviteReceived != null ||
-                    INSTANCE.messageRevoked != null || INSTANCE.messageEjected != null) {
-                    PersonalWorldsMod.LOGGER.warn("Custom messages in config are deprecated and ignored!");
-                    PersonalWorldsMod.LOGGER.warn("Use language files instead: src/main/resources/assets/personalworlds/lang/en_us.json");
-                    PersonalWorldsMod.LOGGER.warn("See README for translation guide");
-                }
-
-                // Warn about deprecated world type fields
-                if (INSTANCE.defaultWorldType != null || INSTANCE.allowPlayerWorldTypeChoice != null) {
-                    PersonalWorldsMod.LOGGER.warn("World type configuration is deprecated and ignored!");
-                    PersonalWorldsMod.LOGGER.warn("World type is hardcoded to VOID (architectural requirement)");
                 }
 
                 PersonalWorldsMod.LOGGER.info("Configuration loaded from {}", CONFIG_PATH);
@@ -293,6 +230,19 @@ public class ModConfig {
                     PersonalWorldsMod.LOGGER.warn("Portal type {} layer {} has invalid block ID '{}', using minecraft:grass_block",
                         i, j, portal.islandLayers[j]);
                     portal.islandLayers[j] = "minecraft:grass_block";
+                }
+            }
+
+            // Validate portal color (migration for old configs without portalColor)
+            if (portal.portalColor == null || portal.portalColor.isEmpty()) {
+                PersonalWorldsMod.LOGGER.info("Portal type {} has no color specified, using 'red'", i);
+                portal.portalColor = "red";
+            } else {
+                // Validate color is a known enum value
+                PortalColor parsedColor = PortalColor.fromString(portal.portalColor);
+                if (!parsedColor.asString().equalsIgnoreCase(portal.portalColor)) {
+                    PersonalWorldsMod.LOGGER.warn("Portal type {} has invalid color '{}', using '{}' instead",
+                        i, portal.portalColor, parsedColor.asString());
                 }
             }
         }
