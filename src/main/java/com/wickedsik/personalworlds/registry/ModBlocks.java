@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.registry;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
+import com.wickedsik.personalworlds.portal.PortalColor;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -36,6 +37,12 @@ public class ModBlocks {
      * Lazily loaded from config, cleared on config reload.
      */
     private static Block[] cachedFrameBlocks = null;
+
+    /**
+     * Cached portal colors for all portal types.
+     * Lazily loaded from config, cleared on config reload.
+     */
+    private static PortalColor[] cachedPortalColors = null;
 
     /**
      * Register all mod blocks.
@@ -92,11 +99,42 @@ public class ModBlocks {
     }
 
     /**
-     * Clear the cached frame blocks.
+     * Get the portal color for a specific portal type.
+     * Reads from config on first access, with fallback to RED.
+     *
+     * @param portalTypeIndex Index into ModConfig.portalTypes array
+     * @return The portal color for this portal type
+     */
+    public static PortalColor getPortalColor(int portalTypeIndex) {
+        if (cachedPortalColors == null) {
+            var configs = ModConfig.get().portalTypes;
+            cachedPortalColors = new PortalColor[configs.size()];
+
+            for (int i = 0; i < configs.size(); i++) {
+                String colorStr = configs.get(i).portalColor;
+                cachedPortalColors[i] = PortalColor.fromString(colorStr);
+                PersonalWorldsMod.LOGGER.debug("Portal type {} color set to: {}",
+                    i, cachedPortalColors[i].asString());
+            }
+        }
+
+        // Bounds check with clamping
+        if (portalTypeIndex < 0 || portalTypeIndex >= cachedPortalColors.length) {
+            PersonalWorldsMod.LOGGER.warn("Portal type index {} out of bounds (0-{}), using RED",
+                portalTypeIndex, cachedPortalColors.length - 1);
+            return PortalColor.RED;
+        }
+
+        return cachedPortalColors[portalTypeIndex];
+    }
+
+    /**
+     * Clear all cached data.
      * Called when configuration is reloaded.
      */
     public static void clearCache() {
         cachedFrameBlocks = null;
+        cachedPortalColors = null;
         PersonalWorldsMod.LOGGER.debug("Block cache cleared");
     }
 }

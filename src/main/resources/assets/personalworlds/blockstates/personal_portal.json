@@ -1,6 +1,8 @@
 {
   "variants": {
-    "axis=x": { "model": "personalworlds:block/personal_portal_ns" },
-    "axis=z": { "model": "personalworlds:block/personal_portal_ew" }
+    "axis=x,color=red": { "model": "personalworlds:block/personal_portal_ns_red" },
+    "axis=z,color=red": { "model": "personalworlds:block/personal_portal_ew_red" },
+    "axis=x,color=cyan": { "model": "personalworlds:block/personal_portal_ns_cyan" },
+    "axis=z,color=cyan": { "model": "personalworlds:block/personal_portal_ew_cyan" }
   }
 }

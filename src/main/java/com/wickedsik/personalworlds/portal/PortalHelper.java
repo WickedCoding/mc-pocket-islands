@@ -93,9 +93,11 @@ public class PortalHelper {
 
         PortalFrame portalFrame = frame.get();
 
-        // Fill interior with portal blocks
+        // Fill interior with portal blocks with the correct color
+        PortalColor color = ModBlocks.getPortalColor(portalTypeIndex);
         BlockState portalState = ModBlocks.PERSONAL_PORTAL.getDefaultState()
-            .with(PersonalPortalBlock.AXIS, portalFrame.axis());
+            .with(PersonalPortalBlock.AXIS, portalFrame.axis())
+            .with(PersonalPortalBlock.COLOR, color);
 
         for (BlockPos pos : portalFrame.getInteriorPositions()) {
             world.setBlockState(pos, portalState);

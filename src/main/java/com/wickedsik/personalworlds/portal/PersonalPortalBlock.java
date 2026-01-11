@@ -38,6 +38,12 @@ public class PersonalPortalBlock extends Block {
     public static final EnumProperty<Direction.Axis> AXIS = Properties.HORIZONTAL_AXIS;
 
     /**
+     * Color property for portal appearance.
+     * Determines which texture is used for rendering.
+     */
+    public static final EnumProperty<PortalColor> COLOR = EnumProperty.of("color", PortalColor.class);
+
+    /**
      * Collision shape for X-axis portals (thin plane facing north/south).
      */
     protected static final VoxelShape X_SHAPE = Block.createCuboidShape(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
@@ -55,12 +61,14 @@ public class PersonalPortalBlock extends Block {
 
     public PersonalPortalBlock(Settings settings) {
         super(settings);
-        setDefaultState(getStateManager().getDefaultState().with(AXIS, Direction.Axis.X));
+        setDefaultState(getStateManager().getDefaultState()
+            .with(AXIS, Direction.Axis.X)
+            .with(COLOR, PortalColor.RED));
     }
 
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(AXIS);
+        builder.add(AXIS, COLOR);
     }
 
     @Override
