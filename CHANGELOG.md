@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-01-13
+
 ### Added
 - Multi-version support using Stonecutter (1.20.1 and 1.20.4 from single codebase)
+- Minecraft 1.20.1 compatibility
+
+### Changed
+- Build system converted from Groovy to Kotlin DSL
+- GitHub Actions updated for multi-version matrix builds
 
 ### Fixed
 - Dimension time no longer resets to noon when entering; now syncs with overworld time
