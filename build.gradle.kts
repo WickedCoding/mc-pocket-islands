@@ -40,12 +40,10 @@ dependencies {
     // Fantasy — runtime dimension creation (included in JAR)
     modImplementation(include("xyz.nucleoid:fantasy:${property("fantasy_version")}")!!)
 
-    // fabric-permissions-api — optional soft dependency for LuckPerms integration (included in JAR)
+    // fabric-permissions-api — optional soft dependency for LuckPerms integration
+    // NOT bundled: users install LuckPerms which provides a compatible version
     // Falls back to vanilla OP levels when no permission plugin is installed
-    // Exclude the fabric-api-bom to prevent it from overriding our fabric-api
-    modImplementation(include("me.lucko:fabric-permissions-api:0.3.3") {
-        exclude(group = "net.fabricmc.fabric-api", module = "fabric-api-bom")
-    }!!)
+    modCompileOnly("me.lucko:fabric-permissions-api:0.3.3")
 
     // Testing — JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")

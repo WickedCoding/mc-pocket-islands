@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-01-13
+
+### Fixed
+- Compatibility with Xaero's Minimap/World Map mods
+  - Removed bundled fabric-permissions-api (was compiled against MC 1.21.3, causing crashes on 1.20.x)
+  - Permission API now optional: install LuckPerms for permission node support, otherwise falls back to OP levels
+
 ## [0.4.1] - 2025-01-13
 
 ### Added
