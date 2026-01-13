@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
@@ -45,6 +46,101 @@ public class InvitationManager {
         // Check for invitation
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         return dataManager.hasInvitationFrom(visitorUuid, ownerUuid);
+    }
+
+    /**
+     * Check if a visitor can access an owner's dimension with full access control.
+     * Implements the following rules (in order):
+     * 1. Admins (OP level 2+) can always visit
+     * 2. Owner can always access their own dimension
+     * 3. Visitor must have an invitation
+     * 4. Host must be online
+     * 5. If config.allowVisitWhenHostNotHome is false, host must be on their own island
+     *
+     * @param server The Minecraft server
+     * @param visitor The visiting player entity (needed for admin check)
+     * @param ownerUuid The UUID of the dimension owner
+     * @return VisitDenialReason indicating whether visit is allowed or why it's denied
+     */
+    public static VisitDenialReason checkVisitAccess(MinecraftServer server, ServerPlayerEntity visitor, UUID ownerUuid) {
+        UUID visitorUuid = visitor.getUuid();
+
+        // 1. Admin bypass (OP level 2+)
+        if (visitor.hasPermissionLevel(2)) {
+            return VisitDenialReason.ALLOWED;
+        }
+
+        // 2. Owner can always access their own dimension
+        if (visitorUuid.equals(ownerUuid)) {
+            return VisitDenialReason.ALLOWED;
+        }
+
+        // 3. Check for invitation
+        PlayerDataManager dataManager = PlayerDataManager.get(server);
+        if (!dataManager.hasInvitationFrom(visitorUuid, ownerUuid)) {
+            return VisitDenialReason.NOT_INVITED;
+        }
+
+        // 4. Check if host is online
+        ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
+        if (host == null) {
+            return VisitDenialReason.HOST_OFFLINE;
+        }
+
+        // 5. Check if host is "home" (on their own island) - if config requires it
+        if (!ModConfig.get().allowVisitWhenHostNotHome) {
+            if (!isPlayerHome(host, ownerUuid)) {
+                return VisitDenialReason.HOST_NOT_HOME;
+            }
+        }
+
+        return VisitDenialReason.ALLOWED;
+    }
+
+    /**
+     * Check if a player is "home" - on their own personal island.
+     *
+     * @param player The player to check
+     * @param playerUuid The player's UUID (for dimension ownership check)
+     * @return true if the player is in their own personal dimension
+     */
+    private static boolean isPlayerHome(ServerPlayerEntity player, UUID playerUuid) {
+        ServerWorld world = player.getServerWorld();
+
+        // Check if player is in any personal dimension
+        if (!PortalHelper.isInPersonalDimension(world)) {
+            return false;
+        }
+
+        // Check if it's THEIR OWN dimension (not visiting someone else's)
+        Optional<UUID> dimensionOwner = PortalHelper.getDimensionOwner(world);
+        return dimensionOwner.isPresent() && dimensionOwner.get().equals(playerUuid);
+    }
+
+    /**
+     * Notify the host that someone tried to visit their island but was denied.
+     * Only notifies if the host is online.
+     *
+     * @param server The Minecraft server
+     * @param ownerUuid The UUID of the dimension owner
+     * @param visitorName The name of the visitor who was denied
+     * @param reason The reason for denial (only HOST_NOT_HOME triggers notification)
+     */
+    public static void notifyHostOfVisitAttempt(MinecraftServer server, UUID ownerUuid, String visitorName, VisitDenialReason reason) {
+        // Only notify for HOST_NOT_HOME (host is online but not home)
+        // Don't notify for HOST_OFFLINE (they're not there to receive it)
+        if (reason != VisitDenialReason.HOST_NOT_HOME) {
+            return;
+        }
+
+        ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
+        if (host != null) {
+            host.sendMessage(
+                Text.translatable("personalworlds.visit.attempted.not_home", visitorName)
+                    .formatted(Formatting.GRAY),
+                false
+            );
+        }
     }
 
     // --- Invitation Operations ---

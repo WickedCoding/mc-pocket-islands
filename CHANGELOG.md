@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-01-13
+
+### Added
+- Visit access control system for personal islands
+  - Visitors cannot enter when host is offline
+  - Configurable `allowVisitWhenHostNotHome` option (default: false - host must be on their island)
+  - Admins (OP level 2+) bypass all visit restrictions
+  - Host notifications when visitors are denied access
+
+### Fixed
+- UUID parsing in dimension ownership check (dashless UUIDs now handled correctly)
+
 ## [0.4.0] - 2025-01-13
 
 ### Added

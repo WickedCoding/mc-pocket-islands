@@ -78,6 +78,17 @@ public class ModConfig {
     /** Maximum number of invitations per player. -1 for unlimited. Default: 20 */
     public int maxInvitationsPerPlayer = 20;
 
+    // ==================== Visit Access Control ====================
+
+    /**
+     * Whether visitors can enter an island when the host is online but not on their own island.
+     * When false: visitors can only enter when the host is physically present on their island.
+     * When true: visitors can enter anytime the host is online (original behavior).
+     * Note: Admins (OP level 2+) bypass this restriction.
+     * Default: false (restrictive - host must be home)
+     */
+    public boolean allowVisitWhenHostNotHome = false;
+
     // ==================== Performance ====================
 
     /** Delay in ticks before unloading an empty dimension. Default: 600 (30 seconds) */

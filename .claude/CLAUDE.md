@@ -13,9 +13,6 @@ are deleted and regenerated, each player's pocket island remains intact.
 This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version
 support from a single codebase.
 
-See `docs/per-player-dimensions-mod-plan.md` for the complete architectural
-specification.
-
 ## Build Commands
 
 ```bash
@@ -42,6 +39,12 @@ specification.
 
 # Run tests for all versions
 ./gradlew chiseledTest
+
+# Run a single test class
+./gradlew test --tests "com.wickedsik.personalworlds.portal.PortalFrameTest"
+
+# Run a single test method
+./gradlew test --tests "com.wickedsik.personalworlds.portal.PortalFrameTest.testFrameDetection"
 
 # Generate Minecraft sources for IDE navigation
 ./gradlew genSources
@@ -130,20 +133,6 @@ The PersistentState API changed in MC 1.20.2. These files contain versioned code
 - `PlayerDataManager.java` — TYPE constant and get() method
 - `PortalOwnershipManager.java` — TYPE constant and get() method
 
-### Project Structure with Stonecutter
-
-```
-personalworlds/
-├── settings.gradle.kts      # Stonecutter version configuration
-├── stonecutter.gradle.kts   # Active version & chiseled tasks
-├── build.gradle.kts         # Shared build logic
-├── gradle.properties        # Shared properties
-├── versions/                # Version-specific configs
-│   ├── 1.20.1/gradle.properties
-│   └── 1.20.4/gradle.properties
-└── src/                     # Source code (single codebase)
-```
-
 ### Adding a New Version
 
 1. Add version to `settings.gradle.kts`:
@@ -151,7 +140,7 @@ personalworlds/
    versions("1.20.1", "1.20.4", "1.21.4")
    ```
 2. Create `versions/<new-version>/gradle.properties` with dependencies
-3. Run `./gradlew build` to generate the new version subproject
+3. Run `./gradlew chiseledBuild` to generate the new version subproject
 4. Check for API differences requiring new versioned comments
 5. Test with `./gradlew "Set active project to <version>"` + `./gradlew runClient`
 
@@ -358,25 +347,7 @@ This triggers `.github/workflows/release.yml` which:
 
 **Release artifacts:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.4.0+1.20.4.jar`)
 
-## Reference Documentation
+## Key External Dependencies
 
-- **Fantasy library:** https://github.com/NucleoidMC/fantasy
-- **Fabric Wiki — Dimensions:** https://fabricmc.net/wiki/tutorial:dimension
-- **Fabric Wiki — Custom Portals:** https://fabricmc.net/wiki/tutorial:portal
-- **Fabric API Javadoc:** https://maven.fabricmc.net/docs/fabric-api-latest/
-
-## Implementation Status
-
-**Status:** Feature-complete (v0.4.0)
-
-All planned phases have been implemented:
-
-1. ✅ Core Infrastructure (DimensionRegistry, DimensionManager)
-2. ✅ Portal System (blocks, detection, activation, teleportation)
-3. ✅ Player Data (return positions)
-4. ✅ Invitations (command-based)
-5. ✅ Polish (config, starter platform, void generator, admin commands)
-6. ✅ Hardening (edge cases, crash recovery, performance monitoring)
-7. ✅ Localization (language file support)
-8. ✅ Unit test suite
-9. ✅ Multi-version support (Stonecutter: 1.20.1, 1.20.4)
+- **Fantasy** (`xyz.nucleoid:fantasy`) — Runtime dimension creation. Without this, Fabric API alone cannot create dimensions at runtime. See https://github.com/NucleoidMC/fantasy
+- **Fabric Permissions API** — Optional soft dependency for LuckPerms integration; falls back to vanilla OP levels

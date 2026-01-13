@@ -9,6 +9,7 @@ import com.wickedsik.personalworlds.dimension.WorldGenType;
 import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
+import com.wickedsik.personalworlds.player.VisitDenialReason;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
@@ -193,23 +194,34 @@ public class PortalHelper {
         }
 
         UUID portalOwner = portalOwnerOpt.get();
-        UUID visitorUuid = player.getUuid();
 
         // Get portal type from ownership manager
         int portalTypeIndex = ownershipManager.getPortalType(fromWorld, portalPos).orElse(0);
 
-        // Permission check: owner OR has invitation
-        if (InvitationManager.canVisit(server, visitorUuid, portalOwner)) {
+        // Full access control check (admin bypass, online/home checks)
+        VisitDenialReason denialReason = InvitationManager.checkVisitAccess(server, player, portalOwner);
+
+        if (denialReason.isAllowed()) {
             teleportToOwnerDimension(player, server, fromWorld, portalOwner, portalTypeIndex);
         } else {
             String ownerName = ownershipManager.getOwnerName(server, portalOwner);
-            player.sendMessage(
-                Text.literal("You have not been invited by ")
-                    .append(Text.literal(ownerName).formatted(Formatting.YELLOW)),
-                false
+
+            // Notify host if they're online but not home
+            InvitationManager.notifyHostOfVisitAttempt(
+                server, portalOwner, player.getName().getString(), denialReason
             );
-            PersonalWorldsMod.LOGGER.debug("{} denied entry to {}'s portal at {}",
-                player.getName().getString(), ownerName, portalPos);
+
+            // Send appropriate denial message to visitor
+            Text denialMessage = switch (denialReason) {
+                case NOT_INVITED -> Text.translatable("personalworlds.command.error.not_invited", ownerName);
+                case HOST_OFFLINE -> Text.translatable("personalworlds.visit.denied.offline", ownerName);
+                case HOST_NOT_HOME -> Text.translatable("personalworlds.visit.denied.not_home", ownerName);
+                case ALLOWED -> Text.empty(); // Should never happen
+            };
+
+            player.sendMessage(denialMessage.copy().formatted(Formatting.RED), false);
+            PersonalWorldsMod.LOGGER.debug("{} denied entry to {}'s portal at {} (reason: {})",
+                player.getName().getString(), ownerName, portalPos, denialReason);
         }
     }
 
@@ -457,6 +469,16 @@ public class PortalHelper {
 
         String path = world.getRegistryKey().getValue().getPath();
         String uuidStr = path.substring(3); // Remove "pw_" prefix
+
+        // Dimension IDs store UUIDs without dashes (e.g., "e8823481a39c3659a564a28f5ed6f193")
+        // We need to insert dashes for UUID.fromString() which requires format: 8-4-4-4-12
+        if (uuidStr.length() == 32 && !uuidStr.contains("-")) {
+            uuidStr = uuidStr.substring(0, 8) + "-" +
+                      uuidStr.substring(8, 12) + "-" +
+                      uuidStr.substring(12, 16) + "-" +
+                      uuidStr.substring(16, 20) + "-" +
+                      uuidStr.substring(20);
+        }
 
         try {
             return Optional.of(UUID.fromString(uuidStr));

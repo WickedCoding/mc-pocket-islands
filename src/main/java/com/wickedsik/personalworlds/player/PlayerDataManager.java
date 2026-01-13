@@ -22,12 +22,12 @@ public class PlayerDataManager extends PersistentState {
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_player_data";
 
     //? if >=1.20.2 {
-    /*private static final Type<PlayerDataManager> TYPE = new Type<>(
+    private static final Type<PlayerDataManager> TYPE = new Type<>(
         PlayerDataManager::new,
         PlayerDataManager::fromNbt,
         null // No DataFixTypes needed
     );
-    *///?}
+    //?}
 
     /**
      * Return positions: Player UUID -> ReturnData
@@ -371,9 +371,9 @@ public class PlayerDataManager extends PersistentState {
     public static PlayerDataManager get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
         //? if >=1.20.2 {
-        /*return stateManager.getOrCreate(TYPE, DATA_NAME);
-        *///?} else {
-        return stateManager.getOrCreate(PlayerDataManager::fromNbt, PlayerDataManager::new, DATA_NAME);
-        //?}
+        return stateManager.getOrCreate(TYPE, DATA_NAME);
+        //?} else {
+        /*return stateManager.getOrCreate(PlayerDataManager::fromNbt, PlayerDataManager::new, DATA_NAME);
+        *///?}
     }
 }

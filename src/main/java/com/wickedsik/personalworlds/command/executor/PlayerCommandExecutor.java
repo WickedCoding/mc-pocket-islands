@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.command.executor;
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
 import com.wickedsik.personalworlds.player.InvitationManager;
+import com.wickedsik.personalworlds.player.VisitDenialReason;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -97,15 +98,38 @@ public class PlayerCommandExecutor {
 
         PlayerLookupService.PlayerReference ref = targetRef.get();
 
-        if (!InvitationManager.canVisit(server, player.getUuid(), ref.uuid())) {
-            return CommandResult.error(
-                Text.translatable("personalworlds.command.error.not_invited", ref.resolvedName())
+        // Check visit access with full access control (admin bypass, online/home checks)
+        VisitDenialReason denialReason = InvitationManager.checkVisitAccess(server, player, ref.uuid());
+
+        if (denialReason.isDenied()) {
+            // Notify host if they're online but not home
+            InvitationManager.notifyHostOfVisitAttempt(
+                server, ref.uuid(), player.getName().getString(), denialReason
             );
+
+            // Return appropriate error message based on denial reason
+            return CommandResult.error(getDenialMessage(denialReason, ref.resolvedName()));
         }
 
         boolean success = PortalHelper.teleportToDimension(player, server, ref.uuid());
         return success ? CommandResult.silent() : CommandResult.error(
             Text.translatable("personalworlds.command.error.teleport_failed")
         );
+    }
+
+    /**
+     * Get the appropriate denial message for a visit denial reason.
+     *
+     * @param reason The denial reason
+     * @param ownerName The name of the island owner
+     * @return The localized denial message
+     */
+    private Text getDenialMessage(VisitDenialReason reason, String ownerName) {
+        return switch (reason) {
+            case NOT_INVITED -> Text.translatable("personalworlds.command.error.not_invited", ownerName);
+            case HOST_OFFLINE -> Text.translatable("personalworlds.visit.denied.offline", ownerName);
+            case HOST_NOT_HOME -> Text.translatable("personalworlds.visit.denied.not_home", ownerName);
+            case ALLOWED -> Text.empty(); // Should never happen
+        };
     }
 }

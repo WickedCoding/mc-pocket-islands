@@ -1,4 +1,8 @@
 {
+  "personalworlds.visit.denied.offline": "%s is offline",
+  "personalworlds.visit.denied.not_home": "%s is not home",
+  "personalworlds.visit.attempted.not_home": "%s tried to visit your island",
+
   "personalworlds.message.invite_sent": "Invited %s to your dimension",
   "personalworlds.message.invite_received": "%s invited you to their dimension",
   "personalworlds.message.invite_revoked": "Revoked %s's invitation",
