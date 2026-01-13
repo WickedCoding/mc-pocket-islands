@@ -5,10 +5,13 @@ code in this repository.
 
 ## Project Overview
 
-**Pocket Islands** — A Fabric mod for Minecraft 1.20.4 that provides each player
+**Pocket Islands** — A Fabric mod for Minecraft (1.20.1, 1.20.4) that provides each player
 with their own isolated, persistent pocket dimension island. The primary use
 case is dimension survival through world resets: when the overworld/nether/end
 are deleted and regenerated, each player's pocket island remains intact.
+
+This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version
+support from a single codebase.
 
 See `docs/per-player-dimensions-mod-plan.md` for the complete architectural
 specification.
@@ -16,23 +19,37 @@ specification.
 ## Build Commands
 
 ```bash
-# Build the mod JAR
-./gradlew build
+# Build ALL versions at once (RECOMMENDED)
+./gradlew chiseledBuild
+
+# IMPORTANT: Do NOT use `./gradlew build` directly - it fails with Stonecutter.
+# The chiseledBuild task properly coordinates version switching and source processing.
+
+# Switch active version to 1.20.1
+./gradlew "Set active project to 1.20.1"
+
+# Switch active version to 1.20.4
+./gradlew "Set active project to 1.20.4"
 
 # Clean build artifacts
 ./gradlew clean
 
-# Run Minecraft client with the mod loaded
+# Run Minecraft client with the mod loaded (uses active version)
 ./gradlew runClient
 
 # Run Minecraft server with the mod loaded
 ./gradlew runServer
 
+# Run tests for all versions
+./gradlew chiseledTest
+
 # Generate Minecraft sources for IDE navigation
 ./gradlew genSources
 ```
 
-The compiled mod JAR will be located at: `build/libs/personalworlds-<version>.jar`
+**Output locations (after chiseledBuild):**
+- MC 1.20.1: `versions/1.20.1/build/libs/personalworlds-<version>.jar`
+- MC 1.20.4: `versions/1.20.4/build/libs/personalworlds-<version>.jar`
 
 ## Project Structure
 
@@ -45,8 +62,11 @@ This is a standard Fabric mod project with split environment source sets:
 
 ### Key Configuration Files
 
-- **`gradle.properties`** — Minecraft version (1.20.4), Fabric Loader version, mod metadata
-- **`build.gradle`** — Dependencies, build configuration, uses Fabric Loom for mod development
+- **`settings.gradle.kts`** — Stonecutter multi-version configuration
+- **`stonecutter.gradle.kts`** — Chiseled tasks and active version selection
+- **`build.gradle.kts`** — Dependencies, build configuration, uses Fabric Loom
+- **`gradle.properties`** — Shared properties (mod version, loom version)
+- **`versions/<mc-version>/gradle.properties`** — Version-specific dependencies
 - **`src/main/resources/fabric.mod.json`** — Mod metadata, entrypoints, dependencies
 
 ### Package Structure
@@ -63,8 +83,77 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 
 ### Dependencies
 
-- **Fantasy** — Required for runtime dimension creation (`xyz.nucleoid:fantasy:0.5.0+1.20.4`)
+| MC Version | Fantasy | Fabric API |
+|------------|---------|------------|
+| 1.20.1 | 0.4.11+1.20-rc1 | 0.92.6+1.20.1 |
+| 1.20.4 | 0.5.0+1.20.4 | 0.97.0+1.20.4 |
+
+- **Fantasy** — Required for runtime dimension creation (version varies by MC version)
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration
+
+## Multi-Version Support (Stonecutter)
+
+This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version
+management from a single codebase.
+
+### Supported Versions
+
+| MC Version | Status | Active |
+|------------|--------|--------|
+| 1.20.1 | Supported | |
+| 1.20.4 | Supported | ✓ (default) |
+
+### Versioned Comment Syntax
+
+Stonecutter uses special comments for conditional compilation:
+
+```java
+//? if >=1.20.2 {
+// Code for MC 1.20.2 and newer (uses PersistentState.Type)
+//?}
+
+//? if >=1.20.2 {
+return stateManager.getOrCreate(TYPE, DATA_NAME);
+//?} else {
+/*return stateManager.getOrCreate(T::fromNbt, T::new, DATA_NAME);*/
+//?}
+```
+
+**Important:** The `else` branch code must be commented out (`/* */`) when the
+active version is >= 1.20.2.
+
+### Version-Specific Code Locations
+
+The PersistentState API changed in MC 1.20.2. These files contain versioned code:
+
+- `DimensionRegistry.java` — TYPE constant and get() method
+- `PlayerDataManager.java` — TYPE constant and get() method
+- `PortalOwnershipManager.java` — TYPE constant and get() method
+
+### Project Structure with Stonecutter
+
+```
+personalworlds/
+├── settings.gradle.kts      # Stonecutter version configuration
+├── stonecutter.gradle.kts   # Active version & chiseled tasks
+├── build.gradle.kts         # Shared build logic
+├── gradle.properties        # Shared properties
+├── versions/                # Version-specific configs
+│   ├── 1.20.1/gradle.properties
+│   └── 1.20.4/gradle.properties
+└── src/                     # Source code (single codebase)
+```
+
+### Adding a New Version
+
+1. Add version to `settings.gradle.kts`:
+   ```kotlin
+   versions("1.20.1", "1.20.4", "1.21.4")
+   ```
+2. Create `versions/<new-version>/gradle.properties` with dependencies
+3. Run `./gradlew build` to generate the new version subproject
+4. Check for API differences requiring new versioned comments
+5. Test with `./gradlew "Set active project to <version>"` + `./gradlew runClient`
 
 ## Commit Format
 
@@ -217,15 +306,22 @@ Run with `./gradlew test`. Tests cover:
 
 ## Minecraft Version Notes
 
-The mod targets **Minecraft 1.20.4** for compatibility with existing modded
-servers. This version uses:
+The mod targets **Minecraft 1.20.1 and 1.20.4** using Stonecutter for
+multi-version support. Both versions use:
 
 - **Java 17** (not Java 21)
 - **Yarn mappings** (not Mojang mappings)
-- **Fantasy 0.5.0+1.20.4** for runtime dimension creation
 - **FabricDimensions.teleport()** for cross-dimension teleportation
 
-**Key API differences from 1.21.x:**
+### API Differences Between Supported Versions
+
+**1.20.1 vs 1.20.4 (handled by Stonecutter):**
+
+- `PersistentState.getOrCreate()` signature changed in 1.20.2
+  - 1.20.1: `getOrCreate(fromNbt, constructor, name)`
+  - 1.20.4: `getOrCreate(Type<T>, name)`
+
+**Key API differences from 1.21.x (for future support):**
 
 - `Identifier` instead of `ResourceLocation`
 - `new Identifier(namespace, path)` instead of `Identifier.of()`
@@ -235,13 +331,12 @@ servers. This version uses:
 - `PersistentState` instead of `SavedData`
 - `Text.literal()` instead of `Component.literal()`
 
-**If updating Minecraft versions:**
+**Adding 1.21.x support:**
 
-1. Update `minecraft_version` in `gradle.properties`
-2. Update `fabric_version` to match (check https://fabricmc.net/develop)
-3. Verify Fantasy compatibility (may need version update)
-4. Check for API changes in Fabric API dimension/teleportation modules
-5. For 1.21+: Switch to Mojang mappings and update class names accordingly
+1. Add version to `settings.gradle.kts`
+2. Create `versions/1.21.x/gradle.properties` with appropriate dependencies
+3. Add versioned comments for additional API differences
+4. Consider switching to Mojang mappings if preferred
 
 ## Releasing
 
@@ -250,16 +345,20 @@ Releases are automated via GitHub Actions when a version tag is pushed:
 ```bash
 # Update mod_version in gradle.properties
 # Commit changes
-git tag v0.2.0
+git tag v0.4.0
 git push origin main --tags
 ```
 
 This triggers `.github/workflows/release.yml` which:
 
-1. Builds the mod
-2. Runs tests
-3. Creates a GitHub Release with the JAR and sources attached
+1. Builds **all versions** using `chiseledBuild`
+2. Runs tests for all versions
+3. Creates a GitHub Release with JARs for all MC versions attached
 4. Auto-generates release notes from commits
+
+**Release artifacts:**
+- `personalworlds-<version>-mc1.20.1.jar`
+- `personalworlds-<version>-mc1.20.4.jar`
 
 ## Reference Documentation
 
@@ -270,7 +369,7 @@ This triggers `.github/workflows/release.yml` which:
 
 ## Implementation Status
 
-**Status:** Feature-complete (v0.2.0)
+**Status:** Feature-complete (v0.4.0)
 
 All planned phases have been implemented:
 
@@ -282,3 +381,4 @@ All planned phases have been implemented:
 6. ✅ Hardening (edge cases, crash recovery, performance monitoring)
 7. ✅ Localization (language file support)
 8. ✅ Unit test suite
+9. ✅ Multi-version support (Stonecutter: 1.20.1, 1.20.4)

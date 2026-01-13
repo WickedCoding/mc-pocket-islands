@@ -30,11 +30,13 @@ public class PortalOwnershipManager extends PersistentState {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_portal_ownership";
 
-    private static final Type<PortalOwnershipManager> TYPE = new Type<>(
+    //? if >=1.20.2 {
+    /*private static final Type<PortalOwnershipManager> TYPE = new Type<>(
         PortalOwnershipManager::new,
         PortalOwnershipManager::fromNbt,
         null // No DataFixTypes needed
     );
+    *///?}
 
     /**
      * Portal ownership data: stores owner UUID and portal type index.
@@ -258,6 +260,10 @@ public class PortalOwnershipManager extends PersistentState {
      */
     public static PortalOwnershipManager get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
-        return stateManager.getOrCreate(TYPE, DATA_NAME);
+        //? if >=1.20.2 {
+        /*return stateManager.getOrCreate(TYPE, DATA_NAME);
+        *///?} else {
+        return stateManager.getOrCreate(PortalOwnershipManager::fromNbt, PortalOwnershipManager::new, DATA_NAME);
+        //?}
     }
 }

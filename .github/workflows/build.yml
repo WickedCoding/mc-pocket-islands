@@ -1,7 +1,5 @@
 # Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+# and submitted pull request. Uses Stonecutter to build all supported MC versions.
 
 name: build
 on: [pull_request, push]
@@ -9,22 +7,66 @@ on: [pull_request, push]
 jobs:
   build:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        mc_version: ["1.20.1", "1.20.4"]
+
     steps:
-      - name: checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: validate gradle wrapper
+
+      - name: Validate gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
-      - name: setup jdk
+
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'microsoft'
-      - name: make gradle wrapper executable
+
+      - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: build
-        run: ./gradlew build
-      - name: capture build artifacts
+
+      - name: Build MC ${{ matrix.mc_version }}
+        run: |
+          ./gradlew build
+        env:
+          MC_VERSION: ${{ matrix.mc_version }}
+
+      - name: Capture build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
-          path: build/libs/
+          name: Artifacts-MC${{ matrix.mc_version }}
+          path: versions/${{ matrix.mc_version }}/build/libs/
+
+  build-all:
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: Make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build all versions
+        run: ./gradlew chiseledBuild
+
+      - name: Capture all artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: All-Versions
+          path: |
+            versions/*/build/libs/*.jar
+            !versions/*/build/libs/*-dev.jar

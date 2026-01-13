@@ -18,11 +18,13 @@ public class DimensionRegistry extends PersistentState {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_registry";
 
-    private static final Type<DimensionRegistry> TYPE = new Type<>(
+    //? if >=1.20.2 {
+    /*private static final Type<DimensionRegistry> TYPE = new Type<>(
         DimensionRegistry::new,
         DimensionRegistry::fromNbt,
         null // No DataFixTypes needed
     );
+    *///?}
 
     private final Map<UUID, PlayerDimensionData> dimensions = new HashMap<>();
 
@@ -126,6 +128,10 @@ public class DimensionRegistry extends PersistentState {
 
     public static DimensionRegistry get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
-        return stateManager.getOrCreate(TYPE, DATA_NAME);
+        //? if >=1.20.2 {
+        /*return stateManager.getOrCreate(TYPE, DATA_NAME);
+        *///?} else {
+        return stateManager.getOrCreate(DimensionRegistry::fromNbt, DimensionRegistry::new, DATA_NAME);
+        //?}
     }
 }

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Multi-version support using Stonecutter (1.20.1 and 1.20.4 from single codebase)
+
 ### Fixed
 - Dimension time no longer resets to noon when entering; now syncs with overworld time
 

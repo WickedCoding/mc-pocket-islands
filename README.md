@@ -1,7 +1,9 @@
 # Pocket Islands
 
-A Fabric mod for Minecraft 1.20.4 that gives each player their own persistent
+A Fabric mod for Minecraft that gives each player their own persistent
 pocket dimension island.
+
+**Supported Versions:** Minecraft 1.20.1, 1.20.4
 
 ## Features
 
@@ -13,17 +15,22 @@ pocket dimension island.
 
 ## Requirements
 
-- Minecraft 1.20.4
-- Fabric Loader 0.14.22+
+- Minecraft 1.20.1 or 1.20.4
+- Fabric Loader 0.15.0+
 - Fabric API
 - **Both client and server must have the mod installed**
 
 ## Installation
 
+Download the version matching your Minecraft version from
+[Releases](https://github.com/wickedsik/pocket-islands/releases):
+- `personalworlds-X.X.X-mc1.20.1.jar` for Minecraft 1.20.1
+- `personalworlds-X.X.X-mc1.20.4.jar` for Minecraft 1.20.4
+
 ### Server
 
 1. Install Fabric Loader on your server
-2. Download Pocket Islands from releases
+2. Download the correct Pocket Islands JAR for your MC version
 3. Place in the server's `mods/` folder
     - Make sure Fabric API is also installed here
 4. Start the server
@@ -31,7 +38,7 @@ pocket dimension island.
 ### Client
 
 1. Install Fabric Loader
-2. Download Pocket Islands from releases
+2. Download the correct Pocket Islands JAR for your MC version
 3. Place in your `mods/` folder
     - Make sure Fabric API is also installed here
 4. Launch Minecraft

@@ -1,8 +1,8 @@
 # Automatically create a GitHub Release when a version tag is pushed.
-# Builds the mod and attaches all JAR variants (main, dev, sources) to the release.
+# Builds all MC versions using Stonecutter and attaches all JAR variants to the release.
 #
 # Usage:
-#   git tag v0.2.0
+#   git tag v0.4.0
 #   git push origin main --tags
 
 name: Release
@@ -34,8 +34,8 @@ jobs:
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Build
-        run: ./gradlew build
+      - name: Build all versions
+        run: ./gradlew chiseledBuild
 
       - name: Get mod version
         id: mod_version
@@ -43,11 +43,23 @@ jobs:
           VERSION=$(grep -oP 'mod_version=\K.*' gradle.properties)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-artifacts
+          # Copy and rename JARs with MC version suffix
+          cp versions/1.20.1/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar \
+             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.1.jar
+          cp versions/1.20.1/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar \
+             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.1-sources.jar
+          cp versions/1.20.4/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar \
+             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.4.jar
+          cp versions/1.20.4/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar \
+             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.4-sources.jar
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           files: |
-            build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar
-            build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar
+            release-artifacts/*.jar
