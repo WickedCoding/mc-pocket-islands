@@ -24,8 +24,8 @@ pocket dimension island.
 
 Download the version matching your Minecraft version from
 [Releases](https://github.com/wickedsik/pocket-islands/releases):
-- `personalworlds-X.X.X-mc1.20.1.jar` for Minecraft 1.20.1
-- `personalworlds-X.X.X-mc1.20.4.jar` for Minecraft 1.20.4
+- `personalworlds-X.X.X+1.20.1.jar` for Minecraft 1.20.1
+- `personalworlds-X.X.X+1.20.4.jar` for Minecraft 1.20.4
 
 ### Server
 

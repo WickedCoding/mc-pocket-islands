@@ -31,8 +31,8 @@ jobs:
           java-version: '21'
           distribution: 'microsoft'
 
-      - name: Make gradle wrapper executable
-        run: chmod +x ./gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build all versions
         run: ./gradlew chiseledBuild
@@ -46,15 +46,25 @@ jobs:
       - name: Prepare release artifacts
         run: |
           mkdir -p release-artifacts
-          # Copy and rename JARs with MC version suffix
-          cp versions/1.20.1/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar \
-             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.1.jar
-          cp versions/1.20.1/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar \
-             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.1-sources.jar
-          cp versions/1.20.4/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}.jar \
-             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.4.jar
-          cp versions/1.20.4/build/libs/personalworlds-${{ steps.mod_version.outputs.version }}-sources.jar \
-             release-artifacts/personalworlds-${{ steps.mod_version.outputs.version }}-mc1.20.4-sources.jar
+          MOD_VERSION="${{ steps.mod_version.outputs.version }}"
+
+          # Dynamically find and rename all built JARs
+          for version_dir in versions/*/; do
+            mc_version=$(basename "$version_dir")
+            jar_path="${version_dir}build/libs/personalworlds-${MOD_VERSION}.jar"
+            sources_path="${version_dir}build/libs/personalworlds-${MOD_VERSION}-sources.jar"
+
+            if [ -f "$jar_path" ]; then
+              cp "$jar_path" "release-artifacts/personalworlds-${MOD_VERSION}+${mc_version}.jar"
+            fi
+
+            if [ -f "$sources_path" ]; then
+              cp "$sources_path" "release-artifacts/personalworlds-${MOD_VERSION}+${mc_version}-sources.jar"
+            fi
+          done
+
+          echo "Release artifacts:"
+          ls -la release-artifacts/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

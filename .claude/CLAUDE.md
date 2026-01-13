@@ -356,9 +356,7 @@ This triggers `.github/workflows/release.yml` which:
 3. Creates a GitHub Release with JARs for all MC versions attached
 4. Auto-generates release notes from commits
 
-**Release artifacts:**
-- `personalworlds-<version>-mc1.20.1.jar`
-- `personalworlds-<version>-mc1.20.4.jar`
+**Release artifacts:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.4.0+1.20.4.jar`)
 
 ## Reference Documentation
 
