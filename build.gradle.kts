@@ -1,6 +1,7 @@
 plugins {
     id("fabric-loom") version "1.9-SNAPSHOT"
     id("maven-publish")
+    id("com.modrinth.minotaur") version "2.+"
 }
 
 version = property("mod_version") as String
@@ -104,4 +105,38 @@ publishing {
             from(components["java"])
         }
     }
+}
+
+// Modrinth publishing configuration
+modrinth {
+    token.set(System.getenv("MODRINTH_TOKEN"))
+    projectId.set("pocket-islands")
+    versionNumber.set("${property("mod_version")}+${property("minecraft_version")}")
+    versionType.set("release")
+    uploadFile.set(tasks.remapJar)
+
+    // Game version from Stonecutter context
+    gameVersions.add(property("minecraft_version") as String)
+    loaders.add("fabric")
+
+    dependencies {
+        required.project("fabric-api")
+        // Fantasy is embedded in JAR via include() - no external dependency needed
+    }
+
+    // Changelog from environment variable (extracted from CHANGELOG.md in CI)
+    val changelogContent = System.getenv("RELEASE_CHANGELOG")
+    changelog.set(
+        if (changelogContent.isNullOrBlank())
+            "See [GitHub release](https://github.com/WickedSik/pocket-islands/releases) for full changelog."
+        else
+            changelogContent
+    )
+
+    // Sync project description from README
+    syncBodyFrom.set(rootProject.file("README.md").readText())
+}
+
+tasks.modrinth {
+    dependsOn(tasks.remapJar)
 }

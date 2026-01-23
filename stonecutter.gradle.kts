@@ -14,3 +14,8 @@ stonecutter registerChiseled tasks.register("chiseledTest", stonecutter.chiseled
     group = "verification"
     ofTask("test")
 }
+
+stonecutter registerChiseled tasks.register("chiseledPublishModrinth", stonecutter.chiseled) {
+    group = "publishing"
+    ofTask("modrinth")
+}
