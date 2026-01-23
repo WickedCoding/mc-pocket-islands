@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Void ejection safety system - players falling below Y=0 in pocket islands are automatically teleported back to their return position before taking void damage
+
 ### Removed
 - `/pi go <player>` command - players must now use physical portals to visit other islands
 

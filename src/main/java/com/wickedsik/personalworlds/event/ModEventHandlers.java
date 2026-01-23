@@ -20,6 +20,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -33,6 +35,8 @@ public class ModEventHandlers {
 
     private static int guardCleanupCounter = 0;
     private static final int GUARD_CLEANUP_INTERVAL = 200; // 10 seconds
+
+    private static final int VOID_EJECTION_THRESHOLD = 0; // Y level for ejection
 
     public static void register() {
         // Server started - restore all dimensions
@@ -76,6 +80,9 @@ public class ModEventHandlers {
     }
 
     private static void onServerTick(MinecraftServer server) {
+        // Check void falling every tick (safety critical)
+        checkVoidFalling(server);
+
         tickCounter++;
         if (tickCounter >= UNLOAD_CHECK_INTERVAL) {
             tickCounter = 0;
@@ -90,6 +97,39 @@ public class ModEventHandlers {
         if (guardCleanupCounter >= GUARD_CLEANUP_INTERVAL) {
             guardCleanupCounter = 0;
             ConcurrentPortalGuard.cleanup();
+        }
+    }
+
+    /**
+     * Check if any players in personal dimensions have fallen below the ejection threshold.
+     * Ejects them safely before void damage can occur.
+     */
+    private static void checkVoidFalling(MinecraftServer server) {
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            ServerWorld world = player.getServerWorld();
+
+            // Only check in personal dimensions
+            if (!PortalHelper.isInPersonalDimension(world)) {
+                continue;
+            }
+
+            // Check if below ejection threshold
+            if (player.getY() <= VOID_EJECTION_THRESHOLD) {
+                // Reset fall distance to prevent fall damage
+                player.fallDistance = 0;
+
+                // Eject to return position
+                PortalHelper.teleportToReturnPosition(player, server);
+
+                // Notify player
+                player.sendMessage(
+                    Text.translatable("personalworlds.void_ejection"),
+                    false
+                );
+
+                PersonalWorldsMod.LOGGER.info("Player {} fell off island and was ejected at Y={}",
+                    player.getName().getString(), player.getY());
+            }
         }
     }
 

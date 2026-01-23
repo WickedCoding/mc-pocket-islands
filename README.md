@@ -326,6 +326,7 @@ main registry is corrupted. This file contains:
 - **Two players enter portal simultaneously**: Concurrent portal guard prevents race conditions
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
 - **Invitation revoked while offline**: Player evacuated on next login
+- **Player falls off island**: Automatically teleported back before taking void damage
 
 ## Performance
 
@@ -376,6 +377,12 @@ enter their portal to visit their island.
 
 Enter the return portal on your island. It teleports you back to the exact
 location you entered from.
+
+### What happens if I fall off my island?
+
+You're safe. When you fall below Y=0, you're automatically teleported back to
+your original entry location before taking any void damage. Your items and
+progress are preserved.
 
 ## License
 

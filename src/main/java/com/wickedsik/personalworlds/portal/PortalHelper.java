@@ -280,10 +280,12 @@ public class PortalHelper {
         }
 
         // Store return position BEFORE teleporting
+        // Offset 1 block backward from facing direction to avoid landing inside portal
+        BlockPos returnPos = player.getBlockPos().offset(player.getHorizontalFacing().getOpposite());
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         ReturnData returnData = new ReturnData(
             fromWorld.getRegistryKey(),
-            player.getBlockPos(),
+            returnPos,
             player.getYaw(),
             player.getPitch()
         );

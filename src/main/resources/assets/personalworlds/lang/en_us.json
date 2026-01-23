@@ -14,6 +14,7 @@
   "personalworlds.message.returned_overworld": "Returned to the overworld.",
   "personalworlds.message.emergency_teleport": "Emergency teleport: %s",
   "personalworlds.message.admin_ejected": "You have been ejected - dimension deleted by admin",
+  "personalworlds.void_ejection": "You fell off the island and were returned safely.",
 
   "personalworlds.command.enter.success": "Entered your pocket island",
   "personalworlds.command.info.dimension_created": "Created dimension for %s",
