@@ -86,10 +86,10 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 
 ### Dependencies
 
-| MC Version | Fantasy | Fabric API |
-|------------|---------|------------|
-| 1.20.1 | 0.4.11+1.20-rc1 | 0.92.6+1.20.1 |
-| 1.20.4 | 0.5.0+1.20.4 | 0.97.0+1.20.4 |
+| MC Version | Fantasy         | Fabric API    |
+|------------|-----------------|---------------|
+| 1.20.1     | 0.4.11+1.20-rc1 | 0.92.6+1.20.1 |
+| 1.20.4     | 0.5.0+1.20.4    | 0.97.0+1.20.4 |
 
 - **Fantasy** — Required for runtime dimension creation (version varies by MC version)
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration
@@ -101,10 +101,10 @@ management from a single codebase.
 
 ### Supported Versions
 
-| MC Version | Status | Active |
-|------------|--------|--------|
-| 1.20.1 | Supported | |
-| 1.20.4 | Supported | ✓ (default) |
+| MC Version | Status    | Active      |
+|------------|-----------|-------------|
+| 1.20.1     | Supported |             |
+| 1.20.4     | Supported | ✓ (default) |
 
 ### Versioned Comment Syntax
 
@@ -332,8 +332,9 @@ Releases are automated via GitHub Actions when a version tag is pushed:
 
 ```bash
 # Update mod_version in gradle.properties
+# Move CHANGELOG.md [Unreleased] to new version section
 # Commit changes
-git tag v0.4.0
+git tag v0.4.3
 git push origin main --tags
 ```
 
@@ -343,8 +344,26 @@ This triggers `.github/workflows/release.yml` which:
 2. Runs tests for all versions
 3. Creates a GitHub Release with JARs for all MC versions attached
 4. Auto-generates release notes from commits
+5. Publishes to **Modrinth** automatically (one version per MC version)
 
-**Release artifacts:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.4.0+1.20.4.jar`)
+### Release Checklist
+
+1. Update `mod_version` in `gradle.properties`
+2. Move `[Unreleased]` content in `CHANGELOG.md` to new version section with date
+3. Commit: `git commit -m "Chore: Prepare release X.Y.Z"`
+4. Tag and push: `git tag vX.Y.Z && git push origin main --tags`
+
+### Release Artifacts
+
+- **GitHub:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.4.3+1.20.4.jar`)
+- **Modrinth:** Two versions published automatically (`0.4.3+1.20.1`, `0.4.3+1.20.4`)
+
+### Distribution
+
+| Platform        | URL                                                     |
+|-----------------|---------------------------------------------------------|
+| GitHub Releases | https://github.com/WickedSik/mc-pocket-islands/releases |
+| Modrinth        | https://modrinth.com/mod/pocket-islands                 |
 
 ## Key External Dependencies
 
