@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- `/pi go <player>` command - players must now use physical portals to visit other islands
+
 ## [0.4.2] - 2025-01-13
 
 ### Fixed
