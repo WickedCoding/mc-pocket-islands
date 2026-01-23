@@ -82,7 +82,6 @@ Enter the portal on your pocket island to return to your original location.
 - `/pi invites` - View your invitations (sent and received)
 - `/pi invite <player>` - Invite a player to your island
 - `/pi uninvite <player>` - Revoke a player's invitation
-- `/pi go <player>` - Visit someone's island (requires invitation)
 
 **Admin commands (op level 2+):**
 
@@ -370,9 +369,8 @@ folders to keep.
 
 ### Can I visit other players' islands?
 
-Yes, if they invite you. Use `/pi invite <player>` to invite someone, and
-`/pi go <player>` to visit an island you've been invited to. Or just enter their
-portal after having been invited.
+Yes, if they invite you. Use `/pi invite <player>` to invite someone, then
+enter their portal to visit their island.
 
 ### How do I get back from my island?
 

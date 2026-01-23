@@ -251,8 +251,7 @@ flickering when standing in the portal.
 ### Invitation System
 
 Players can invite others to visit their island via commands
-(`/pi invite <player>`). Invited players can visit using `/pi go <player>` or by
-entering the owner's portal.
+(`/pi invite <player>`). Invited players can visit by entering the owner's portal.
 
 ### Void World Generation
 
