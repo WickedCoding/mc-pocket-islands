@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-01-23
+
 ### Added
 - Void ejection safety system - players falling below Y=0 in pocket islands are automatically teleported back to their return position before taking void damage
 
