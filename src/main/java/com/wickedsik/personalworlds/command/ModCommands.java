@@ -7,6 +7,7 @@ import com.wickedsik.personalworlds.command.executor.DebugCommandExecutor;
 import com.wickedsik.personalworlds.command.executor.DevCommandExecutor;
 import com.wickedsik.personalworlds.command.executor.PlayerCommandExecutor;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
+import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.util.PermissionHelper;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -76,14 +77,7 @@ public class ModCommands {
                 )
 
                 // === Player Commands (No Permission Required) ===
-                .then(CommandManager.literal("invite")
-                    .then(CommandManager.argument("player", EntityArgumentType.player())
-                        .executes(ctx -> handleInvite(
-                            ctx.getSource(),
-                            EntityArgumentType.getPlayer(ctx, "player")
-                        ))
-                    )
-                )
+                .then(buildInviteCommand())
 
                 .then(CommandManager.literal("uninvite")
                     .then(CommandManager.argument("player", StringArgumentType.word())
@@ -93,6 +87,9 @@ public class ModCommands {
                         ))
                     )
                 )
+
+                // Conditionally add togglewelcome command
+                .then(buildToggleWelcomeCommand())
 
                 .then(CommandManager.literal("invites")
                     .executes(ctx -> handleInvites(ctx.getSource()))
@@ -167,6 +164,54 @@ public class ModCommands {
         );
     }
 
+    // ==================== Command Builders ====================
+
+    /**
+     * Build the invite command with optional "always" subcommand.
+     * The "always" variant is only available when enableAlwaysWelcome is true.
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> buildInviteCommand() {
+        var playerArg = CommandManager.argument("player", EntityArgumentType.player())
+            .executes(ctx -> handleInvite(
+                ctx.getSource(),
+                EntityArgumentType.getPlayer(ctx, "player"),
+                false
+            ));
+
+        // Conditionally add "always" subcommand
+        if (ModConfig.get().enableAlwaysWelcome) {
+            playerArg = playerArg.then(CommandManager.literal("always")
+                .executes(ctx -> handleInvite(
+                    ctx.getSource(),
+                    EntityArgumentType.getPlayer(ctx, "player"),
+                    true
+                ))
+            );
+        }
+
+        return CommandManager.literal("invite").then(playerArg);
+    }
+
+    /**
+     * Build the togglewelcome command.
+     * Returns a no-op command if enableAlwaysWelcome is false.
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> buildToggleWelcomeCommand() {
+        if (!ModConfig.get().enableAlwaysWelcome) {
+            // Return a hidden command that does nothing (won't show in tab-complete)
+            return CommandManager.literal("togglewelcome")
+                .requires(source -> false);  // Never passes requirements check
+        }
+
+        return CommandManager.literal("togglewelcome")
+            .then(CommandManager.argument("player", StringArgumentType.word())
+                .executes(ctx -> handleToggleWelcome(
+                    ctx.getSource(),
+                    StringArgumentType.getString(ctx, "player")
+                ))
+            );
+    }
+
     // ==================== Thin Adapter Methods ====================
 
     private static int handleCreate(ServerCommandSource source, String typeStr) {
@@ -193,12 +238,20 @@ public class ModCommands {
         return devExecutor.leaveDimension(player).applyTo(source);
     }
 
-    private static int handleInvite(ServerCommandSource source, ServerPlayerEntity guest) {
+    private static int handleInvite(ServerCommandSource source, ServerPlayerEntity guest, boolean alwaysWelcome) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
             source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
-        return playerExecutor.invite(owner, guest).applyTo(source);
+        return playerExecutor.invite(owner, guest, alwaysWelcome).applyTo(source);
+    }
+
+    private static int handleToggleWelcome(ServerCommandSource source, String guestName) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            return CommandResult.FAILURE;
+        }
+        return playerExecutor.toggleWelcome(owner, guestName).applyTo(source);
     }
 
     private static int handleUninvite(ServerCommandSource source, String guestName) {

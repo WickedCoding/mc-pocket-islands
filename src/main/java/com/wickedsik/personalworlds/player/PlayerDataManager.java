@@ -107,7 +107,7 @@ public class PlayerDataManager extends PersistentState {
     // --- Invitation Management ---
 
     /**
-     * Add an invitation from an owner to a guest.
+     * Add a standard invitation from an owner to a guest.
      *
      * @param ownerUuid The dimension owner's UUID
      * @param ownerName The owner's display name
@@ -115,6 +115,19 @@ public class PlayerDataManager extends PersistentState {
      * @return true if invitation was added, false if already exists
      */
     public boolean addInvitation(UUID ownerUuid, String ownerName, UUID guestUuid) {
+        return addInvitation(ownerUuid, ownerName, guestUuid, false);
+    }
+
+    /**
+     * Add an invitation from an owner to a guest.
+     *
+     * @param ownerUuid The dimension owner's UUID
+     * @param ownerName The owner's display name
+     * @param guestUuid The invited player's UUID
+     * @param alwaysWelcome Whether the guest can visit when host is offline/away
+     * @return true if invitation was added, false if already exists
+     */
+    public boolean addInvitation(UUID ownerUuid, String ownerName, UUID guestUuid, boolean alwaysWelcome) {
         // Sanitize owner name
         ownerName = DataValidator.sanitizePlayerName(ownerName);
 
@@ -124,15 +137,15 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Add to received invitations
-        InvitationData invitation = new InvitationData(ownerUuid, ownerName, System.currentTimeMillis());
+        InvitationData invitation = new InvitationData(ownerUuid, ownerName, System.currentTimeMillis(), alwaysWelcome);
         receivedInvitations.computeIfAbsent(guestUuid, k -> new ArrayList<>()).add(invitation);
 
         // Add to sent invitations
         sentInvitations.computeIfAbsent(ownerUuid, k -> new HashSet<>()).add(guestUuid);
 
         markDirty();
-        PersonalWorldsMod.LOGGER.debug("Added invitation: {} invited {} to their dimension",
-            ownerName, guestUuid);
+        PersonalWorldsMod.LOGGER.debug("Added invitation: {} invited {} to their dimension (alwaysWelcome={})",
+            ownerName, guestUuid, alwaysWelcome);
         return true;
     }
 
@@ -181,12 +194,80 @@ public class PlayerDataManager extends PersistentState {
      * @return true if the guest has an invitation from the owner
      */
     public boolean hasInvitationFrom(UUID guestUuid, UUID ownerUuid) {
+        return getInvitationFrom(guestUuid, ownerUuid).isPresent();
+    }
+
+    /**
+     * Get the invitation from a specific owner to a guest.
+     *
+     * @param guestUuid The guest player's UUID
+     * @param ownerUuid The dimension owner's UUID
+     * @return Optional containing the invitation if it exists
+     */
+    public Optional<InvitationData> getInvitationFrom(UUID guestUuid, UUID ownerUuid) {
         List<InvitationData> guestInvitations = receivedInvitations.get(guestUuid);
         if (guestInvitations == null) {
-            return false;
+            return Optional.empty();
         }
         return guestInvitations.stream()
-            .anyMatch(inv -> inv.ownerUuid().equals(ownerUuid));
+            .filter(inv -> inv.ownerUuid().equals(ownerUuid))
+            .findFirst();
+    }
+
+    /**
+     * Check if an invitation has Always Welcome status.
+     *
+     * @param ownerUuid The dimension owner's UUID
+     * @param guestUuid The guest player's UUID
+     * @return true if the invitation exists and has alwaysWelcome enabled
+     */
+    public boolean isAlwaysWelcome(UUID ownerUuid, UUID guestUuid) {
+        return getInvitationFrom(guestUuid, ownerUuid)
+            .map(InvitationData::alwaysWelcome)
+            .orElse(false);
+    }
+
+    /**
+     * Toggle the Always Welcome status for an invitation.
+     *
+     * @param ownerUuid The dimension owner's UUID
+     * @param guestUuid The guest player's UUID
+     * @return Optional containing the new alwaysWelcome value, empty if invitation doesn't exist
+     */
+    public Optional<Boolean> toggleAlwaysWelcome(UUID ownerUuid, UUID guestUuid) {
+        Optional<InvitationData> current = getInvitationFrom(guestUuid, ownerUuid);
+        if (current.isEmpty()) {
+            return Optional.empty();
+        }
+
+        InvitationData updated = current.get().withToggledAlwaysWelcome();
+        updateInvitation(guestUuid, ownerUuid, updated);
+        return Optional.of(updated.alwaysWelcome());
+    }
+
+    /**
+     * Update an existing invitation with new data.
+     *
+     * @param guestUuid The guest player's UUID
+     * @param ownerUuid The dimension owner's UUID
+     * @param updated The updated invitation data
+     */
+    private void updateInvitation(UUID guestUuid, UUID ownerUuid, InvitationData updated) {
+        List<InvitationData> guestInvitations = receivedInvitations.get(guestUuid);
+        if (guestInvitations == null) {
+            return;
+        }
+
+        // Replace the old invitation with the updated one
+        for (int i = 0; i < guestInvitations.size(); i++) {
+            if (guestInvitations.get(i).ownerUuid().equals(ownerUuid)) {
+                guestInvitations.set(i, updated);
+                markDirty();
+                PersonalWorldsMod.LOGGER.debug("Updated invitation from {} to {}: alwaysWelcome={}",
+                    ownerUuid, guestUuid, updated.alwaysWelcome());
+                return;
+            }
+        }
     }
 
     /**

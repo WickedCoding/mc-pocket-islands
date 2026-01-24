@@ -54,8 +54,9 @@ public class InvitationManager {
      * 1. Admins (OP level 2+) can always visit
      * 2. Owner can always access their own dimension
      * 3. Visitor must have an invitation
-     * 4. Host must be online
-     * 5. If config.allowVisitWhenHostNotHome is false, host must be on their own island
+     * 4. If Always Welcome feature enabled and invitation has alwaysWelcome flag, allow visit
+     * 5. Host must be online
+     * 6. If config.allowVisitWhenHostNotHome is false, host must be on their own island
      *
      * @param server The Minecraft server
      * @param visitor The visiting player entity (needed for admin check)
@@ -81,19 +82,27 @@ public class InvitationManager {
             return VisitDenialReason.NOT_INVITED;
         }
 
-        // 4. Check if host is online
+        // 4. Always Welcome bypass (if feature enabled)
+        if (ModConfig.get().enableAlwaysWelcome) {
+            if (dataManager.isAlwaysWelcome(ownerUuid, visitorUuid)) {
+                return VisitDenialReason.ALLOWED;
+            }
+        }
+
+        // 5. Check if host is online
         ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
         if (host == null) {
             return VisitDenialReason.HOST_OFFLINE;
         }
 
-        // 5. Check if host is "home" (on their own island) - if config requires it
+        // 6. Check if host is "home" (on their own island) - if config requires it
         if (!ModConfig.get().allowVisitWhenHostNotHome) {
             if (!isPlayerHome(host, ownerUuid)) {
                 return VisitDenialReason.HOST_NOT_HOME;
             }
         }
 
+        // 7. All checks passed
         return VisitDenialReason.ALLOWED;
     }
 
@@ -146,7 +155,7 @@ public class InvitationManager {
     // --- Invitation Operations ---
 
     /**
-     * Invite a player to the owner's dimension.
+     * Invite a player to the owner's dimension (standard invitation).
      *
      * @param server The Minecraft server
      * @param owner The dimension owner
@@ -154,6 +163,19 @@ public class InvitationManager {
      * @return true if invitation was successful
      */
     public static boolean invite(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest) {
+        return invite(server, owner, guest, false);
+    }
+
+    /**
+     * Invite a player to the owner's dimension.
+     *
+     * @param server The Minecraft server
+     * @param owner The dimension owner
+     * @param guest The player being invited
+     * @param alwaysWelcome If true, guest can visit when host is offline/away
+     * @return true if invitation was successful
+     */
+    public static boolean invite(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest, boolean alwaysWelcome) {
         UUID ownerUuid = owner.getUuid();
         UUID guestUuid = guest.getUuid();
 
@@ -166,18 +188,22 @@ public class InvitationManager {
         String ownerName = owner.getName().getString();
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
-        boolean added = dataManager.addInvitation(ownerUuid, ownerName, guestUuid);
+        boolean added = dataManager.addInvitation(ownerUuid, ownerName, guestUuid, alwaysWelcome);
 
         if (added) {
-            owner.sendMessage(Text.translatable("personalworlds.message.invite_sent", guest.getName().getString()), false);
+            // Send appropriate message based on invitation type
+            String messageKey = alwaysWelcome
+                ? "personalworlds.command.invited_always_welcome"
+                : "personalworlds.message.invite_sent";
+            owner.sendMessage(Text.translatable(messageKey, guest.getName().getString()), false);
             guest.sendMessage(Text.translatable("personalworlds.message.invite_received", ownerName), false);
 
             // Play notification sounds
             VisualEffects.playInvitationSentEffect(owner);
             VisualEffects.playInvitationReceivedEffect(guest);
 
-            PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension",
-                ownerName, guest.getName().getString());
+            PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension (alwaysWelcome={})",
+                ownerName, guest.getName().getString(), alwaysWelcome);
         } else {
             owner.sendMessage(Text.translatable("personalworlds.message.already_invited", guest.getName().getString()), false);
         }
@@ -311,8 +337,37 @@ public class InvitationManager {
         if (sent.isEmpty()) {
             player.sendMessage(Text.translatable("personalworlds.invitations.sent.none").formatted(Formatting.GRAY), false);
         } else {
+            boolean alwaysWelcomeEnabled = ModConfig.get().enableAlwaysWelcome;
+
             for (UUID guestUuid : sent) {
                 String guestName = getPlayerName(server, guestUuid);
+
+                // Build the entry text
+                MutableText entryText = Text.literal(guestName).formatted(Formatting.YELLOW);
+
+                // Add Always Welcome toggle button if feature is enabled
+                if (alwaysWelcomeEnabled) {
+                    boolean isAlwaysWelcome = dataManager.isAlwaysWelcome(playerUuid, guestUuid);
+
+                    String toggleIcon = isAlwaysWelcome ? "★" : "☆";
+                    Formatting toggleColor = isAlwaysWelcome ? Formatting.GREEN : Formatting.GRAY;
+                    String toggleTooltipKey = isAlwaysWelcome
+                        ? "personalworlds.invitations.sent.toggle_off_tooltip"
+                        : "personalworlds.invitations.sent.toggle_on_tooltip";
+
+                    MutableText toggleButton = Text.literal("[" + toggleIcon + "]")
+                        .formatted(toggleColor)
+                        .styled(style -> style
+                            .withClickEvent(new ClickEvent(
+                                ClickEvent.Action.RUN_COMMAND,
+                                "/pi togglewelcome " + guestName))
+                            .withHoverEvent(new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                Text.translatable(toggleTooltipKey)))
+                        );
+
+                    entryText = entryText.append(" ").append(toggleButton);
+                }
 
                 // Create clickable [Revoke] button
                 MutableText revokeButton = Text.translatable("personalworlds.invitations.sent.revoke_button")
@@ -323,10 +378,9 @@ public class InvitationManager {
                             Text.translatable("personalworlds.invitations.sent.revoke_tooltip")))
                     );
 
-                player.sendMessage(Text.translatable("personalworlds.invitations.sent.entry",
-                    Text.literal(guestName).formatted(Formatting.YELLOW)
-                        .append(" ")
-                        .append(revokeButton)), false);
+                entryText = entryText.append(" ").append(revokeButton);
+
+                player.sendMessage(Text.translatable("personalworlds.invitations.sent.entry", entryText), false);
             }
         }
 

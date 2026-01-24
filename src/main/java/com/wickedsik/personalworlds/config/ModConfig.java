@@ -78,6 +78,15 @@ public class ModConfig {
     /** Maximum number of invitations per player. -1 for unlimited. Default: 20 */
     public int maxInvitationsPerPlayer = 20;
 
+    /**
+     * Enable "Always Welcome" feature for invitations.
+     * When enabled, island owners can mark specific guests as "Always Welcome",
+     * allowing them to visit even when the host is offline or away from their island.
+     * Requires server restart to change.
+     * Default: false (disabled)
+     */
+    public boolean enableAlwaysWelcome = false;
+
     // ==================== Visit Access Control ====================
 
     /**

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Portal mounted check - players riding horses, boats, pigs, or other vehicles must dismount before entering portals
 - Bed spawn fallback - when exiting pocket islands without a stored return position, players teleport to their bed spawn before falling back to world spawn
+- Always Welcome invitations - island owners can mark guests as "always welcome" to allow visits even when offline (requires `enableAlwaysWelcome` config)
 
 ### Fixed
 - Island-hopping return position - traveling between pocket islands no longer overwrites the original overworld return position

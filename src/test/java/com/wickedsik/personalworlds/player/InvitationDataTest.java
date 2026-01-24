@@ -32,14 +32,35 @@ class InvitationDataTest {
     class Construction {
 
         @Test
-        @DisplayName("Constructor with all fields creates valid record")
-        void constructor_allFields_createsRecord() {
+        @DisplayName("3-arg constructor creates record with alwaysWelcome=false")
+        void constructor_threeArgs_defaultsAlwaysWelcomeFalse() {
             InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt);
 
             assertNotNull(data);
             assertEquals(testOwnerUuid, data.ownerUuid());
             assertEquals(testOwnerName, data.ownerName());
             assertEquals(testInvitedAt, data.invitedAt());
+            assertFalse(data.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("4-arg constructor with alwaysWelcome=true creates valid record")
+        void constructor_fourArgs_alwaysWelcomeTrue() {
+            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+
+            assertNotNull(data);
+            assertEquals(testOwnerUuid, data.ownerUuid());
+            assertEquals(testOwnerName, data.ownerName());
+            assertEquals(testInvitedAt, data.invitedAt());
+            assertTrue(data.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("4-arg constructor with alwaysWelcome=false creates valid record")
+        void constructor_fourArgs_alwaysWelcomeFalse() {
+            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            assertFalse(data.alwaysWelcome());
         }
 
         @Test
@@ -70,13 +91,71 @@ class InvitationDataTest {
     }
 
     @Nested
+    @DisplayName("Always Welcome Toggle")
+    class AlwaysWelcomeToggle {
+
+        @Test
+        @DisplayName("Toggle from false to true")
+        void toggle_fromFalse_becomesTrue() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            InvitationData toggled = original.withToggledAlwaysWelcome();
+
+            assertTrue(toggled.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("Toggle from true to false")
+        void toggle_fromTrue_becomesFalse() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+
+            InvitationData toggled = original.withToggledAlwaysWelcome();
+
+            assertFalse(toggled.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("Toggle preserves other fields")
+        void toggle_preservesOtherFields() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            InvitationData toggled = original.withToggledAlwaysWelcome();
+
+            assertEquals(testOwnerUuid, toggled.ownerUuid());
+            assertEquals(testOwnerName, toggled.ownerName());
+            assertEquals(testInvitedAt, toggled.invitedAt());
+        }
+
+        @Test
+        @DisplayName("Toggle returns new instance")
+        void toggle_returnsNewInstance() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            InvitationData toggled = original.withToggledAlwaysWelcome();
+
+            assertNotSame(original, toggled);
+            assertFalse(original.alwaysWelcome()); // Original unchanged
+        }
+
+        @Test
+        @DisplayName("Double toggle returns to original state")
+        void toggle_twice_returnsToOriginal() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+
+            InvitationData toggledTwice = original.withToggledAlwaysWelcome().withToggledAlwaysWelcome();
+
+            assertEquals(original.alwaysWelcome(), toggledTwice.alwaysWelcome());
+        }
+    }
+
+    @Nested
     @DisplayName("NBT Serialization")
     class NbtSerialization {
 
         @Test
         @DisplayName("toNbt creates compound with all fields")
         void toNbt_validData_createsCompound() {
-            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt);
+            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
             NbtCompound nbt = data.toNbt();
 
@@ -84,18 +163,30 @@ class InvitationDataTest {
             assertTrue(nbt.containsUuid("OwnerUuid"));
             assertTrue(nbt.contains("OwnerName"));
             assertTrue(nbt.contains("InvitedAt"));
+            assertTrue(nbt.contains("AlwaysWelcome"));
         }
 
         @Test
         @DisplayName("toNbt stores correct values")
         void toNbt_correctValues() {
-            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt);
+            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
             NbtCompound nbt = data.toNbt();
 
             assertEquals(testOwnerUuid, nbt.getUuid("OwnerUuid"));
             assertEquals(testOwnerName, nbt.getString("OwnerName"));
             assertEquals(testInvitedAt, nbt.getLong("InvitedAt"));
+            assertTrue(nbt.getBoolean("AlwaysWelcome"));
+        }
+
+        @Test
+        @DisplayName("toNbt stores alwaysWelcome=false correctly")
+        void toNbt_alwaysWelcomeFalse_storesCorrectly() {
+            InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            NbtCompound nbt = data.toNbt();
+
+            assertFalse(nbt.getBoolean("AlwaysWelcome"));
         }
 
         @Test
@@ -105,6 +196,7 @@ class InvitationDataTest {
             nbt.putUuid("OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             nbt.putLong("InvitedAt", testInvitedAt);
+            nbt.putBoolean("AlwaysWelcome", true);
 
             InvitationData data = InvitationData.fromNbt(nbt);
 
@@ -112,17 +204,46 @@ class InvitationDataTest {
             assertEquals(testOwnerUuid, data.ownerUuid());
             assertEquals(testOwnerName, data.ownerName());
             assertEquals(testInvitedAt, data.invitedAt());
+            assertTrue(data.alwaysWelcome());
         }
 
         @Test
-        @DisplayName("Round-trip preserves all fields")
-        void roundTrip_preservesAllFields() {
-            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt);
+        @DisplayName("fromNbt without AlwaysWelcome defaults to false (backward compatibility)")
+        void fromNbt_missingAlwaysWelcome_defaultsFalse() {
+            // Simulates loading old world data before Always Welcome feature existed
+            NbtCompound nbt = new NbtCompound();
+            nbt.putUuid("OwnerUuid", testOwnerUuid);
+            nbt.putString("OwnerName", testOwnerName);
+            nbt.putLong("InvitedAt", testInvitedAt);
+            // AlwaysWelcome field intentionally missing
+
+            InvitationData data = InvitationData.fromNbt(nbt);
+
+            assertFalse(data.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("Round-trip preserves all fields including alwaysWelcome=true")
+        void roundTrip_preservesAllFields_alwaysWelcomeTrue() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
             NbtCompound nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(original, restored);
+            assertTrue(restored.alwaysWelcome());
+        }
+
+        @Test
+        @DisplayName("Round-trip preserves all fields including alwaysWelcome=false")
+        void roundTrip_preservesAllFields_alwaysWelcomeFalse() {
+            InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+
+            NbtCompound nbt = original.toNbt();
+            InvitationData restored = InvitationData.fromNbt(nbt);
+
+            assertEquals(original, restored);
+            assertFalse(restored.alwaysWelcome());
         }
 
         @Test
@@ -244,6 +365,25 @@ class InvitationDataTest {
             InvitationData data2 = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt + 1000);
 
             assertNotEquals(data1, data2);
+        }
+
+        @Test
+        @DisplayName("Different alwaysWelcome means not equal")
+        void equals_differentAlwaysWelcome_notEqual() {
+            InvitationData data1 = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
+            InvitationData data2 = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+
+            assertNotEquals(data1, data2);
+        }
+
+        @Test
+        @DisplayName("Same values including alwaysWelcome are equal")
+        void equals_sameValuesWithAlwaysWelcome_areEqual() {
+            InvitationData data1 = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+            InvitationData data2 = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
+
+            assertEquals(data1, data2);
+            assertEquals(data1.hashCode(), data2.hashCode());
         }
     }
 

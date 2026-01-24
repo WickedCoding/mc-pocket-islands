@@ -67,5 +67,12 @@
   "personalworlds.invitations.received.none": "  (none)",
   "personalworlds.invitations.received.entry": "  - %s",
   "personalworlds.invitations.received.world_name": "%s's World",
-  "personalworlds.invitations.received.visit_tooltip": "Click to visit %s's dimension"
+  "personalworlds.invitations.received.visit_tooltip": "Click to visit %s's dimension",
+
+  "personalworlds.command.invited_always_welcome": "Invited %s to your island (Always Welcome)",
+  "personalworlds.command.toggle_welcome_on": "%s is now Always Welcome on your island",
+  "personalworlds.command.toggle_welcome_off": "%s now requires you to be home to visit",
+  "personalworlds.command.error.not_invited_by_you": "%s has not been invited by you",
+  "personalworlds.invitations.sent.toggle_on_tooltip": "Click to enable Always Welcome",
+  "personalworlds.invitations.sent.toggle_off_tooltip": "Click to disable Always Welcome"
 }

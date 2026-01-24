@@ -24,6 +24,7 @@ pocket dimension island.
 
 Download the version matching your Minecraft version from
 [Releases](https://github.com/wickedsik/pocket-islands/releases):
+
 - `personalworlds-X.X.X+1.20.1.jar` for Minecraft 1.20.1
 - `personalworlds-X.X.X+1.20.4.jar` for Minecraft 1.20.4
 
@@ -81,7 +82,9 @@ Enter the portal on your pocket island to return to your original location.
 
 - `/pi invites` - View your invitations (sent and received)
 - `/pi invite <player>` - Invite a player to your island
+- `/pi invite <player> always` - Invite with Always Welcome status (if enabled)
 - `/pi uninvite <player>` - Revoke a player's invitation
+- `/pi togglewelcome <player>` - Toggle Always Welcome for an existing invitation (if enabled)
 
 **Admin commands (op level 2+):**
 
@@ -126,6 +129,7 @@ different materials and properties.
     ],
     "consumeActivationItem": false,
     "maxInvitationsPerPlayer": 20,
+    "enableAlwaysWelcome": false,
     "unloadEmptyDimensionDelayTicks": 600,
     "cleanupIntervalTicks": 600,
     "enableTeleportParticles": true,
@@ -155,6 +159,73 @@ Define multiple portal types to create islands with different materials:
 #### Invitations
 
 - **`maxInvitationsPerPlayer`** — Maximum invitations per player (`-1` for unlimited)
+- **`enableAlwaysWelcome`** — Enable the Always Welcome feature (default: `false`, requires restart)
+
+### Always Welcome Feature
+
+By default, visitors can only enter your island when you are online and present
+on your island. The **Always Welcome** feature allows island owners to grant
+specific guests permanent access, bypassing these restrictions.
+
+#### Enabling the Feature
+
+Set `enableAlwaysWelcome` to `true` in your config and restart the server:
+
+```json
+{
+    "enableAlwaysWelcome": true
+}
+```
+
+**Note:** This setting requires a server restart to take effect. When disabled,
+all Always Welcome commands are hidden and existing flags are ignored.
+
+#### Using Always Welcome
+
+Once enabled, island owners have two ways to grant Always Welcome status:
+
+**Option 1: Invite with Always Welcome**
+
+```
+/pi invite Steve always
+```
+
+This creates a new invitation with Always Welcome enabled immediately.
+
+**Option 2: Toggle existing invitation**
+
+```
+/pi togglewelcome Steve
+```
+
+This toggles the Always Welcome status on an existing invitation. Run it again
+to disable.
+
+#### Viewing Always Welcome Status
+
+Use `/pi invites` to see your sent invitations. When the feature is enabled,
+each invitation shows a clickable star indicator:
+
+```
+Sent (players who can visit you):
+  - Steve [★] [Revoke]    ← Green star: Always Welcome ON
+  - Alex  [☆] [Revoke]    ← Gray star: Always Welcome OFF
+```
+
+Click the star to toggle the status directly from the chat.
+
+#### Access Control Behavior
+
+| Invitation Type | Host Online + Home | Host Online + Away | Host Offline |
+|-----------------|--------------------|--------------------|--------------|
+| Standard        | ✓ Allowed          | ✗ Denied           | ✗ Denied     |
+| Always Welcome  | ✓ Allowed          | ✓ Allowed          | ✓ Allowed    |
+
+**Notes:**
+
+- Admins (OP level 2+) always bypass all visit restrictions
+- The island owner can always access their own island
+- Always Welcome guests still need an active invitation (uninviting removes access)
 
 #### Performance
 
