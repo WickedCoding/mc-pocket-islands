@@ -346,12 +346,27 @@ This triggers `.github/workflows/release.yml` which:
 4. Auto-generates release notes from commits
 5. Publishes to **Modrinth** automatically (one version per MC version)
 
-### Release Checklist
+### Release Command
 
-1. Update `mod_version` in `gradle.properties`
-2. Move `[Unreleased]` content in `CHANGELOG.md` to new version section with date
-3. Commit: `git commit -m "Chore: Prepare release X.Y.Z"`
-4. Tag and push: `git tag vX.Y.Z && git push origin main --tags`
+Use the `/release` command to automate the release preparation:
+
+```bash
+/release           # patch release (0.4.3 → 0.4.4)
+/release patch     # patch release (0.4.3 → 0.4.4)
+/release minor     # minor release (0.4.3 → 0.5.0)
+/release major     # major release (0.4.3 → 1.0.0)
+```
+
+The command performs steps 1-3 automatically:
+1. Updates `mod_version` in `gradle.properties`
+2. Moves `[Unreleased]` content in `CHANGELOG.md` to new version section with date
+3. Commits both files: `Chore: Prepare release X.Y.Z`
+4. Creates git tag: `vX.Y.Z`
+
+After the command completes, push to trigger the release workflow:
+```bash
+git push origin main --tags
+```
 
 ### Release Artifacts
 
