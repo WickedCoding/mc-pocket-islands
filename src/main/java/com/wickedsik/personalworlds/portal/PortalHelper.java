@@ -391,14 +391,33 @@ public class PortalHelper {
             // Clear return data after use
             dataManager.clearReturnData(playerUuid);
         } else {
-            // No return data - go to overworld spawn
-            PersonalWorldsMod.LOGGER.debug("No return data for player {}, using overworld spawn",
-                player.getName().getString());
-            targetWorld = server.getOverworld();
-            targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
-                targetWorld, targetWorld.getSpawnPos()));
-            yaw = player.getYaw();
-            pitch = player.getPitch();
+            // No return data - try bed spawn first
+            BlockPos bedPos = player.getSpawnPointPosition();
+            ServerWorld bedWorld = null;
+
+            if (bedPos != null) {
+                bedWorld = server.getWorld(player.getSpawnPointDimension());
+            }
+
+            if (bedWorld != null) {
+                // Use bed spawn
+                BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
+                targetWorld = bedWorld;
+                targetPos = Vec3d.ofCenter(safePos);
+                yaw = player.getYaw();
+                pitch = player.getPitch();
+                PersonalWorldsMod.LOGGER.debug("No return data for player {}, using bed spawn at {}",
+                    player.getName().getString(), safePos);
+            } else {
+                // Fallback: overworld world spawn
+                PersonalWorldsMod.LOGGER.debug("No return data for player {}, using overworld spawn",
+                    player.getName().getString());
+                targetWorld = server.getOverworld();
+                targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
+                    targetWorld, targetWorld.getSpawnPos()));
+                yaw = player.getYaw();
+                pitch = player.getPitch();
+            }
         }
 
         // Play departure effects and dimension exit sound

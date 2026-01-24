@@ -144,9 +144,24 @@ public class CrashRecoveryHandler {
 
             dataManager.clearReturnData(player.getUuid());
         } else {
-            // No return data - overworld spawn
-            targetWorld = server.getOverworld();
-            targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(targetWorld, targetWorld.getSpawnPos()));
+            // No return data - try bed spawn first
+            BlockPos bedPos = player.getSpawnPointPosition();
+            ServerWorld bedWorld = null;
+
+            if (bedPos != null) {
+                bedWorld = server.getWorld(player.getSpawnPointDimension());
+            }
+
+            if (bedWorld != null) {
+                // Use bed spawn
+                BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
+                targetWorld = bedWorld;
+                targetPos = Vec3d.ofCenter(safePos);
+            } else {
+                // Fallback: overworld world spawn
+                targetWorld = server.getOverworld();
+                targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(targetWorld, targetWorld.getSpawnPos()));
+            }
             yaw = player.getYaw();
             pitch = player.getPitch();
         }
