@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-24
+
 ### Added
 - Portal mounted check - players riding horses, boats, pigs, or other vehicles must dismount before entering portals
 - Bed spawn fallback - when exiting pocket islands without a stored return position, players teleport to their bed spawn before falling back to world spawn
