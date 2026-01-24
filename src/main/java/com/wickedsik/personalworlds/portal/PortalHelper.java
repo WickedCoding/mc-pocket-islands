@@ -279,17 +279,21 @@ public class PortalHelper {
             return false;
         }
 
-        // Store return position BEFORE teleporting
-        // Offset 1 block backward from facing direction to avoid landing inside portal
-        BlockPos returnPos = player.getBlockPos().offset(player.getHorizontalFacing().getOpposite());
+        // Only store return position if coming from a NON-personal dimension
+        // This preserves the original overworld return when island-hopping
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        ReturnData returnData = new ReturnData(
-            fromWorld.getRegistryKey(),
-            returnPos,
-            player.getYaw(),
-            player.getPitch()
-        );
-        dataManager.setReturnData(playerUuid, returnData);
+        if (!isInPersonalDimension(fromWorld)) {
+            // Offset 1 block backward from facing direction to avoid landing inside portal
+            BlockPos returnPos = player.getBlockPos().offset(player.getHorizontalFacing().getOpposite());
+            ReturnData returnData = new ReturnData(
+                fromWorld.getRegistryKey(),
+                returnPos,
+                player.getYaw(),
+                player.getPitch()
+            );
+            dataManager.setReturnData(playerUuid, returnData);
+        }
+        // If coming from a personal dimension, preserve existing return data (overworld position)
 
         // Get or create the owner's dimension
         ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(

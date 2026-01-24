@@ -14,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
+import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
 /**
@@ -87,6 +88,15 @@ public class PersonalPortalBlock extends Block {
         }
 
         if (!(entity instanceof ServerPlayerEntity player)) {
+            return;
+        }
+
+        // Prevent mounted players from entering portals
+        if (player.hasVehicle()) {
+            player.sendMessage(
+                Text.translatable("personalworlds.portal.dismount_required"),
+                true  // Action bar message (less intrusive)
+            );
             return;
         }
 
