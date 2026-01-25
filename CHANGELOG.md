@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Full 16-color portal palette matching Minecraft's standard dye colors (white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink)
+
 ## [0.5.0] - 2026-01-24
 
 ### Added

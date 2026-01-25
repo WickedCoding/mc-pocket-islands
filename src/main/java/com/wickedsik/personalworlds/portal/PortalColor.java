@@ -13,8 +13,22 @@ import net.minecraft.util.StringIdentifiable;
  * 4. Add blockstate entries for color=purple
  */
 public enum PortalColor implements StringIdentifiable {
+    WHITE("white"),
+    LIGHT_GRAY("light_gray"),
+    GRAY("gray"),
+    BLACK("black"),
+    BROWN("brown"),
     RED("red"),
-    CYAN("cyan");
+    ORANGE("orange"),
+    YELLOW("yellow"),
+    LIME("lime"),
+    GREEN("green"),
+    CYAN("cyan"),
+    LIGHT_BLUE("light_blue"),
+    BLUE("blue"),
+    PURPLE("purple"),
+    MAGENTA("magenta"),
+    PINK("pink");
 
     private final String name;
 

@@ -1,0 +1,16 @@
+{
+  "textures": {
+    "particle": "personalworlds:block/personal_portal_yellow",
+    "portal": "personalworlds:block/personal_portal_yellow"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 6],
+      "to": [16, 16, 10],
+      "faces": {
+        "north": { "texture": "#portal", "tintindex": 0 },
+        "south": { "texture": "#portal", "tintindex": 0 }
+      }
+    }
+  ]
+}

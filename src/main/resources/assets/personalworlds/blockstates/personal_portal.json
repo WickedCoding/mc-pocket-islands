@@ -1,8 +1,36 @@
 {
   "variants": {
+    "axis=x,color=white": { "model": "personalworlds:block/personal_portal_ns_white" },
+    "axis=z,color=white": { "model": "personalworlds:block/personal_portal_ew_white" },
+    "axis=x,color=light_gray": { "model": "personalworlds:block/personal_portal_ns_light_gray" },
+    "axis=z,color=light_gray": { "model": "personalworlds:block/personal_portal_ew_light_gray" },
+    "axis=x,color=gray": { "model": "personalworlds:block/personal_portal_ns_gray" },
+    "axis=z,color=gray": { "model": "personalworlds:block/personal_portal_ew_gray" },
+    "axis=x,color=black": { "model": "personalworlds:block/personal_portal_ns_black" },
+    "axis=z,color=black": { "model": "personalworlds:block/personal_portal_ew_black" },
+    "axis=x,color=brown": { "model": "personalworlds:block/personal_portal_ns_brown" },
+    "axis=z,color=brown": { "model": "personalworlds:block/personal_portal_ew_brown" },
     "axis=x,color=red": { "model": "personalworlds:block/personal_portal_ns_red" },
     "axis=z,color=red": { "model": "personalworlds:block/personal_portal_ew_red" },
+    "axis=x,color=orange": { "model": "personalworlds:block/personal_portal_ns_orange" },
+    "axis=z,color=orange": { "model": "personalworlds:block/personal_portal_ew_orange" },
+    "axis=x,color=yellow": { "model": "personalworlds:block/personal_portal_ns_yellow" },
+    "axis=z,color=yellow": { "model": "personalworlds:block/personal_portal_ew_yellow" },
+    "axis=x,color=lime": { "model": "personalworlds:block/personal_portal_ns_lime" },
+    "axis=z,color=lime": { "model": "personalworlds:block/personal_portal_ew_lime" },
+    "axis=x,color=green": { "model": "personalworlds:block/personal_portal_ns_green" },
+    "axis=z,color=green": { "model": "personalworlds:block/personal_portal_ew_green" },
     "axis=x,color=cyan": { "model": "personalworlds:block/personal_portal_ns_cyan" },
-    "axis=z,color=cyan": { "model": "personalworlds:block/personal_portal_ew_cyan" }
+    "axis=z,color=cyan": { "model": "personalworlds:block/personal_portal_ew_cyan" },
+    "axis=x,color=light_blue": { "model": "personalworlds:block/personal_portal_ns_light_blue" },
+    "axis=z,color=light_blue": { "model": "personalworlds:block/personal_portal_ew_light_blue" },
+    "axis=x,color=blue": { "model": "personalworlds:block/personal_portal_ns_blue" },
+    "axis=z,color=blue": { "model": "personalworlds:block/personal_portal_ew_blue" },
+    "axis=x,color=purple": { "model": "personalworlds:block/personal_portal_ns_purple" },
+    "axis=z,color=purple": { "model": "personalworlds:block/personal_portal_ew_purple" },
+    "axis=x,color=magenta": { "model": "personalworlds:block/personal_portal_ns_magenta" },
+    "axis=z,color=magenta": { "model": "personalworlds:block/personal_portal_ew_magenta" },
+    "axis=x,color=pink": { "model": "personalworlds:block/personal_portal_ns_pink" },
+    "axis=z,color=pink": { "model": "personalworlds:block/personal_portal_ew_pink" }
   }
 }
