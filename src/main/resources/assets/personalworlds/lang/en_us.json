@@ -12,6 +12,7 @@
   "personalworlds.message.ejected": "Your invitation was revoked. Returning to overworld...",
   "personalworlds.message.ejected_offline": "Your invitation was revoked while you were offline.",
   "personalworlds.message.returned_overworld": "Returned to the overworld.",
+  "personalworlds.message.dimension_restored": "Restored connection to your pocket dimension.",
   "personalworlds.message.emergency_teleport": "Emergency teleport: %s",
   "personalworlds.message.admin_ejected": "You have been ejected - dimension deleted by admin",
   "personalworlds.void_ejection": "You fell off the island and were returned safely.",

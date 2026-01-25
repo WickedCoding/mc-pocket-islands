@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Full 16-color portal palette matching Minecraft's standard dye colors (white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink)
+- Pocket dimension recovery system - players who log out on their island are restored to it even if the dimension was unloaded during their absence
 
 ## [0.5.0] - 2026-01-24
 

@@ -5,9 +5,13 @@ import com.wickedsik.personalworlds.util.DataValidator;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
+import net.minecraft.world.World;
 
 import java.util.*;
 
@@ -46,6 +50,13 @@ public class PlayerDataManager extends PersistentState {
      * Tracks which players each owner has invited.
      */
     private final Map<UUID, Set<UUID>> sentInvitations = new HashMap<>();
+
+    /**
+     * Current pocket dimensions: Player UUID -> Dimension RegistryKey
+     * Tracks which pocket dimension a player is currently in (null if not in one).
+     * Used for recovery when player logs out on island and dimension unloads.
+     */
+    private final Map<UUID, RegistryKey<World>> currentPocketDimensions = new HashMap<>();
 
     public PlayerDataManager() {
         // Default constructor for new state
@@ -337,6 +348,61 @@ public class PlayerDataManager extends PersistentState {
         }
     }
 
+    // --- Current Pocket Dimension Tracking ---
+
+    /**
+     * Set the current pocket dimension for a player.
+     * Called when player enters a pocket dimension.
+     *
+     * @param playerUuid The player's UUID
+     * @param dimension The pocket dimension registry key
+     */
+    public void setCurrentPocketDimension(UUID playerUuid, RegistryKey<World> dimension) {
+        if (!DataValidator.isValidUuid(playerUuid) || dimension == null) {
+            PersonalWorldsMod.LOGGER.warn("Attempted to set invalid pocket dimension tracking for {}",
+                playerUuid);
+            return;
+        }
+
+        currentPocketDimensions.put(playerUuid, dimension);
+        markDirty();
+        PersonalWorldsMod.LOGGER.debug("Tracking player {} in pocket dimension: {}",
+            playerUuid, dimension.getValue());
+    }
+
+    /**
+     * Get the current pocket dimension a player is tracked as being in.
+     *
+     * @param playerUuid The player's UUID
+     * @return Optional containing the dimension key if player is tracked in a pocket dimension
+     */
+    public Optional<RegistryKey<World>> getCurrentPocketDimension(UUID playerUuid) {
+        return Optional.ofNullable(currentPocketDimensions.get(playerUuid));
+    }
+
+    /**
+     * Clear the pocket dimension tracking for a player.
+     * Called when player exits a pocket dimension.
+     *
+     * @param playerUuid The player's UUID
+     */
+    public void clearCurrentPocketDimension(UUID playerUuid) {
+        if (currentPocketDimensions.remove(playerUuid) != null) {
+            markDirty();
+            PersonalWorldsMod.LOGGER.debug("Cleared pocket dimension tracking for player: {}", playerUuid);
+        }
+    }
+
+    /**
+     * Check if a player is tracked as being in a pocket dimension.
+     *
+     * @param playerUuid The player's UUID
+     * @return true if player is tracked in a pocket dimension
+     */
+    public boolean isInPocketDimension(UUID playerUuid) {
+        return currentPocketDimensions.containsKey(playerUuid);
+    }
+
     // --- Serialization ---
 
     @Override
@@ -371,6 +437,13 @@ public class PlayerDataManager extends PersistentState {
             sentNbt.put(entry.getKey().toString(), guestList);
         }
         nbt.put("SentInvitations", sentNbt);
+
+        // Current pocket dimensions
+        NbtCompound pocketDimNbt = new NbtCompound();
+        for (Map.Entry<UUID, RegistryKey<World>> entry : currentPocketDimensions.entrySet()) {
+            pocketDimNbt.putString(entry.getKey().toString(), entry.getValue().getValue().toString());
+        }
+        nbt.put("CurrentPocketDimensions", pocketDimNbt);
 
         return nbt;
     }
@@ -433,10 +506,26 @@ public class PlayerDataManager extends PersistentState {
             }
         }
 
-        PersonalWorldsMod.LOGGER.debug("Loaded {} return positions, {} players with received invitations, {} owners with sent invitations",
+        // Current pocket dimensions (backward compatible - missing = empty)
+        if (nbt.contains("CurrentPocketDimensions", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound pocketDimNbt = nbt.getCompound("CurrentPocketDimensions");
+            for (String key : pocketDimNbt.getKeys()) {
+                try {
+                    UUID playerUuid = UUID.fromString(key);
+                    Identifier dimId = new Identifier(pocketDimNbt.getString(key));
+                    RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
+                    manager.currentPocketDimensions.put(playerUuid, dimension);
+                } catch (IllegalArgumentException e) {
+                    PersonalWorldsMod.LOGGER.warn("Invalid UUID or dimension in pocket dimensions: {}", key);
+                }
+            }
+        }
+
+        PersonalWorldsMod.LOGGER.debug("Loaded {} return positions, {} players with received invitations, {} owners with sent invitations, {} pocket dimension trackings",
             manager.returnPositions.size(),
             manager.receivedInvitations.size(),
-            manager.sentInvitations.size());
+            manager.sentInvitations.size(),
+            manager.currentPocketDimensions.size());
         return manager;
     }
 

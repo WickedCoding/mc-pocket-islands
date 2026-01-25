@@ -20,6 +20,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -305,6 +306,9 @@ public class PortalHelper {
             .map(portalPos -> findSafePositionNearPortal(targetWorld, portalPos))
             .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType, portalTypeIndex));
 
+        // Track that player is now in this pocket dimension (for recovery if they log out)
+        dataManager.setCurrentPocketDimension(playerUuid, targetWorld.getRegistryKey());
+
         // Play departure effects
         VisualEffects.playTeleportDepartureEffects(player);
 
@@ -420,6 +424,9 @@ public class PortalHelper {
             }
         }
 
+        // Clear pocket dimension tracking (player is leaving the pocket dimension)
+        dataManager.clearCurrentPocketDimension(playerUuid);
+
         // Play departure effects and dimension exit sound
         VisualEffects.playTeleportDepartureEffects(player);
         VisualEffects.playDimensionExitEffect(player);
@@ -509,6 +516,44 @@ public class PortalHelper {
             return Optional.of(UUID.fromString(uuidStr));
         } catch (IllegalArgumentException e) {
             PersonalWorldsMod.LOGGER.warn("Invalid UUID in dimension path: {}", path);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Get the owner UUID from a dimension registry key (for stored keys, not loaded worlds).
+     * Used for recovery when restoring players to unloaded dimensions.
+     *
+     * @param dimensionKey The dimension registry key
+     * @return Optional containing the owner UUID, or empty if not a personal dimension
+     */
+    public static Optional<UUID> getDimensionOwner(RegistryKey<World> dimensionKey) {
+        // Check namespace
+        if (!dimensionKey.getValue().getNamespace().equals(PersonalWorldsMod.MOD_ID)) {
+            return Optional.empty();
+        }
+
+        String path = dimensionKey.getValue().getPath();
+        if (!path.startsWith("pw_")) {
+            return Optional.empty();
+        }
+
+        String uuidStr = path.substring(3); // Remove "pw_" prefix
+
+        // Dimension IDs store UUIDs without dashes (e.g., "e8823481a39c3659a564a28f5ed6f193")
+        // Insert dashes for UUID.fromString() format: 8-4-4-4-12
+        if (uuidStr.length() == 32 && !uuidStr.contains("-")) {
+            uuidStr = uuidStr.substring(0, 8) + "-" +
+                      uuidStr.substring(8, 12) + "-" +
+                      uuidStr.substring(12, 16) + "-" +
+                      uuidStr.substring(16, 20) + "-" +
+                      uuidStr.substring(20);
+        }
+
+        try {
+            return Optional.of(UUID.fromString(uuidStr));
+        } catch (IllegalArgumentException e) {
+            PersonalWorldsMod.LOGGER.warn("Invalid UUID in dimension key path: {}", path);
             return Optional.empty();
         }
     }

@@ -392,11 +392,12 @@ main registry is corrupted. This file contains:
 
 ### Edge Cases Handled
 
-- **Player disconnects in pocket island**: Position preserved, permission checked on reconnect
+- **Player disconnects in pocket island**: Position preserved, dimension restored on reconnect even if unloaded
+- **Dimension unloaded while offline**: Player is restored to their island with fallback to bed spawn or world spawn if restoration fails
 - **Server crashes**: Recovery handler checks permissions and evacuates if needed
 - **Two players enter portal simultaneously**: Concurrent portal guard prevents race conditions
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
-- **Invitation revoked while offline**: Player evacuated on next login
+- **Invitation revoked while offline**: Player evacuated on next login with fallback chain (return data → bed → spawn)
 - **Player falls off island**: Automatically teleported back before taking void damage
 
 ## Performance
