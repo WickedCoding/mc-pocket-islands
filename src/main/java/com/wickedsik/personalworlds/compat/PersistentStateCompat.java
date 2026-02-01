@@ -85,7 +85,7 @@ public final class PersistentStateCompat {
         );
         return stateManager.getOrCreate(type, name);
         *///?} else {
-        /*return stateManager.getOrCreate(deserializer, constructor, name);*/
-        //?}
+        /*return stateManager.getOrCreate(deserializer, constructor, name);
+        *///?}
     }
 }
