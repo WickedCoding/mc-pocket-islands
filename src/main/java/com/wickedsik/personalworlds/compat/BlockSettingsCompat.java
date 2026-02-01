@@ -1,8 +1,15 @@
 package com.wickedsik.personalworlds.compat;
 
-//? if >=1.21 {
+import net.minecraft.util.Identifier;
+
+//? if >=1.21.2 {
 import net.minecraft.block.AbstractBlock;
-//?} else {
+import net.minecraft.block.Block;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+//?} else if >=1.21 {
+/*import net.minecraft.block.AbstractBlock;
+*///?} else {
 /*import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 *///?}
 
@@ -10,7 +17,8 @@ import net.minecraft.block.AbstractBlock;
  * Compatibility layer for Block settings creation.
  * <p>
  * MC 1.20.x uses: FabricBlockSettings.create()
- * MC 1.21.x uses: AbstractBlock.Settings.create() (FabricBlockSettings was removed)
+ * MC 1.21.0-1.21.1 uses: AbstractBlock.Settings.create()
+ * MC 1.21.2+ uses: AbstractBlock.Settings.create().registryKey(key) - REQUIRED
  * <p>
  * This class centralizes block settings creation to simplify version migration.
  */
@@ -21,18 +29,38 @@ public final class BlockSettingsCompat {
     }
 
     /**
-     * Create a new block settings instance.
-     * Returns FabricBlockSettings on 1.20.x, AbstractBlock.Settings on 1.21.x.
-     * Both support the same chaining methods (mapColor, noCollision, strength, etc.)
+     * Create a new block settings instance with registry key (required for 1.21.2+).
      *
+     * @param id The block identifier for registry key creation
      * @return A new block settings builder
      */
+    //? if >=1.21.2 {
+    public static AbstractBlock.Settings create(Identifier id) {
+        RegistryKey<Block> key = RegistryKey.of(RegistryKeys.BLOCK, id);
+        return AbstractBlock.Settings.create().registryKey(key);
+    }
+    //?} else if >=1.21 {
+    /*public static AbstractBlock.Settings create(Identifier id) {
+        return AbstractBlock.Settings.create();
+    }*/
+    //?} else {
+    /*public static FabricBlockSettings create(Identifier id) {
+        return FabricBlockSettings.create();
+    }
+    *///?}
+
+    /**
+     * Create a new block settings instance without registry key.
+     * @deprecated Use create(Identifier) instead for 1.21.2+ compatibility.
+     */
     //? if >=1.21 {
+    @Deprecated
     public static AbstractBlock.Settings create() {
         return AbstractBlock.Settings.create();
     }
     //?} else {
-    /*public static FabricBlockSettings create() {
+    /*@Deprecated
+    public static FabricBlockSettings create() {
         return FabricBlockSettings.create();
     }
     *///?}

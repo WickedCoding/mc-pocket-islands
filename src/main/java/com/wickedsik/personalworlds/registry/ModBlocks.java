@@ -19,12 +19,14 @@ import net.minecraft.util.Identifier;
  */
 public class ModBlocks {
 
+    private static final Identifier PERSONAL_PORTAL_ID = IdentifierCompat.modId("personal_portal");
+
     /**
      * The personal portal block - similar to nether portal properties.
      * Non-collidable, emits light, unbreakable by hand.
      */
     public static final Block PERSONAL_PORTAL = new PersonalPortalBlock(
-        BlockSettingsCompat.create()
+        BlockSettingsCompat.create(PERSONAL_PORTAL_ID)
             .mapColor(MapColor.CYAN)
             .noCollision()
             .strength(-1.0F)
@@ -52,7 +54,7 @@ public class ModBlocks {
     public static void register() {
         Registry.register(
             Registries.BLOCK,
-            IdentifierCompat.modId("personal_portal"),
+            PERSONAL_PORTAL_ID,
             PERSONAL_PORTAL
         );
 
