@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.registry;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -47,7 +48,7 @@ public class ModItems {
 
             for (int i = 0; i < configs.size(); i++) {
                 String itemId = configs.get(i).activationItem;
-                Identifier id = Identifier.tryParse(itemId);
+                Identifier id = IdentifierCompat.tryParse(itemId);
                 Item item = id != null ? Registries.ITEM.get(id) : Items.AIR;
 
                 // Validate the item exists (get() returns AIR for unknown IDs)

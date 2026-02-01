@@ -1,6 +1,8 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.util.DataValidator;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -24,14 +26,6 @@ import java.util.*;
 public class PlayerDataManager extends PersistentState {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_player_data";
-
-    //? if >=1.20.2 {
-    private static final Type<PlayerDataManager> TYPE = new Type<>(
-        PlayerDataManager::new,
-        PlayerDataManager::fromNbt,
-        null // No DataFixTypes needed
-    );
-    //?}
 
     /**
      * Return positions: Player UUID -> ReturnData
@@ -512,7 +506,7 @@ public class PlayerDataManager extends PersistentState {
             for (String key : pocketDimNbt.getKeys()) {
                 try {
                     UUID playerUuid = UUID.fromString(key);
-                    Identifier dimId = new Identifier(pocketDimNbt.getString(key));
+                    Identifier dimId = IdentifierCompat.fromNbtString(pocketDimNbt.getString(key));
                     RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
                     manager.currentPocketDimensions.put(playerUuid, dimension);
                 } catch (IllegalArgumentException e) {
@@ -540,10 +534,11 @@ public class PlayerDataManager extends PersistentState {
      */
     public static PlayerDataManager get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
-        //? if >=1.20.2 {
-        return stateManager.getOrCreate(TYPE, DATA_NAME);
-        //?} else {
-        /*return stateManager.getOrCreate(PlayerDataManager::fromNbt, PlayerDataManager::new, DATA_NAME);
-        *///?}
+        return PersistentStateCompat.getOrCreate(
+            stateManager,
+            DATA_NAME,
+            PlayerDataManager::new,
+            PlayerDataManager::fromNbt
+        );
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
@@ -66,7 +67,7 @@ public class DimensionMetadataFile {
             return new PlayerDimensionData(
                 UUID.fromString(ownerUuid),
                 ownerName,
-                new Identifier(dimensionId),
+                IdentifierCompat.fromNbtString(dimensionId),
                 createdAt,
                 new BlockPos(spawnX, spawnY, spawnZ),
                 WorldGenType.fromString(generatorType),

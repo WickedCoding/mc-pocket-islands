@@ -1,6 +1,8 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
@@ -14,7 +16,6 @@ import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
 import com.wickedsik.personalworlds.util.VisualEffects;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -32,7 +33,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -312,13 +312,7 @@ public class PortalHelper {
         // Play departure effects
         VisualEffects.playTeleportDepartureEffects(player);
 
-        TeleportTarget target = new TeleportTarget(
-            Vec3d.ofCenter(destinationPos),
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
-        );
-        FabricDimensions.teleport(player, targetWorld, target);
+        TeleportCompat.teleportToBlockPreserveRotation(player, targetWorld, destinationPos);
 
         // Play arrival effects and dimension entry sound
         VisualEffects.playTeleportArrivalEffects(player);
@@ -431,8 +425,7 @@ public class PortalHelper {
         VisualEffects.playTeleportDepartureEffects(player);
         VisualEffects.playDimensionExitEffect(player);
 
-        TeleportTarget target = new TeleportTarget(targetPos, Vec3d.ZERO, yaw, pitch);
-        FabricDimensions.teleport(player, targetWorld, target);
+        TeleportCompat.teleport(player, targetWorld, targetPos, yaw, pitch);
 
         // Play arrival effects
         VisualEffects.playTeleportArrivalEffects(player);
@@ -695,7 +688,7 @@ public class PortalHelper {
         ModConfig.PortalConfig config = ModConfig.get().portalTypes.get(portalTypeIndex);
         if (config.islandLayers.length > 0) {
             String blockId = config.islandLayers[0];
-            Identifier id = Identifier.tryParse(blockId);
+            Identifier id = IdentifierCompat.tryParse(blockId);
             Block block = id != null ? Registries.BLOCK.get(id) : Blocks.GRASS_BLOCK;
 
             if (block != Blocks.AIR || blockId.equals("minecraft:air")) {

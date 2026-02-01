@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.player;
 
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -46,7 +47,7 @@ public record ReturnData(
      * @return Deserialized ReturnData
      */
     public static ReturnData fromNbt(NbtCompound nbt) {
-        Identifier dimId = new Identifier(nbt.getString("Dimension"));
+        Identifier dimId = IdentifierCompat.fromNbtString(nbt.getString("Dimension"));
         RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
 
         BlockPos position = new BlockPos(

@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
 import com.wickedsik.personalworlds.player.InvitationData;
@@ -65,7 +66,7 @@ public final class DataValidator {
         }
 
         try {
-            return Optional.of(new Identifier(namespace, path));
+            return Optional.of(IdentifierCompat.create(namespace, path));
         } catch (Exception e) {
             PersonalWorldsMod.LOGGER.warn("Invalid identifier: {}:{}", namespace, path);
             return Optional.empty();
@@ -174,7 +175,7 @@ public final class DataValidator {
             return new PlayerDimensionData(
                 ownerUuid,
                 "Unknown (" + ownerUuid.toString().substring(0, 8) + ")",
-                new Identifier(PersonalWorldsMod.MOD_ID, dimPath),
+                IdentifierCompat.modId(dimPath),
                 System.currentTimeMillis(),
                 new BlockPos(0, 65, 0),
                 WorldGenType.VOID,
@@ -189,7 +190,7 @@ public final class DataValidator {
             : "Unknown";
         Identifier dimId = data.dimensionId() != null
             ? data.dimensionId()
-            : new Identifier(PersonalWorldsMod.MOD_ID, "pw_" + uuid.toString().replace("-", ""));
+            : IdentifierCompat.modId("pw_" + uuid.toString().replace("-", ""));
         long createdAt = data.createdAt() > 0 ? data.createdAt() : System.currentTimeMillis();
         BlockPos spawn = sanitizeBlockPos(data.spawnPoint());
         WorldGenType genType = data.generatorType() != null ? data.generatorType() : WorldGenType.VOID;

@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.command.executor;
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
 import com.wickedsik.personalworlds.command.service.TeleportHelper;
+import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
@@ -13,7 +14,6 @@ import com.wickedsik.personalworlds.portal.PortalOwnershipManager;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.VisualEffects;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -21,7 +21,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -231,7 +230,7 @@ public class AdminCommandExecutor {
                 // Copy player list to avoid concurrent modification
                 List<ServerPlayerEntity> playersToEject = new ArrayList<>(dimWorld.getPlayers());
                 for (ServerPlayerEntity player : playersToEject) {
-                    FabricDimensions.teleport(player, overworld, TeleportHelper.toWorldSpawn(overworld, player));
+                    TeleportCompat.teleport(player, overworld, TeleportHelper.toWorldSpawn(overworld, player));
                     player.sendMessage(Text.translatable("personalworlds.message.admin_ejected")
                         .formatted(Formatting.RED), false);
                 }
@@ -308,7 +307,7 @@ public class AdminCommandExecutor {
 
         // Teleport with effects
         VisualEffects.playTeleportDepartureEffects(admin);
-        FabricDimensions.teleport(admin, dimension, TeleportHelper.toBlockPos(data.spawnPoint(), admin));
+        TeleportCompat.teleport(admin, dimension, TeleportHelper.toBlockPos(data.spawnPoint(), admin));
         VisualEffects.playTeleportArrivalEffects(admin);
 
         return CommandResult.successBroadcast(

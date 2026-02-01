@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
 import net.minecraft.block.Block;
@@ -240,10 +241,7 @@ public class DimensionManager {
 
     private static Identifier createDimensionId(UUID playerUuid) {
         // Format: personalworlds:pw_<uuid>
-        return new Identifier(
-            PersonalWorldsMod.MOD_ID,
-            "pw_" + playerUuid.toString().replace("-", "")
-        );
+        return IdentifierCompat.modId("pw_" + playerUuid.toString().replace("-", ""));
     }
 
     private static RuntimeWorldConfig createWorldConfig(
@@ -326,7 +324,7 @@ public class DimensionManager {
 
         for (int i = 0; i < layerCount; i++) {
             String blockId = layerIds[i];
-            Identifier id = Identifier.tryParse(blockId);
+            Identifier id = IdentifierCompat.tryParse(blockId);
             Block block = id != null ? Registries.BLOCK.get(id) : Blocks.AIR;
 
             if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {

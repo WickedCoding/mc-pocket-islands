@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.recovery;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -9,7 +10,6 @@ import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -18,7 +18,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 
 import java.util.Optional;
@@ -193,9 +192,7 @@ public class CrashRecoveryHandler {
             // Use stored spawn point from dimension data
             BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, dimData.spawnPoint());
 
-            TeleportTarget target = new TeleportTarget(
-                Vec3d.ofCenter(safePos), Vec3d.ZERO, player.getYaw(), player.getPitch());
-            FabricDimensions.teleport(player, targetWorld, target);
+            TeleportCompat.teleportToBlockPreserveRotation(player, targetWorld, safePos);
 
             PersonalWorldsMod.LOGGER.info("Restored player {} to pocket dimension after fallback spawn",
                 player.getName().getString());
@@ -297,8 +294,7 @@ public class CrashRecoveryHandler {
             float yaw,
             float pitch
     ) {
-        TeleportTarget target = new TeleportTarget(pos, Vec3d.ZERO, yaw, pitch);
-        FabricDimensions.teleport(player, world, target);
+        TeleportCompat.teleport(player, world, pos, yaw, pitch);
         player.sendMessage(Text.translatable("personalworlds.message.returned_overworld"), true);
     }
 
@@ -316,10 +312,9 @@ public class CrashRecoveryHandler {
      */
     private static void emergencyEvacuate(ServerPlayerEntity player, MinecraftServer server, String reason) {
         ServerWorld overworld = server.getOverworld();
-        Vec3d spawnPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(overworld, overworld.getSpawnPos()));
+        BlockPos safePos = SafeSpawnFinder.findSafePosition(overworld, overworld.getSpawnPos());
 
-        TeleportTarget target = new TeleportTarget(spawnPos, Vec3d.ZERO, player.getYaw(), player.getPitch());
-        FabricDimensions.teleport(player, overworld, target);
+        TeleportCompat.teleportToBlockPreserveRotation(player, overworld, safePos);
 
         player.sendMessage(Text.translatable("personalworlds.message.emergency_teleport", reason)
             .formatted(Formatting.RED), false);

@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.dimension;
 
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -39,7 +40,7 @@ public record PlayerDimensionData(
         return new PlayerDimensionData(
             nbt.getUuid("OwnerUuid"),
             nbt.getString("OwnerName"),
-            new Identifier(nbt.getString("DimensionId")),
+            IdentifierCompat.fromNbtString(nbt.getString("DimensionId")),
             nbt.getLong("CreatedAt"),
             new BlockPos(
                 nbt.getInt("SpawnX"),

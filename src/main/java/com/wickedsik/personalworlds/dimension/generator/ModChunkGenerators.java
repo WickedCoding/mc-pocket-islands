@@ -1,16 +1,14 @@
 package com.wickedsik.personalworlds.dimension.generator;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
 public class ModChunkGenerators {
 
-    public static final Identifier VOID_ISLAND_ID = new Identifier(
-        PersonalWorldsMod.MOD_ID,
-        "void_island"
-    );
+    public static final Identifier VOID_ISLAND_ID = IdentifierCompat.modId("void_island");
 
     /**
      * Register all custom chunk generators.

@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import net.minecraft.nbt.NbtCompound;
@@ -29,14 +30,6 @@ import java.util.UUID;
 public class PortalOwnershipManager extends PersistentState {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_portal_ownership";
-
-    //? if >=1.20.2 {
-    private static final Type<PortalOwnershipManager> TYPE = new Type<>(
-        PortalOwnershipManager::new,
-        PortalOwnershipManager::fromNbt,
-        null // No DataFixTypes needed
-    );
-    //?}
 
     /**
      * Portal ownership data: stores owner UUID and portal type index.
@@ -260,10 +253,11 @@ public class PortalOwnershipManager extends PersistentState {
      */
     public static PortalOwnershipManager get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
-        //? if >=1.20.2 {
-        return stateManager.getOrCreate(TYPE, DATA_NAME);
-        //?} else {
-        /*return stateManager.getOrCreate(PortalOwnershipManager::fromNbt, PortalOwnershipManager::new, DATA_NAME);
-        *///?}
+        return PersistentStateCompat.getOrCreate(
+            stateManager,
+            DATA_NAME,
+            PortalOwnershipManager::new,
+            PortalOwnershipManager::fromNbt
+        );
     }
 }

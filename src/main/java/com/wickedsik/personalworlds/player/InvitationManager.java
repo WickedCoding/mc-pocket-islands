@@ -1,19 +1,18 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.util.VisualEffects;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.TeleportTarget;
 
 import java.util.List;
 import java.util.Optional;
@@ -306,8 +305,7 @@ public class InvitationManager {
             pitch = guest.getPitch();
         }
 
-        TeleportTarget target = new TeleportTarget(targetPos, Vec3d.ZERO, yaw, pitch);
-        FabricDimensions.teleport(guest, targetWorld, target);
+        TeleportCompat.teleport(guest, targetWorld, targetPos, yaw, pitch);
 
         PersonalWorldsMod.LOGGER.info("Ejected {} from {}'s dimension due to revoked invitation",
             guest.getName().getString(), owner.getName().getString());

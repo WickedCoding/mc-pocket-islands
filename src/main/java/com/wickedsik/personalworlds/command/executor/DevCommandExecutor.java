@@ -2,12 +2,12 @@ package com.wickedsik.personalworlds.command.executor;
 
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.TeleportHelper;
+import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
 import com.wickedsik.personalworlds.portal.PortalHelper;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -49,7 +49,7 @@ public class DevCommandExecutor {
                 0  // Default portal type for /pi create command
             );
 
-            FabricDimensions.teleport(player, dimension, TeleportHelper.toDefaultSpawn(player));
+            TeleportCompat.teleport(player, dimension, TeleportHelper.toDefaultSpawn(player));
 
             return CommandResult.successBroadcast(
                 Text.translatable("personalworlds.command.info.dimension_created", type.name())
@@ -96,7 +96,7 @@ public class DevCommandExecutor {
                 data.portalTypeIndex()
             );
 
-            FabricDimensions.teleport(
+            TeleportCompat.teleport(
                 player,
                 dimension,
                 TeleportHelper.toBlockPos(data.spawnPoint(), player)

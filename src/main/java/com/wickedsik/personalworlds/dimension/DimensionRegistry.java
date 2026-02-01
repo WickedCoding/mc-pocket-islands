@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.util.DataValidator;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -17,14 +18,6 @@ import java.util.UUID;
 public class DimensionRegistry extends PersistentState {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_registry";
-
-    //? if >=1.20.2 {
-    private static final Type<DimensionRegistry> TYPE = new Type<>(
-        DimensionRegistry::new,
-        DimensionRegistry::fromNbt,
-        null // No DataFixTypes needed
-    );
-    //?}
 
     private final Map<UUID, PlayerDimensionData> dimensions = new HashMap<>();
 
@@ -128,10 +121,11 @@ public class DimensionRegistry extends PersistentState {
 
     public static DimensionRegistry get(MinecraftServer server) {
         PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
-        //? if >=1.20.2 {
-        return stateManager.getOrCreate(TYPE, DATA_NAME);
-        //?} else {
-        /*return stateManager.getOrCreate(DimensionRegistry::fromNbt, DimensionRegistry::new, DATA_NAME);
-        *///?}
+        return PersistentStateCompat.getOrCreate(
+            stateManager,
+            DATA_NAME,
+            DimensionRegistry::new,
+            DimensionRegistry::fromNbt
+        );
     }
 }
