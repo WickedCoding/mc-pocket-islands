@@ -44,7 +44,7 @@ public record InvitationData(
      */
     public NbtCompound toNbt() {
         NbtCompound nbt = new NbtCompound();
-        nbt.putUuid("OwnerUuid", ownerUuid);
+        com.wickedsik.personalworlds.compat.NbtCompat.putUuid(nbt, "OwnerUuid", ownerUuid);
         nbt.putString("OwnerName", ownerName);
         nbt.putLong("InvitedAt", invitedAt);
         nbt.putBoolean("AlwaysWelcome", alwaysWelcome);
@@ -60,14 +60,12 @@ public record InvitationData(
      */
     public static InvitationData fromNbt(NbtCompound nbt) {
         // Backward compatible: default to false if field doesn't exist
-        boolean alwaysWelcome = nbt.contains("AlwaysWelcome")
-            ? nbt.getBoolean("AlwaysWelcome")
-            : false;
+        boolean alwaysWelcome = com.wickedsik.personalworlds.compat.NbtCompat.getBoolean(nbt, "AlwaysWelcome", false);
 
         return new InvitationData(
-            nbt.getUuid("OwnerUuid"),
-            nbt.getString("OwnerName"),
-            nbt.getLong("InvitedAt"),
+            com.wickedsik.personalworlds.compat.NbtCompat.getUuid(nbt, "OwnerUuid"),
+            com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "OwnerName", "Unknown"),
+            com.wickedsik.personalworlds.compat.NbtCompat.getLong(nbt, "InvitedAt", 0L),
             alwaysWelcome
         );
     }

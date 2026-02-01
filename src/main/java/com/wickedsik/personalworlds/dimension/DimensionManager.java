@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.GameRulesCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
@@ -17,7 +18,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.FixedBiomeSource;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import xyz.nucleoid.fantasy.Fantasy;
@@ -262,7 +262,7 @@ public class DimensionManager {
 
         // For void worlds, disable mob spawning to keep the dimension pristine
         if (genType == WorldGenType.VOID) {
-            config.setGameRule(GameRules.DO_MOB_SPAWNING, false);
+            GameRulesCompat.disableMobSpawning(config);
         }
 
         return config;
@@ -285,9 +285,15 @@ public class DimensionManager {
             case VOID -> {
                 // Create VoidIslandChunkGenerator with THE_VOID biome
                 // Using THE_VOID prevents structure generation (no villages, etc.)
-                var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
+                //? if >=1.21 {
+                var biomeRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.BIOME);
+                RegistryEntry<Biome> voidBiome = biomeRegistry.getOptional(BiomeKeys.THE_VOID)
+                    .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
+                //?} else {
+                /*var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
                 RegistryEntry<Biome> voidBiome = biomeRegistry.getEntry(BiomeKeys.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
+                *///?}
 
                 // Convert island layer strings to BlockStates
                 BlockState[] islandLayers = convertIslandLayers(portalTypeIndex);

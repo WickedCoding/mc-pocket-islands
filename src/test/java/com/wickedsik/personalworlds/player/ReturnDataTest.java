@@ -1,6 +1,8 @@
 package com.wickedsik.personalworlds.player;
 
 //? if >=1.20.2 {
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.NbtCompat;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -31,7 +33,7 @@ class ReturnDataTest {
 
     @BeforeEach
     void setUp() {
-        testDimension = RegistryKey.of(RegistryKeys.WORLD, new Identifier("minecraft", "overworld"));
+        testDimension = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "overworld"));
         testPosition = new BlockPos(100, 65, -200);
         testYaw = 90.0f;
         testPitch = -15.0f;
@@ -106,7 +108,7 @@ class ReturnDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals("minecraft:overworld", nbt.getString("Dimension"));
+            assertEquals("minecraft:overworld", NbtCompat.getString(nbt, "Dimension", ""));
         }
 
         @Test
@@ -116,9 +118,9 @@ class ReturnDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals(100, nbt.getInt("X"));
-            assertEquals(65, nbt.getInt("Y"));
-            assertEquals(-200, nbt.getInt("Z"));
+            assertEquals(100, NbtCompat.getInt(nbt, "X", 0));
+            assertEquals(65, NbtCompat.getInt(nbt, "Y", 0));
+            assertEquals(-200, NbtCompat.getInt(nbt, "Z", 0));
         }
 
         @Test
@@ -128,8 +130,8 @@ class ReturnDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals(90.0f, nbt.getFloat("Yaw"), 0.001f);
-            assertEquals(-15.0f, nbt.getFloat("Pitch"), 0.001f);
+            assertEquals(90.0f, NbtCompat.getFloat(nbt, "Yaw", 0.0f), 0.001f);
+            assertEquals(-15.0f, NbtCompat.getFloat(nbt, "Pitch", 0.0f), 0.001f);
         }
 
         @Test
@@ -199,40 +201,40 @@ class ReturnDataTest {
         @Test
         @DisplayName("Overworld dimension key serializes correctly")
         void overworldDimension_serializesCorrectly() {
-            RegistryKey<World> overworld = RegistryKey.of(RegistryKeys.WORLD, new Identifier("minecraft", "overworld"));
+            RegistryKey<World> overworld = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "overworld"));
             ReturnData data = new ReturnData(overworld, testPosition, testYaw, testPitch);
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals("minecraft:overworld", nbt.getString("Dimension"));
+            assertEquals("minecraft:overworld", NbtCompat.getString(nbt, "Dimension", ""));
         }
 
         @Test
         @DisplayName("Nether dimension key serializes correctly")
         void netherDimension_serializesCorrectly() {
-            RegistryKey<World> nether = RegistryKey.of(RegistryKeys.WORLD, new Identifier("minecraft", "the_nether"));
+            RegistryKey<World> nether = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_nether"));
             ReturnData data = new ReturnData(nether, testPosition, testYaw, testPitch);
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals("minecraft:the_nether", nbt.getString("Dimension"));
+            assertEquals("minecraft:the_nether", NbtCompat.getString(nbt, "Dimension", ""));
         }
 
         @Test
         @DisplayName("End dimension key serializes correctly")
         void endDimension_serializesCorrectly() {
-            RegistryKey<World> end = RegistryKey.of(RegistryKeys.WORLD, new Identifier("minecraft", "the_end"));
+            RegistryKey<World> end = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_end"));
             ReturnData data = new ReturnData(end, testPosition, testYaw, testPitch);
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals("minecraft:the_end", nbt.getString("Dimension"));
+            assertEquals("minecraft:the_end", NbtCompat.getString(nbt, "Dimension", ""));
         }
 
         @Test
         @DisplayName("Custom dimension key serializes correctly")
         void customDimension_serializesCorrectly() {
-            RegistryKey<World> custom = RegistryKey.of(RegistryKeys.WORLD, new Identifier("personalworlds", "pw_test"));
+            RegistryKey<World> custom = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("personalworlds", "pw_test"));
             ReturnData data = new ReturnData(custom, testPosition, testYaw, testPitch);
 
             NbtCompound nbt = data.toNbt();
@@ -246,13 +248,13 @@ class ReturnDataTest {
         @DisplayName("Dimension with underscores serializes correctly")
         void dimensionWithUnderscores_serializesCorrectly() {
             RegistryKey<World> custom = RegistryKey.of(RegistryKeys.WORLD,
-                new Identifier("my_mod", "my_cool_dimension"));
+                IdentifierCompat.create("my_mod", "my_cool_dimension"));
             ReturnData data = new ReturnData(custom, testPosition, testYaw, testPitch);
 
             NbtCompound nbt = data.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
-            assertEquals("my_mod:my_cool_dimension", nbt.getString("Dimension"));
+            assertEquals("my_mod:my_cool_dimension", NbtCompat.getString(nbt, "Dimension", ""));
             assertEquals("my_mod", restored.dimension().getValue().getNamespace());
             assertEquals("my_cool_dimension", restored.dimension().getValue().getPath());
         }
@@ -388,7 +390,7 @@ class ReturnDataTest {
         @Test
         @DisplayName("Different dimension not equal")
         void equals_differentDimension_notEqual() {
-            RegistryKey<World> other = RegistryKey.of(RegistryKeys.WORLD, new Identifier("minecraft", "the_nether"));
+            RegistryKey<World> other = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_nether"));
             ReturnData data1 = new ReturnData(testDimension, testPosition, testYaw, testPitch);
             ReturnData data2 = new ReturnData(other, testPosition, testYaw, testPitch);
 

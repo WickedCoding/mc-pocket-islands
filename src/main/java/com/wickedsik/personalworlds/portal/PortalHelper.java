@@ -1,8 +1,10 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
@@ -74,7 +76,7 @@ public class PortalHelper {
             return false;
         }
 
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) {
             return false;
         }
@@ -140,7 +142,7 @@ public class PortalHelper {
      * @param portalPos The position of the portal block
      */
     public static void handlePortalEntry(ServerPlayerEntity player, BlockPos portalPos) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) {
             return;
         }
@@ -152,7 +154,7 @@ public class PortalHelper {
         }
 
         try {
-            ServerWorld currentWorld = player.getServerWorld();
+            ServerWorld currentWorld = EntityCompat.getServerWorld(player);
 
             if (isInPersonalDimension(currentWorld)) {
                 // Going back to overworld (or original dimension)
@@ -369,7 +371,7 @@ public class PortalHelper {
                     player.getName().getString());
                 targetWorld = server.getOverworld();
                 targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
-                    targetWorld, targetWorld.getSpawnPos()));
+                    targetWorld, WorldCompat.getSpawnPos(targetWorld)));
                 yaw = player.getYaw();
                 pitch = player.getPitch();
             } else if (!SafeSpawnFinder.isSafeSpawn(targetWorld, returnData.position())) {
@@ -390,11 +392,11 @@ public class PortalHelper {
             dataManager.clearReturnData(playerUuid);
         } else {
             // No return data - try bed spawn first
-            BlockPos bedPos = player.getSpawnPointPosition();
+            BlockPos bedPos = EntityCompat.getSpawnPointPosition(player);
             ServerWorld bedWorld = null;
 
             if (bedPos != null) {
-                bedWorld = server.getWorld(player.getSpawnPointDimension());
+                bedWorld = server.getWorld(EntityCompat.getSpawnPointDimension(player));
             }
 
             if (bedWorld != null) {
@@ -412,7 +414,7 @@ public class PortalHelper {
                     player.getName().getString());
                 targetWorld = server.getOverworld();
                 targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
-                    targetWorld, targetWorld.getSpawnPos()));
+                    targetWorld, WorldCompat.getSpawnPos(targetWorld)));
                 yaw = player.getYaw();
                 pitch = player.getPitch();
             }
@@ -447,7 +449,7 @@ public class PortalHelper {
      */
     public static boolean teleportToDimension(ServerPlayerEntity player, MinecraftServer server, UUID ownerUuid) {
         // Check if player is already in the target dimension
-        ServerWorld currentWorld = player.getServerWorld();
+        ServerWorld currentWorld = EntityCompat.getServerWorld(player);
         if (isInPersonalDimension(currentWorld)) {
             String dimPath = currentWorld.getRegistryKey().getValue().getPath();
             String targetPath = "pw_" + ownerUuid.toString();
@@ -575,7 +577,7 @@ public class PortalHelper {
                     BlockPos checkPos = center.add(x, y, z);
 
                     // Ensure Y is within valid range
-                    if (checkPos.getY() < world.getBottomY() || checkPos.getY() >= world.getTopY()) {
+                    if (checkPos.getY() < world.getBottomY() || checkPos.getY() >= WorldCompat.getTopY(world)) {
                         continue;
                     }
 

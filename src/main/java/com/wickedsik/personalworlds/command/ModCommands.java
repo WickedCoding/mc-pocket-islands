@@ -7,6 +7,7 @@ import com.wickedsik.personalworlds.command.executor.DebugCommandExecutor;
 import com.wickedsik.personalworlds.command.executor.DevCommandExecutor;
 import com.wickedsik.personalworlds.command.executor.PlayerCommandExecutor;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
+import com.wickedsik.personalworlds.compat.CommandCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.util.PermissionHelper;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -146,7 +147,7 @@ public class ModCommands {
 
                 // === Debug/Testing Commands (OP level 4) ===
                 .then(CommandManager.literal("debug")
-                    .requires(source -> source.hasPermissionLevel(4))
+                    .requires(CommandCompat.requiresLevel(4))
                     .then(CommandManager.literal("perf")
                         .then(CommandManager.literal("enable")
                             .executes(ctx -> debugExecutor.enablePerf().applyTo(ctx.getSource())))

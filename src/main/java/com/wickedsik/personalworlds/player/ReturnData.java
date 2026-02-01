@@ -47,17 +47,19 @@ public record ReturnData(
      * @return Deserialized ReturnData
      */
     public static ReturnData fromNbt(NbtCompound nbt) {
-        Identifier dimId = IdentifierCompat.fromNbtString(nbt.getString("Dimension"));
+        Identifier dimId = IdentifierCompat.fromNbtString(
+            com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "Dimension", "minecraft:overworld")
+        );
         RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
 
         BlockPos position = new BlockPos(
-            nbt.getInt("X"),
-            nbt.getInt("Y"),
-            nbt.getInt("Z")
+            com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "X", 0),
+            com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "Y", 64),
+            com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "Z", 0)
         );
 
-        float yaw = nbt.getFloat("Yaw");
-        float pitch = nbt.getFloat("Pitch");
+        float yaw = com.wickedsik.personalworlds.compat.NbtCompat.getFloat(nbt, "Yaw", 0.0f);
+        float pitch = com.wickedsik.personalworlds.compat.NbtCompat.getFloat(nbt, "Pitch", 0.0f);
 
         return new ReturnData(dimension, position, yaw, pitch);
     }

@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.command.executor;
 
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.TeleportHelper;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
@@ -38,7 +39,7 @@ public class DevCommandExecutor {
         WorldGenType type = WorldGenType.fromString(typeStr);
         UUID playerUuid = player.getUuid();
         String playerName = player.getName().getString();
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
 
         try {
             ServerWorld dimension = DimensionManager.getOrCreatePlayerDimension(
@@ -49,7 +50,7 @@ public class DevCommandExecutor {
                 0  // Default portal type for /pi create command
             );
 
-            TeleportCompat.teleport(player, dimension, TeleportHelper.toDefaultSpawn(player));
+            TeleportCompat.teleport(player, dimension, TeleportHelper.toDefaultSpawn(dimension, player));
 
             return CommandResult.successBroadcast(
                 Text.translatable("personalworlds.command.info.dimension_created", type.name())
@@ -69,7 +70,7 @@ public class DevCommandExecutor {
      */
     public CommandResult enterDimension(ServerPlayerEntity player) {
         UUID playerUuid = player.getUuid();
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
         DimensionRegistry registry = DimensionRegistry.get(server);
 
         if (!registry.hasDimension(playerUuid)) {
@@ -99,7 +100,7 @@ public class DevCommandExecutor {
             TeleportCompat.teleport(
                 player,
                 dimension,
-                TeleportHelper.toBlockPos(data.spawnPoint(), player)
+                TeleportHelper.toBlockPos(dimension, data.spawnPoint(), player)
             );
 
             return CommandResult.successBroadcast(
@@ -119,7 +120,7 @@ public class DevCommandExecutor {
      * @return Command result (always successful as PortalHelper handles the teleport)
      */
     public CommandResult leaveDimension(ServerPlayerEntity player) {
-        PortalHelper.teleportToReturnPosition(player, player.getServer());
+        PortalHelper.teleportToReturnPosition(player, EntityCompat.getServer(player));
         return CommandResult.silent();
     }
 }

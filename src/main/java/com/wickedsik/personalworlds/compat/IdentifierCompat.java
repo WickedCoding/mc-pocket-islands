@@ -29,10 +29,10 @@ public final class IdentifierCompat {
      */
     public static Identifier create(String namespace, String path) {
         //? if >=1.21 {
-        /*return Identifier.of(namespace, path);*/
-        //? } else {
-        return new Identifier(namespace, path);
-        //? }
+        return Identifier.of(namespace, path);
+        //?} else {
+        /*return new Identifier(namespace, path);
+        *///?}
     }
 
     /**
@@ -68,10 +68,10 @@ public final class IdentifierCompat {
             return null;
         }
         //? if >=1.21 {
-        /*return Identifier.tryParse(id);*/
-        //? } else {
         return Identifier.tryParse(id);
-        //? }
+        //?} else {
+        /*return Identifier.tryParse(id);
+        *///?}
     }
 
     /**
@@ -84,9 +84,9 @@ public final class IdentifierCompat {
      */
     public static Identifier fromNbtString(String value) {
         //? if >=1.21 {
-        /*return Identifier.of(value);*/
-        //? } else {
-        return new Identifier(value);
-        //? }
+        return Identifier.of(value);
+        //?} else {
+        /*return new Identifier(value);
+        *///?}
     }
 }

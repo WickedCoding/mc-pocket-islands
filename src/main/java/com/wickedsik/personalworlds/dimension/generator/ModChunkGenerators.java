@@ -15,11 +15,20 @@ public class ModChunkGenerators {
      * Must be called during mod initialization BEFORE any dimensions are created.
      */
     public static void register() {
+        //? if >=1.21 {
+        // 1.21.x uses MapCodec for chunk generator registry
         Registry.register(
+            Registries.CHUNK_GENERATOR,
+            VOID_ISLAND_ID,
+            VoidIslandChunkGenerator.CODEC.fieldOf("void_island")
+        );
+        //?} else {
+        /*Registry.register(
             Registries.CHUNK_GENERATOR,
             VOID_ISLAND_ID,
             VoidIslandChunkGenerator.CODEC
         );
+        *///?}
 
         PersonalWorldsMod.LOGGER.info("Registered chunk generators");
     }

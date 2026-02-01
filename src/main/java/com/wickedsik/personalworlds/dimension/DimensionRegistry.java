@@ -77,7 +77,29 @@ public class DimensionRegistry extends PersistentState {
 
     // --- Serialization ---
 
-    @Override
+    //? if >=1.21.5 {
+    // In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    // The Codec in PersistentStateCompat calls writeNbtData() via reflection
+    public NbtCompound writeNbtData(NbtCompound nbt) {
+        NbtList dimensionList = new NbtList();
+        for (PlayerDimensionData data : dimensions.values()) {
+            dimensionList.add(data.toNbt());
+        }
+        nbt.put("Dimensions", dimensionList);
+        return nbt;
+    }
+    //?} else if >=1.21 {
+    /*@Override
+    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
+        NbtList dimensionList = new NbtList();
+        for (PlayerDimensionData data : dimensions.values()) {
+            dimensionList.add(data.toNbt());
+        }
+        nbt.put("Dimensions", dimensionList);
+        return nbt;
+    }*/
+    //?} else {
+    /*@Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtList dimensionList = new NbtList();
         for (PlayerDimensionData data : dimensions.values()) {
@@ -86,15 +108,16 @@ public class DimensionRegistry extends PersistentState {
         nbt.put("Dimensions", dimensionList);
         return nbt;
     }
+    *///?}
 
     public static DimensionRegistry fromNbt(NbtCompound nbt) {
         DimensionRegistry registry = new DimensionRegistry();
-        NbtList dimensionList = nbt.getList("Dimensions", NbtElement.COMPOUND_TYPE);
+        NbtList dimensionList = com.wickedsik.personalworlds.compat.NbtCompat.getList(nbt, "Dimensions", NbtElement.COMPOUND_TYPE);
         int skipped = 0;
 
         for (int i = 0; i < dimensionList.size(); i++) {
             try {
-                PlayerDimensionData data = PlayerDimensionData.fromNbt(dimensionList.getCompound(i));
+                PlayerDimensionData data = PlayerDimensionData.fromNbt(com.wickedsik.personalworlds.compat.NbtCompat.getCompound(dimensionList, i));
 
                 // Validate loaded data
                 if (!DataValidator.isValidDimensionData(data)) {

@@ -1,11 +1,11 @@
 package com.wickedsik.personalworlds.registry;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.BlockSettingsCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
 import com.wickedsik.personalworlds.portal.PortalColor;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
@@ -24,7 +24,7 @@ public class ModBlocks {
      * Non-collidable, emits light, unbreakable by hand.
      */
     public static final Block PERSONAL_PORTAL = new PersonalPortalBlock(
-        FabricBlockSettings.create()
+        BlockSettingsCompat.create()
             .mapColor(MapColor.CYAN)
             .noCollision()
             .strength(-1.0F)

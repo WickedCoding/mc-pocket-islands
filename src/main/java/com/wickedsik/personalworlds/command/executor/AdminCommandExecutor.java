@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.command.executor;
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
 import com.wickedsik.personalworlds.command.service.TeleportHelper;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
@@ -275,7 +276,7 @@ public class AdminCommandExecutor {
      * @return Command result
      */
     public CommandResult teleport(ServerPlayerEntity admin, String playerName) {
-        MinecraftServer server = admin.getServer();
+        MinecraftServer server = EntityCompat.getServer(admin);
 
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
@@ -299,7 +300,7 @@ public class AdminCommandExecutor {
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         dataManager.setReturnData(admin.getUuid(),
             new ReturnData(
-                admin.getServerWorld().getRegistryKey(),
+                EntityCompat.getServerWorld(admin).getRegistryKey(),
                 admin.getBlockPos(),
                 admin.getYaw(),
                 admin.getPitch()
@@ -307,7 +308,7 @@ public class AdminCommandExecutor {
 
         // Teleport with effects
         VisualEffects.playTeleportDepartureEffects(admin);
-        TeleportCompat.teleport(admin, dimension, TeleportHelper.toBlockPos(data.spawnPoint(), admin));
+        TeleportCompat.teleport(admin, dimension, TeleportHelper.toBlockPos(dimension, data.spawnPoint(), admin));
         VisualEffects.playTeleportArrivalEffects(admin);
 
         return CommandResult.successBroadcast(

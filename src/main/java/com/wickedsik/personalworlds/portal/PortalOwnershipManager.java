@@ -195,7 +195,35 @@ public class PortalOwnershipManager extends PersistentState {
 
     // --- Serialization ---
 
-    @Override
+    //? if >=1.21.5 {
+    // In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    // The Codec in PersistentStateCompat calls writeNbtData() via reflection
+    public NbtCompound writeNbtData(NbtCompound nbt) {
+        NbtCompound portalsNbt = new NbtCompound();
+        for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
+            NbtCompound portalData = new NbtCompound();
+            com.wickedsik.personalworlds.compat.NbtCompat.putUuid(portalData, "OwnerUuid", entry.getValue().ownerUuid);
+            portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
+            portalsNbt.put(entry.getKey(), portalData);
+        }
+        nbt.put("PortalOwners", portalsNbt);
+        return nbt;
+    }
+    //?} else if >=1.21 {
+    /*@Override
+    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
+        NbtCompound portalsNbt = new NbtCompound();
+        for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
+            NbtCompound portalData = new NbtCompound();
+            com.wickedsik.personalworlds.compat.NbtCompat.putUuid(portalData, "OwnerUuid", entry.getValue().ownerUuid);
+            portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
+            portalsNbt.put(entry.getKey(), portalData);
+        }
+        nbt.put("PortalOwners", portalsNbt);
+        return nbt;
+    }*/
+    //?} else {
+    /*@Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtCompound portalsNbt = new NbtCompound();
         for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
@@ -207,12 +235,13 @@ public class PortalOwnershipManager extends PersistentState {
         nbt.put("PortalOwners", portalsNbt);
         return nbt;
     }
+    *///?}
 
     public static PortalOwnershipManager fromNbt(NbtCompound nbt) {
         PortalOwnershipManager manager = new PortalOwnershipManager();
 
-        if (nbt.contains("PortalOwners", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound portalsNbt = nbt.getCompound("PortalOwners");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "PortalOwners", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound portalsNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "PortalOwners");
             for (String key : portalsNbt.getKeys()) {
                 try {
                     NbtElement element = portalsNbt.get(key);
@@ -221,16 +250,18 @@ public class PortalOwnershipManager extends PersistentState {
                     if (element instanceof NbtCompound) {
                         // New format: portal data with UUID and portal type index
                         NbtCompound portalData = (NbtCompound) element;
-                        UUID uuid = portalData.getUuid("OwnerUuid");
-                        int portalTypeIndex = portalData.contains("PortalTypeIndex")
-                            ? portalData.getInt("PortalTypeIndex")
-                            : 0;  // Default to first portal type
-                        manager.portalOwners.put(key, new PortalOwnershipData(uuid, portalTypeIndex));
+                        UUID uuid = com.wickedsik.personalworlds.compat.NbtCompat.getUuid(portalData, "OwnerUuid");
+                        int portalTypeIndex = com.wickedsik.personalworlds.compat.NbtCompat.getInt(portalData, "PortalTypeIndex", 0);
+                        if (uuid != null) {
+                            manager.portalOwners.put(key, new PortalOwnershipData(uuid, portalTypeIndex));
+                        }
                     } else {
                         // Old format: just UUID - migrate to new format with default portal type
-                        UUID uuid = portalsNbt.getUuid(key);
-                        manager.portalOwners.put(key, new PortalOwnershipData(uuid, 0));
-                        PersonalWorldsMod.LOGGER.debug("Migrated old portal ownership data for key: {}", key);
+                        UUID uuid = com.wickedsik.personalworlds.compat.NbtCompat.getUuid(portalsNbt, key);
+                        if (uuid != null) {
+                            manager.portalOwners.put(key, new PortalOwnershipData(uuid, 0));
+                            PersonalWorldsMod.LOGGER.debug("Migrated old portal ownership data for key: {}", key);
+                        }
                     }
                 } catch (Exception e) {
                     PersonalWorldsMod.LOGGER.warn("Invalid portal ownership data for key: {}", key);

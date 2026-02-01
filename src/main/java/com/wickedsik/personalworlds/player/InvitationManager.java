@@ -1,7 +1,11 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.CommandCompat;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
+import com.wickedsik.personalworlds.compat.TextCompat;
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -66,7 +70,7 @@ public class InvitationManager {
         UUID visitorUuid = visitor.getUuid();
 
         // 1. Admin bypass (OP level 2+)
-        if (visitor.hasPermissionLevel(2)) {
+        if (CommandCompat.hasPermissionLevel(visitor, 2)) {
             return VisitDenialReason.ALLOWED;
         }
 
@@ -113,7 +117,7 @@ public class InvitationManager {
      * @return true if the player is in their own personal dimension
      */
     private static boolean isPlayerHome(ServerPlayerEntity player, UUID playerUuid) {
-        ServerWorld world = player.getServerWorld();
+        ServerWorld world = EntityCompat.getServerWorld(player);
 
         // Check if player is in any personal dimension
         if (!PortalHelper.isInPersonalDimension(world)) {
@@ -252,7 +256,7 @@ public class InvitationManager {
      * @param guest The guest player to check and possibly eject
      */
     private static void handleRevocationWhileVisiting(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest) {
-        ServerWorld guestWorld = guest.getServerWorld();
+        ServerWorld guestWorld = EntityCompat.getServerWorld(guest);
 
         // Check if guest is in a personal dimension
         if (!PortalHelper.isInPersonalDimension(guestWorld)) {
@@ -288,7 +292,7 @@ public class InvitationManager {
 
             if (targetWorld == null) {
                 targetWorld = server.getOverworld();
-                targetPos = Vec3d.ofCenter(targetWorld.getSpawnPos());
+                targetPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(targetWorld));
                 yaw = guest.getYaw();
                 pitch = guest.getPitch();
             } else {
@@ -300,7 +304,7 @@ public class InvitationManager {
             dataManager.clearReturnData(guest.getUuid());
         } else {
             targetWorld = server.getOverworld();
-            targetPos = Vec3d.ofCenter(targetWorld.getSpawnPos());
+            targetPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(targetWorld));
             yaw = guest.getYaw();
             pitch = guest.getPitch();
         }
@@ -319,7 +323,7 @@ public class InvitationManager {
      * @param player The player viewing their invitations
      */
     public static void showInvitations(ServerPlayerEntity player) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) return;
 
         PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -356,12 +360,8 @@ public class InvitationManager {
                     MutableText toggleButton = Text.literal("[" + toggleIcon + "]")
                         .formatted(toggleColor)
                         .styled(style -> style
-                            .withClickEvent(new ClickEvent(
-                                ClickEvent.Action.RUN_COMMAND,
-                                "/pi togglewelcome " + guestName))
-                            .withHoverEvent(new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                Text.translatable(toggleTooltipKey)))
+                            .withClickEvent(TextCompat.runCommand("/pi togglewelcome " + guestName))
+                            .withHoverEvent(TextCompat.showText(Text.translatable(toggleTooltipKey)))
                         );
 
                     entryText = entryText.append(" ").append(toggleButton);
@@ -371,9 +371,8 @@ public class InvitationManager {
                 MutableText revokeButton = Text.translatable("personalworlds.invitations.sent.revoke_button")
                     .formatted(Formatting.RED)
                     .styled(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw uninvite " + guestName))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Text.translatable("personalworlds.invitations.sent.revoke_tooltip")))
+                        .withClickEvent(TextCompat.runCommand("/pw uninvite " + guestName))
+                        .withHoverEvent(TextCompat.showText(Text.translatable("personalworlds.invitations.sent.revoke_tooltip")))
                     );
 
                 entryText = entryText.append(" ").append(revokeButton);
@@ -395,9 +394,8 @@ public class InvitationManager {
                 MutableText worldLink = Text.translatable("personalworlds.invitations.received.world_name", inv.ownerName())
                     .formatted(Formatting.YELLOW)
                     .styled(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pw go " + inv.ownerName()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Text.translatable("personalworlds.invitations.received.visit_tooltip", inv.ownerName())))
+                        .withClickEvent(TextCompat.runCommand("/pw go " + inv.ownerName()))
+                        .withHoverEvent(TextCompat.showText(Text.translatable("personalworlds.invitations.received.visit_tooltip", inv.ownerName())))
                     );
 
                 player.sendMessage(Text.translatable("personalworlds.invitations.received.entry", worldLink), false);

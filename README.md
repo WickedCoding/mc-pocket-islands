@@ -3,7 +3,7 @@
 A Fabric mod for Minecraft that gives each player their own persistent
 pocket dimension island.
 
-**Supported Versions:** Minecraft 1.20.1, 1.20.4
+**Supported Versions:** Minecraft 1.20.1, 1.20.4, 1.21.11
 
 ## Features
 
@@ -15,8 +15,8 @@ pocket dimension island.
 
 ## Requirements
 
-- Minecraft 1.20.1 or 1.20.4
-- Fabric Loader 0.15.0+
+- Minecraft 1.20.1, 1.20.4, or 1.21.11
+- Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x)
 - Fabric API
 - **Both client and server must have the mod installed**
 
@@ -27,6 +27,7 @@ Download the version matching your Minecraft version from
 
 - `personalworlds-X.X.X+1.20.1.jar` for Minecraft 1.20.1
 - `personalworlds-X.X.X+1.20.4.jar` for Minecraft 1.20.4
+- `personalworlds-X.X.X+1.21.11.jar` for Minecraft 1.21.11
 
 ### Server
 
@@ -348,8 +349,8 @@ To customize messages while keeping the English language:
 
 ```json
 {
-    "personalworlds.message.invite_sent": "🎉 You invited %s to your island!",
-    "personalworlds.message.invite_received": "✨ %s wants you to visit their island!"
+    "personalworlds.message.invite_sent": "You invited %s to your island!",
+    "personalworlds.message.invite_received": "%s wants you to visit their island!"
 }
 ```
 

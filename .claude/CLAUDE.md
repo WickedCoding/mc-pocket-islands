@@ -5,7 +5,7 @@ code in this repository.
 
 ## Project Overview
 
-**Pocket Islands** — A Fabric mod for Minecraft (1.20.1, 1.20.4) that provides each player
+**Pocket Islands** — A Fabric mod for Minecraft (1.20.1, 1.20.4, 1.21.11) that provides each player
 with their own isolated, persistent pocket dimension island. The primary use
 case is dimension survival through world resets: when the overworld/nether/end
 are deleted and regenerated, each player's pocket island remains intact.
@@ -27,6 +27,9 @@ support from a single codebase.
 
 # Switch active version to 1.20.4
 ./gradlew "Set active project to 1.20.4"
+
+# Switch active version to 1.21.11
+./gradlew "Set active project to 1.21.11"
 
 # Clean build artifacts
 ./gradlew clean
@@ -53,6 +56,7 @@ support from a single codebase.
 **Output locations (after chiseledBuild):**
 - MC 1.20.1: `versions/1.20.1/build/libs/personalworlds-<version>.jar`
 - MC 1.20.4: `versions/1.20.4/build/libs/personalworlds-<version>.jar`
+- MC 1.21.11: `versions/1.21.11/build/libs/personalworlds-<version>.jar`
 
 ## Project Structure
 
@@ -76,6 +80,7 @@ This is a standard Fabric mod project with split environment source sets:
 
 Under `src/main/java/com/wickedsik/personalworlds/`:
 
+- **`compat/`** — Version-specific API abstraction layer (Identifier, Nbt, TeleportTarget, etc.)
 - **`dimension/`** — Dimension creation, registry, lifecycle management (uses Fantasy)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
 - **`player/`** — Player data, invitations, return positions (PersistentState)
@@ -86,10 +91,11 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 
 ### Dependencies
 
-| MC Version | Fantasy         | Fabric API    |
-|------------|-----------------|---------------|
-| 1.20.1     | 0.4.11+1.20-rc1 | 0.92.6+1.20.1 |
-| 1.20.4     | 0.5.0+1.20.4    | 0.97.0+1.20.4 |
+| MC Version | Java | Yarn Mappings | Fabric Loader | Fabric API    | Fantasy         |
+|------------|------|---------------|---------------|---------------|-----------------|
+| 1.20.1     | 17   | 1.20.1+build.9| 0.15.0+       | 0.92.6+1.20.1 | 0.4.11+1.20-rc1 |
+| 1.20.4     | 17   | 1.20.4+build.2| 0.15.0+       | 0.97.0+1.20.4 | 0.5.0+1.20.4    |
+| 1.21.11    | 21   | 1.21.11+build.4| 0.18.4+      | 0.141.1+1.21.11 | 0.7.0+1.21.11 |
 
 - **Fantasy** — Required for runtime dimension creation (version varies by MC version)
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration
@@ -104,7 +110,8 @@ management from a single codebase.
 | MC Version | Status    | Active      |
 |------------|-----------|-------------|
 | 1.20.1     | Supported |             |
-| 1.20.4     | Supported | ✓ (default) |
+| 1.20.4     | Supported |             |
+| 1.21.11    | Supported | ✓ (default) |
 
 ### Versioned Comment Syntax
 
@@ -125,23 +132,38 @@ return stateManager.getOrCreate(TYPE, DATA_NAME);
 **Important:** The `else` branch code must be commented out (`/* */`) when the
 active version is >= 1.20.2.
 
-### Version-Specific Code Locations
+### Version-Specific Code
 
-The PersistentState API changed in MC 1.20.2. These files contain versioned code:
+**1.20.1 vs 1.20.4** (handled by Stonecutter conditionals):
+- `PersistentState.getOrCreate()` signature changed in 1.20.2
 
-- `DimensionRegistry.java` — TYPE constant and get() method
-- `PlayerDataManager.java` — TYPE constant and get() method
-- `PortalOwnershipManager.java` — TYPE constant and get() method
+**1.21.x Major API Changes** (handled by Compat package):
+The 1.21.x series introduced significant API changes. Rather than adding Stonecutter
+conditionals throughout the codebase, all version-specific differences are abstracted
+in `src/main/java/com/wickedsik/personalworlds/compat/`:
+
+- **IdentifierCompat.java** — `new Identifier()` → `Identifier.of()`
+- **NbtCompat.java** — Optional return types, UUID handling (stored as strings), new methods with defaults
+- **TeleportCompat.java** — `TeleportTarget` constructor changed (4 → 6 parameters)
+- **PersistentStateCompat.java** — 1.21.5+ uses Codec-based serialization
+- **WorldCompat.java** — `getTopY()` signature changes
+- **EntityCompat.java** — Entity-related API updates
+- **CommandCompat.java** — Command registration and feedback changes
+- **GameRulesCompat.java** — Game rules API adjustments
+- **BlockSettingsCompat.java** — Block settings and registration updates
+
+This abstraction layer allows the core business logic to remain version-agnostic while
+containing all version-specific implementation details.
 
 ### Adding a New Version
 
 1. Add version to `settings.gradle.kts`:
    ```kotlin
-   versions("1.20.1", "1.20.4", "1.21.4")
+   versions("1.20.1", "1.20.4", "1.21.11")
    ```
 2. Create `versions/<new-version>/gradle.properties` with dependencies
 3. Run `./gradlew chiseledBuild` to generate the new version subproject
-4. Check for API differences requiring new versioned comments
+4. Check for API differences requiring new Stonecutter conditionals or Compat updates
 5. Test with `./gradlew "Set active project to <version>"` + `./gradlew runClient`
 
 ## Commit Format
@@ -233,7 +255,7 @@ DimensionRegistry.registerDimension() (if new)
 ### Dimension Unloading
 
 Don't unload dimensions immediately when the last player leaves. Use a delay
-(600 ticks / 30 seconds) to prevent thrashing if a player disconnects and 
+(600 ticks / 30 seconds) to prevent thrashing if a player disconnects and
 reconnects quickly.
 
 ### Return Position Handling
@@ -294,37 +316,47 @@ Run with `./gradlew test`. Tests cover:
 
 ## Minecraft Version Notes
 
-The mod targets **Minecraft 1.20.1 and 1.20.4** using Stonecutter for
-multi-version support. Both versions use:
+The mod targets **Minecraft 1.20.1, 1.20.4, and 1.21.11** using Stonecutter for
+multi-version support.
 
-- **Java 17** (not Java 21)
-- **Yarn mappings** (not Mojang mappings)
-- **FabricDimensions.teleport()** for cross-dimension teleportation
+**Java Requirements:**
+- MC 1.20.1 & 1.20.4: Java 17
+- MC 1.21.11: Java 21
+
+**Mapping Preferences:**
+- All versions use Yarn mappings (not Mojang mappings)
+- All versions use `FabricDimensions.teleport()` for cross-dimension teleportation
 
 ### API Differences Between Supported Versions
 
-**1.20.1 vs 1.20.4 (handled by Stonecutter):**
+**1.20.1 vs 1.20.4** (handled by Stonecutter):
 
 - `PersistentState.getOrCreate()` signature changed in 1.20.2
   - 1.20.1: `getOrCreate(fromNbt, constructor, name)`
   - 1.20.4: `getOrCreate(Type<T>, name)`
 
-**Key API differences from 1.21.x (for future support):**
+**1.20.x vs 1.21.x** (handled by Compat package):
 
-- `Identifier` instead of `ResourceLocation`
-- `new Identifier(namespace, path)` instead of `Identifier.of()`
-- `ServerWorld` instead of `ServerLevel`
-- `ServerPlayerEntity` instead of `ServerPlayer`
-- `NbtCompound` instead of `CompoundTag`
-- `PersistentState` instead of `SavedData`
-- `Text.literal()` instead of `Component.literal()`
+The 1.21.x series introduced major API changes. All differences are abstracted in the
+`compat/` package to keep core code clean and version-agnostic:
 
-**Adding 1.21.x support:**
+- **Identifier**: `new Identifier(namespace, path)` → `Identifier.of(namespace, path)`
+- **NbtCompound**: Getters return Optional, UUID methods removed (stored as strings), new methods with defaults
+- **TeleportTarget**: Constructor signature changed from 4 to 6 parameters with world and callback
+- **PersistentState**: 1.21.5+ uses Codec-based serialization instead of writeNbt override
+- **Block methods**: `onEntityCollision` added EntityCollisionHandler param, signature changes
+- **World methods**: `getTopY()` signature changed
+- **Entity methods**: Various API adjustments for entity interaction
+
+### Future Version Support
+
+When adding support for newer 1.21.x or 1.22+ versions:
 
 1. Add version to `settings.gradle.kts`
-2. Create `versions/1.21.x/gradle.properties` with appropriate dependencies
-3. Add versioned comments for additional API differences
-4. Consider switching to Mojang mappings if preferred
+2. Create `versions/<new-version>/gradle.properties` with dependencies
+3. Update Compat classes for any additional API changes
+4. Add Stonecutter conditionals only for subtle breaking changes between 1.20.x versions
+5. Test thoroughly with `./gradlew chiseledBuild` and manual client testing
 
 ## Releasing
 
@@ -334,7 +366,7 @@ Releases are automated via GitHub Actions when a version tag is pushed:
 # Update mod_version in gradle.properties
 # Move CHANGELOG.md [Unreleased] to new version section
 # Commit changes
-git tag v0.4.3
+git tag v0.5.1
 git push origin main --tags
 ```
 
@@ -351,10 +383,10 @@ This triggers `.github/workflows/release.yml` which:
 Use the `/release` command to automate the release preparation:
 
 ```bash
-/release           # patch release (0.4.3 → 0.4.4)
-/release patch     # patch release (0.4.3 → 0.4.4)
-/release minor     # minor release (0.4.3 → 0.5.0)
-/release major     # major release (0.4.3 → 1.0.0)
+/release           # patch release (0.5.0 → 0.5.1)
+/release patch     # patch release (0.5.0 → 0.5.1)
+/release minor     # minor release (0.5.0 → 0.6.0)
+/release major     # major release (0.5.0 → 1.0.0)
 ```
 
 The command performs steps 1-3 automatically:
@@ -370,8 +402,8 @@ git push origin main --tags
 
 ### Release Artifacts
 
-- **GitHub:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.4.3+1.20.4.jar`)
-- **Modrinth:** Two versions published automatically (`0.4.3+1.20.1`, `0.4.3+1.20.4`)
+- **GitHub:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.5.1+1.20.4.jar`)
+- **Modrinth:** Three versions published automatically (`0.5.1+1.20.1`, `0.5.1+1.20.4`, `0.5.1+1.21.11`)
 
 ### Distribution
 

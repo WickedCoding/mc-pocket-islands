@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.command.executor;
 
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import net.minecraft.server.MinecraftServer;
@@ -37,7 +38,7 @@ public class PlayerCommandExecutor {
      * @return Command result (InvitationManager sends messages directly)
      */
     public CommandResult invite(ServerPlayerEntity owner, ServerPlayerEntity guest, boolean alwaysWelcome) {
-        InvitationManager.invite(owner.getServer(), owner, guest, alwaysWelcome);
+        InvitationManager.invite(EntityCompat.getServer(owner), owner, guest, alwaysWelcome);
         return CommandResult.silent();
     }
 
@@ -49,7 +50,7 @@ public class PlayerCommandExecutor {
      * @return Command result
      */
     public CommandResult uninvite(ServerPlayerEntity owner, String guestName) {
-        MinecraftServer server = owner.getServer();
+        MinecraftServer server = EntityCompat.getServer(owner);
 
         Optional<PlayerLookupService.PlayerReference> playerRef =
             playerLookup.findInInvitations(server, owner.getUuid(), guestName);
@@ -73,7 +74,7 @@ public class PlayerCommandExecutor {
      * @return Command result
      */
     public CommandResult toggleWelcome(ServerPlayerEntity owner, String guestName) {
-        MinecraftServer server = owner.getServer();
+        MinecraftServer server = EntityCompat.getServer(owner);
 
         // Find the guest in sent invitations
         Optional<PlayerLookupService.PlayerReference> playerRef =

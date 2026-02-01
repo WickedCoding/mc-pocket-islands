@@ -1,6 +1,8 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+//? if <1.21 {
+/*import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+*///?}
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -11,7 +13,7 @@ import net.minecraft.world.TeleportTarget;
  * Compatibility layer for cross-dimension teleportation.
  * <p>
  * MC 1.20.x uses: FabricDimensions.teleport(entity, world, TeleportTarget)
- * MC 1.21.x uses: Different API (DimensionTransition or updated Fabric API)
+ * MC 1.21.x uses: Entity#teleportTo(TeleportTarget) - FabricDimensions was removed
  * <p>
  * This class centralizes all cross-dimension teleportation to simplify version migration.
  * Works alongside TeleportHelper which constructs TeleportTarget instances.
@@ -38,8 +40,22 @@ public final class TeleportCompat {
             float yaw,
             float pitch
     ) {
-        TeleportTarget target = new TeleportTarget(position, Vec3d.ZERO, yaw, pitch);
+        //? if >=1.21 {
+        // MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
+        // TeleportTarget now contains the destination world
+        TeleportTarget target = new TeleportTarget(
+            targetWorld,
+            position,
+            Vec3d.ZERO,
+            yaw,
+            pitch,
+            TeleportTarget.NO_OP
+        );
+        player.teleportTo(target);
+        //?} else {
+        /*TeleportTarget target = new TeleportTarget(position, Vec3d.ZERO, yaw, pitch);
         teleport(player, targetWorld, target);
+        *///?}
     }
 
     /**
@@ -56,12 +72,20 @@ public final class TeleportCompat {
             TeleportTarget target
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses updated teleportation API
-        // TODO: Implement 1.21 teleportation when adding 1.21 support
-        FabricDimensions.teleport(player, targetWorld, target);*/
-        //? } else {
-        FabricDimensions.teleport(player, targetWorld, target);
-        //? }
+        // MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
+        // TeleportTarget is now a record with method accessors instead of field access
+        TeleportTarget newTarget = new TeleportTarget(
+            targetWorld,
+            target.position(),
+            target.velocity(),
+            target.yaw(),
+            target.pitch(),
+            TeleportTarget.NO_OP
+        );
+        player.teleportTo(newTarget);
+        //?} else {
+        /*FabricDimensions.teleport(player, targetWorld, target);
+        *///?}
     }
 
     /**

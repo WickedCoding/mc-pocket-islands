@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Minecraft 1.21.11 support - the mod now supports three versions (1.20.1, 1.20.4, 1.21.11) with Java 21 required for 1.21.x
+- Compat package for version-specific API abstraction handling NBT, teleportation, identifiers, and persistent state differences between 1.20.x and 1.21.x
 - Full 16-color portal palette matching Minecraft's standard dye colors (white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink)
 - Pocket dimension recovery system - players who log out on their island are restored to it even if the dimension was unloaded during their absence
 

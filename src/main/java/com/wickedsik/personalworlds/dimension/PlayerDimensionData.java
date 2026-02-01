@@ -19,7 +19,7 @@ public record PlayerDimensionData(
 
     public NbtCompound toNbt() {
         NbtCompound nbt = new NbtCompound();
-        nbt.putUuid("OwnerUuid", ownerUuid);
+        com.wickedsik.personalworlds.compat.NbtCompat.putUuid(nbt, "OwnerUuid", ownerUuid);
         nbt.putString("OwnerName", ownerName);
         nbt.putString("DimensionId", dimensionId.toString());
         nbt.putLong("CreatedAt", createdAt);
@@ -33,21 +33,19 @@ public record PlayerDimensionData(
 
     public static PlayerDimensionData fromNbt(NbtCompound nbt) {
         // Backward compatibility: default to portal type 0 if not present
-        int portalTypeIndex = nbt.contains("PortalTypeIndex")
-            ? nbt.getInt("PortalTypeIndex")
-            : 0;
+        int portalTypeIndex = com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "PortalTypeIndex", 0);
 
         return new PlayerDimensionData(
-            nbt.getUuid("OwnerUuid"),
-            nbt.getString("OwnerName"),
-            IdentifierCompat.fromNbtString(nbt.getString("DimensionId")),
-            nbt.getLong("CreatedAt"),
+            com.wickedsik.personalworlds.compat.NbtCompat.getUuid(nbt, "OwnerUuid"),
+            com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "OwnerName", "Unknown"),
+            IdentifierCompat.fromNbtString(com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "DimensionId", "")),
+            com.wickedsik.personalworlds.compat.NbtCompat.getLong(nbt, "CreatedAt", 0L),
             new BlockPos(
-                nbt.getInt("SpawnX"),
-                nbt.getInt("SpawnY"),
-                nbt.getInt("SpawnZ")
+                com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "SpawnX", 0),
+                com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "SpawnY", 64),
+                com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "SpawnZ", 0)
             ),
-            WorldGenType.fromString(nbt.getString("GeneratorType")),
+            WorldGenType.fromString(com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "GeneratorType", "VOID")),
             portalTypeIndex
         );
     }

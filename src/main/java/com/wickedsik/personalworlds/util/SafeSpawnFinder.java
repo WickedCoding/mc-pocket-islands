@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -96,7 +97,7 @@ public class SafeSpawnFinder {
         // Search upward first (safer)
         for (int dy = 0; dy <= MAX_Y_SEARCH; dy++) {
             BlockPos check = target.up(dy);
-            if (check.getY() < world.getTopY() && isSafeSpawn(world, check)) {
+            if (check.getY() < WorldCompat.getTopY(world) && isSafeSpawn(world, check)) {
                 return check;
             }
         }
@@ -151,7 +152,7 @@ public class SafeSpawnFinder {
      * Find a safe position near world spawn.
      */
     private static BlockPos findSafeNearSpawn(ServerWorld world) {
-        BlockPos spawn = world.getSpawnPos();
+        BlockPos spawn = WorldCompat.getSpawnPos(world);
 
         // Try spawn directly
         if (isSafeSpawn(world, spawn)) {

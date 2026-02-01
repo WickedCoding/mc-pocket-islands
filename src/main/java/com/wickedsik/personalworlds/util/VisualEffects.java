@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.util;
 
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -28,8 +29,8 @@ public final class VisualEffects {
      */
     public static void playTeleportDepartureEffects(ServerPlayerEntity player) {
         ModConfig config = ModConfig.get();
-        ServerWorld world = player.getServerWorld();
-        Vec3d pos = player.getPos();
+        ServerWorld world = EntityCompat.getServerWorld(player);
+        Vec3d pos = EntityCompat.getPos(player);
 
         if (config.enableTeleportParticles) {
             // Spawn portal particles at departure location
@@ -62,8 +63,8 @@ public final class VisualEffects {
      */
     public static void playTeleportArrivalEffects(ServerPlayerEntity player) {
         ModConfig config = ModConfig.get();
-        ServerWorld world = player.getServerWorld();
-        Vec3d pos = player.getPos();
+        ServerWorld world = EntityCompat.getServerWorld(player);
+        Vec3d pos = EntityCompat.getPos(player);
 
         if (config.enableTeleportParticles) {
             // Spawn reverse portal particles at arrival location
@@ -142,12 +143,11 @@ public final class VisualEffects {
         }
 
         // Pleasant notification sound
-        guest.playSound(
-            SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-            SoundCategory.PLAYERS,
-            0.5f,
-            1.2f
-        );
+        //? if >=1.21 {
+        guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
+        //?} else {
+        /*guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
+        *///?}
     }
 
     /**
@@ -162,12 +162,11 @@ public final class VisualEffects {
         }
 
         // Warning bass note
-        guest.playSound(
-            SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(),
-            SoundCategory.PLAYERS,
-            0.7f,
-            0.5f
-        );
+        //? if >=1.21 {
+        guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 0.7f, 0.5f);
+        //?} else {
+        /*guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.7f, 0.5f);
+        *///?}
     }
 
     /**
@@ -181,12 +180,11 @@ public final class VisualEffects {
         }
 
         // Subtle confirmation sound
-        owner.playSound(
-            SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-            SoundCategory.PLAYERS,
-            0.3f,
-            1.5f
-        );
+        //? if >=1.21 {
+        owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
+        //?} else {
+        /*owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3f, 1.5f);
+        *///?}
     }
 
     // ==================== Dimension Entry/Exit Effects ====================
@@ -203,12 +201,11 @@ public final class VisualEffects {
         }
 
         // Mystical arrival sound
-        player.playSound(
-            SoundEvents.BLOCK_BEACON_ACTIVATE,
-            SoundCategory.AMBIENT,
-            0.5f,
-            1.5f
-        );
+        //? if >=1.21 {
+        player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
+        //?} else {
+        /*player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.AMBIENT, 0.5f, 1.5f);
+        *///?}
     }
 
     /**
@@ -222,12 +219,11 @@ public final class VisualEffects {
         }
 
         // Subtle deactivation sound
-        player.playSound(
-            SoundEvents.BLOCK_BEACON_DEACTIVATE,
-            SoundCategory.AMBIENT,
-            0.3f,
-            1.2f
-        );
+        //? if >=1.21 {
+        player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, 0.3f, 1.2f);
+        //?} else {
+        /*player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.AMBIENT, 0.3f, 1.2f);
+        *///?}
     }
 
     // ==================== Admin Command Effects ====================
@@ -238,12 +234,11 @@ public final class VisualEffects {
      * @param admin The admin executing the command
      */
     public static void playAdminWarningEffect(ServerPlayerEntity admin) {
-        admin.playSound(
-            SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(),
-            SoundCategory.MASTER,
-            1.0f,
-            0.5f
-        );
+        //? if >=1.21 {
+        admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0f, 0.5f);
+        //?} else {
+        /*admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 1.0f, 0.5f);
+        *///?}
     }
 
     /**
@@ -252,12 +247,11 @@ public final class VisualEffects {
      * @param admin The admin who executed the command
      */
     public static void playAdminSuccessEffect(ServerPlayerEntity admin) {
-        admin.playSound(
-            SoundEvents.ENTITY_PLAYER_LEVELUP,
-            SoundCategory.MASTER,
-            0.3f,
-            2.0f
-        );
+        //? if >=1.21 {
+        admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 0.3f, 2.0f);
+        //?} else {
+        /*admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.3f, 2.0f);
+        *///?}
     }
 
     // Prevent instantiation

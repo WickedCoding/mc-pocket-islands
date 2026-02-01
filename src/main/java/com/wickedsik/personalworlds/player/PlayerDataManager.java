@@ -398,9 +398,22 @@ public class PlayerDataManager extends PersistentState {
     }
 
     // --- Serialization ---
+    // Note: For 1.21.5+, PersistentState uses Codec-based serialization via PersistentStateCompat
 
-    @Override
+    //? if >=1.21.5 {
+    //?} else if >=1.21 {
+    /*@Override
+    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
+        return writeNbtData(nbt);
+    }*/
+    //?} else {
+    /*@Override
     public NbtCompound writeNbt(NbtCompound nbt) {
+        return writeNbtData(nbt);
+    }
+    *///?}
+
+    private NbtCompound writeNbtData(NbtCompound nbt) {
         // Return positions
         NbtCompound returnDataNbt = new NbtCompound();
         for (Map.Entry<UUID, ReturnData> entry : returnPositions.entrySet()) {
@@ -425,7 +438,7 @@ public class PlayerDataManager extends PersistentState {
             NbtList guestList = new NbtList();
             for (UUID guestUuid : entry.getValue()) {
                 NbtCompound guestNbt = new NbtCompound();
-                guestNbt.putUuid("Uuid", guestUuid);
+                com.wickedsik.personalworlds.compat.NbtCompat.putUuid(guestNbt, "Uuid", guestUuid);
                 guestList.add(guestNbt);
             }
             sentNbt.put(entry.getKey().toString(), guestList);
@@ -446,12 +459,12 @@ public class PlayerDataManager extends PersistentState {
         PlayerDataManager manager = new PlayerDataManager();
 
         // Return positions
-        if (nbt.contains("ReturnPositions", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound returnDataNbt = nbt.getCompound("ReturnPositions");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReturnPositions", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound returnDataNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReturnPositions");
             for (String key : returnDataNbt.getKeys()) {
                 try {
                     UUID uuid = UUID.fromString(key);
-                    ReturnData data = ReturnData.fromNbt(returnDataNbt.getCompound(key));
+                    ReturnData data = ReturnData.fromNbt(com.wickedsik.personalworlds.compat.NbtCompat.getCompound(returnDataNbt, key));
                     manager.returnPositions.put(uuid, data);
                 } catch (IllegalArgumentException e) {
                     PersonalWorldsMod.LOGGER.warn("Invalid UUID in return positions: {}", key);
@@ -460,15 +473,15 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Received invitations
-        if (nbt.contains("ReceivedInvitations", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound receivedNbt = nbt.getCompound("ReceivedInvitations");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReceivedInvitations", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound receivedNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReceivedInvitations");
             for (String key : receivedNbt.getKeys()) {
                 try {
                     UUID guestUuid = UUID.fromString(key);
-                    NbtList invList = receivedNbt.getList(key, NbtElement.COMPOUND_TYPE);
+                    NbtList invList = com.wickedsik.personalworlds.compat.NbtCompat.getList(receivedNbt, key, NbtElement.COMPOUND_TYPE);
                     List<InvitationData> invitations = new ArrayList<>();
                     for (int i = 0; i < invList.size(); i++) {
-                        invitations.add(InvitationData.fromNbt(invList.getCompound(i)));
+                        invitations.add(InvitationData.fromNbt(com.wickedsik.personalworlds.compat.NbtCompat.getCompound(invList, i)));
                     }
                     if (!invitations.isEmpty()) {
                         manager.receivedInvitations.put(guestUuid, invitations);
@@ -480,16 +493,19 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Sent invitations
-        if (nbt.contains("SentInvitations", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound sentNbt = nbt.getCompound("SentInvitations");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "SentInvitations", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound sentNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "SentInvitations");
             for (String key : sentNbt.getKeys()) {
                 try {
                     UUID ownerUuid = UUID.fromString(key);
-                    NbtList guestList = sentNbt.getList(key, NbtElement.COMPOUND_TYPE);
+                    NbtList guestList = com.wickedsik.personalworlds.compat.NbtCompat.getList(sentNbt, key, NbtElement.COMPOUND_TYPE);
                     Set<UUID> guests = new HashSet<>();
                     for (int i = 0; i < guestList.size(); i++) {
-                        NbtCompound guestNbt = guestList.getCompound(i);
-                        guests.add(guestNbt.getUuid("Uuid"));
+                        NbtCompound guestNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(guestList, i);
+                        UUID guestUuid = com.wickedsik.personalworlds.compat.NbtCompat.getUuid(guestNbt, "Uuid");
+                        if (guestUuid != null) {
+                            guests.add(guestUuid);
+                        }
                     }
                     if (!guests.isEmpty()) {
                         manager.sentInvitations.put(ownerUuid, guests);
@@ -501,14 +517,16 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Current pocket dimensions (backward compatible - missing = empty)
-        if (nbt.contains("CurrentPocketDimensions", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound pocketDimNbt = nbt.getCompound("CurrentPocketDimensions");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "CurrentPocketDimensions", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound pocketDimNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "CurrentPocketDimensions");
             for (String key : pocketDimNbt.getKeys()) {
                 try {
                     UUID playerUuid = UUID.fromString(key);
-                    Identifier dimId = IdentifierCompat.fromNbtString(pocketDimNbt.getString(key));
-                    RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
-                    manager.currentPocketDimensions.put(playerUuid, dimension);
+                    Identifier dimId = IdentifierCompat.fromNbtString(com.wickedsik.personalworlds.compat.NbtCompat.getString(pocketDimNbt, key, ""));
+                    if (dimId != null) {
+                        RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
+                        manager.currentPocketDimensions.put(playerUuid, dimension);
+                    }
                 } catch (IllegalArgumentException e) {
                     PersonalWorldsMod.LOGGER.warn("Invalid UUID or dimension in pocket dimensions: {}", key);
                 }

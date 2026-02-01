@@ -1,5 +1,7 @@
 package com.wickedsik.personalworlds.dimension;
 
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.NbtCompat;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -29,7 +31,7 @@ class PlayerDimensionDataTest {
     void setUp() {
         testUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         testName = "TestPlayer";
-        testDimensionId = new Identifier("personalworlds", "pw_test");
+        testDimensionId = IdentifierCompat.create("personalworlds", "pw_test");
         testCreatedAt = System.currentTimeMillis();
         testSpawnPoint = new BlockPos(0, 65, 0);
         testGenType = WorldGenType.VOID;
@@ -99,7 +101,7 @@ class PlayerDimensionDataTest {
             NbtCompound nbt = data.toNbt();
 
             assertNotNull(nbt);
-            assertTrue(nbt.containsUuid("OwnerUuid"));
+            assertTrue(NbtCompat.containsUuid(nbt,"OwnerUuid"));
             assertTrue(nbt.contains("OwnerName"));
             assertTrue(nbt.contains("DimensionId"));
             assertTrue(nbt.contains("CreatedAt"));
@@ -118,21 +120,21 @@ class PlayerDimensionDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals(testUuid, nbt.getUuid("OwnerUuid"));
-            assertEquals(testName, nbt.getString("OwnerName"));
-            assertEquals("personalworlds:pw_test", nbt.getString("DimensionId"));
-            assertEquals(testCreatedAt, nbt.getLong("CreatedAt"));
-            assertEquals(0, nbt.getInt("SpawnX"));
-            assertEquals(65, nbt.getInt("SpawnY"));
-            assertEquals(0, nbt.getInt("SpawnZ"));
-            assertEquals("VOID", nbt.getString("GeneratorType"));
+            assertEquals(testUuid, NbtCompat.getUuid(nbt,"OwnerUuid"));
+            assertEquals(testName, NbtCompat.getString(nbt, "OwnerName", ""));
+            assertEquals("personalworlds:pw_test", NbtCompat.getString(nbt, "DimensionId", ""));
+            assertEquals(testCreatedAt, NbtCompat.getLong(nbt, "CreatedAt", 0L));
+            assertEquals(0, NbtCompat.getInt(nbt, "SpawnX", 0));
+            assertEquals(65, NbtCompat.getInt(nbt, "SpawnY", 0));
+            assertEquals(0, NbtCompat.getInt(nbt, "SpawnZ", 0));
+            assertEquals("VOID", NbtCompat.getString(nbt, "GeneratorType", ""));
         }
 
         @Test
         @DisplayName("fromNbt with valid compound creates record")
         void fromNbt_validCompound_createsRecord() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testUuid);
             nbt.putString("OwnerName", testName);
             nbt.putString("DimensionId", "personalworlds:pw_test");
             nbt.putLong("CreatedAt", testCreatedAt);
@@ -169,7 +171,7 @@ class PlayerDimensionDataTest {
         @DisplayName("fromNbt handles unknown generator type gracefully")
         void fromNbt_unknownGenType_usesDefault() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testUuid);
             nbt.putString("OwnerName", testName);
             nbt.putString("DimensionId", "personalworlds:pw_test");
             nbt.putLong("CreatedAt", testCreatedAt);
@@ -188,7 +190,7 @@ class PlayerDimensionDataTest {
         @DisplayName("fromNbt handles missing generator type")
         void fromNbt_missingGenType_usesDefault() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testUuid);
             nbt.putString("OwnerName", testName);
             nbt.putString("DimensionId", "personalworlds:pw_test");
             nbt.putLong("CreatedAt", testCreatedAt);
@@ -226,20 +228,20 @@ class PlayerDimensionDataTest {
         @Test
         @DisplayName("Standard namespace:path format")
         void dimensionId_standardFormat() {
-            Identifier dimId = new Identifier("personalworlds", "pw_abc123");
+            Identifier dimId = IdentifierCompat.create("personalworlds", "pw_abc123");
             PlayerDimensionData data = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
             , 0);
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals("personalworlds:pw_abc123", nbt.getString("DimensionId"));
+            assertEquals("personalworlds:pw_abc123", NbtCompat.getString(nbt, "DimensionId", ""));
         }
 
         @Test
         @DisplayName("Dimension ID with underscores round-trips")
         void dimensionId_underscores_roundTrips() {
-            Identifier dimId = new Identifier("my_mod", "my_dimension_name");
+            Identifier dimId = IdentifierCompat.create("my_mod", "my_dimension_name");
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
             , 0);
@@ -253,7 +255,7 @@ class PlayerDimensionDataTest {
         @Test
         @DisplayName("Dimension ID with numbers round-trips")
         void dimensionId_numbers_roundTrips() {
-            Identifier dimId = new Identifier("personalworlds", "pw_550e8400e29b41d4a716446655440000");
+            Identifier dimId = IdentifierCompat.create("personalworlds", "pw_550e8400e29b41d4a716446655440000");
             PlayerDimensionData original = new PlayerDimensionData(
                 testUuid, testName, dimId, testCreatedAt, testSpawnPoint, testGenType
             , 0);

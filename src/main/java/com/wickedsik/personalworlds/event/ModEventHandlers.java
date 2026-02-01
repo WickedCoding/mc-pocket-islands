@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.event;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
@@ -106,7 +107,7 @@ public class ModEventHandlers {
      */
     private static void checkVoidFalling(MinecraftServer server) {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            ServerWorld world = player.getServerWorld();
+            ServerWorld world = EntityCompat.getServerWorld(player);
 
             // Only check in personal dimensions
             if (!PortalHelper.isInPersonalDimension(world)) {

@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.player;
 
+import com.wickedsik.personalworlds.compat.NbtCompat;
 import net.minecraft.nbt.NbtCompound;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -160,7 +161,7 @@ class InvitationDataTest {
             NbtCompound nbt = data.toNbt();
 
             assertNotNull(nbt);
-            assertTrue(nbt.containsUuid("OwnerUuid"));
+            assertTrue(NbtCompat.containsUuid(nbt,"OwnerUuid"));
             assertTrue(nbt.contains("OwnerName"));
             assertTrue(nbt.contains("InvitedAt"));
             assertTrue(nbt.contains("AlwaysWelcome"));
@@ -173,10 +174,10 @@ class InvitationDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertEquals(testOwnerUuid, nbt.getUuid("OwnerUuid"));
-            assertEquals(testOwnerName, nbt.getString("OwnerName"));
-            assertEquals(testInvitedAt, nbt.getLong("InvitedAt"));
-            assertTrue(nbt.getBoolean("AlwaysWelcome"));
+            assertEquals(testOwnerUuid, NbtCompat.getUuid(nbt,"OwnerUuid"));
+            assertEquals(testOwnerName, NbtCompat.getString(nbt, "OwnerName", ""));
+            assertEquals(testInvitedAt, NbtCompat.getLong(nbt, "InvitedAt", 0L));
+            assertTrue(NbtCompat.getBoolean(nbt, "AlwaysWelcome", false));
         }
 
         @Test
@@ -186,14 +187,14 @@ class InvitationDataTest {
 
             NbtCompound nbt = data.toNbt();
 
-            assertFalse(nbt.getBoolean("AlwaysWelcome"));
+            assertFalse(NbtCompat.getBoolean(nbt, "AlwaysWelcome", true));
         }
 
         @Test
         @DisplayName("fromNbt with valid compound creates record")
         void fromNbt_validCompound_createsRecord() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testOwnerUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             nbt.putLong("InvitedAt", testInvitedAt);
             nbt.putBoolean("AlwaysWelcome", true);
@@ -212,7 +213,7 @@ class InvitationDataTest {
         void fromNbt_missingAlwaysWelcome_defaultsFalse() {
             // Simulates loading old world data before Always Welcome feature existed
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testOwnerUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             nbt.putLong("InvitedAt", testInvitedAt);
             // AlwaysWelcome field intentionally missing
@@ -247,23 +248,23 @@ class InvitationDataTest {
         }
 
         @Test
-        @DisplayName("fromNbt with missing name returns empty string")
-        void fromNbt_missingName_returnsEmpty() {
+        @DisplayName("fromNbt with missing name returns Unknown default")
+        void fromNbt_missingName_returnsUnknown() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testOwnerUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putLong("InvitedAt", testInvitedAt);
-            // Missing OwnerName
+            // Missing OwnerName - defaults to "Unknown" for display purposes
 
             InvitationData data = InvitationData.fromNbt(nbt);
 
-            assertEquals("", data.ownerName());
+            assertEquals("Unknown", data.ownerName());
         }
 
         @Test
         @DisplayName("fromNbt with missing timestamp returns 0")
         void fromNbt_missingTimestamp_returnsZero() {
             NbtCompound nbt = new NbtCompound();
-            nbt.putUuid("OwnerUuid", testOwnerUuid);
+            NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             // Missing InvitedAt
 

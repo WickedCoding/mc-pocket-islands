@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.CommandCompat;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.function.Predicate;
@@ -69,10 +70,10 @@ public final class PermissionHelper {
                 return me.lucko.fabric.api.permissions.v0.Permissions.check(source, permission, fallbackLevel);
             } catch (Exception e) {
                 PersonalWorldsMod.LOGGER.debug("Permissions API check failed, falling back to OP level", e);
-                return source.hasPermissionLevel(fallbackLevel);
+                return CommandCompat.hasPermissionLevel(source, fallbackLevel);
             }
         }
-        return source.hasPermissionLevel(fallbackLevel);
+        return CommandCompat.hasPermissionLevel(source, fallbackLevel);
     }
 
     /**

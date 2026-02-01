@@ -1,7 +1,9 @@
 package com.wickedsik.personalworlds.recovery;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -48,11 +50,11 @@ public class CrashRecoveryHandler {
      * @param player The player who just joined
      */
     public static void onPlayerJoin(ServerPlayerEntity player) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) return;
 
         UUID playerUuid = player.getUuid();
-        ServerWorld currentWorld = player.getServerWorld();
+        ServerWorld currentWorld = EntityCompat.getServerWorld(player);
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
         // Case 1: Player IS in personal dimension (normal login or Fantasy restored them)
@@ -266,9 +268,9 @@ public class CrashRecoveryHandler {
         }
 
         // Priority 2: Bed spawn
-        BlockPos bedPos = player.getSpawnPointPosition();
+        BlockPos bedPos = com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointPosition(player);
         if (bedPos != null) {
-            ServerWorld bedWorld = server.getWorld(player.getSpawnPointDimension());
+            ServerWorld bedWorld = server.getWorld(com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointDimension(player));
             if (bedWorld != null) {
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
                 targetPos = Vec3d.ofCenter(safePos);
@@ -279,7 +281,7 @@ public class CrashRecoveryHandler {
 
         // Priority 3: Overworld spawn (always available)
         targetWorld = server.getOverworld();
-        BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, targetWorld.getSpawnPos());
+        BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, WorldCompat.getSpawnPos(targetWorld));
         targetPos = Vec3d.ofCenter(safePos);
         teleportPlayer(player, targetWorld, targetPos, yaw, pitch);
     }
@@ -312,7 +314,7 @@ public class CrashRecoveryHandler {
      */
     private static void emergencyEvacuate(ServerPlayerEntity player, MinecraftServer server, String reason) {
         ServerWorld overworld = server.getOverworld();
-        BlockPos safePos = SafeSpawnFinder.findSafePosition(overworld, overworld.getSpawnPos());
+        BlockPos safePos = SafeSpawnFinder.findSafePosition(overworld, WorldCompat.getSpawnPos(overworld));
 
         TeleportCompat.teleportToBlockPreserveRotation(player, overworld, safePos);
 
