@@ -21,16 +21,16 @@ public final class PermissionHelper {
     // ==================== Permission Nodes ====================
 
     // Admin permissions
-    public static final String ADMIN_LIST = "personalworlds.admin.list";
-    public static final String ADMIN_INFO = "personalworlds.admin.info";
-    public static final String ADMIN_DELETE = "personalworlds.admin.delete";
-    public static final String ADMIN_TELEPORT = "personalworlds.admin.teleport";
-    public static final String ADMIN_RELOAD = "personalworlds.admin.reload";
+    public static final String ADMIN_LIST = "pocketislands.admin.list";
+    public static final String ADMIN_INFO = "pocketislands.admin.info";
+    public static final String ADMIN_DELETE = "pocketislands.admin.delete";
+    public static final String ADMIN_TELEPORT = "pocketislands.admin.teleport";
+    public static final String ADMIN_RELOAD = "pocketislands.admin.reload";
 
     // Player permissions (for future use)
-    public static final String PLAYER_CREATE = "personalworlds.player.create";
-    public static final String PLAYER_INVITE = "personalworlds.player.invite";
-    public static final String PLAYER_VISIT = "personalworlds.player.visit";
+    public static final String PLAYER_CREATE = "pocketislands.player.create";
+    public static final String PLAYER_INVITE = "pocketislands.player.invite";
+    public static final String PLAYER_VISIT = "pocketislands.player.visit";
 
     // ==================== Default OP Levels ====================
 

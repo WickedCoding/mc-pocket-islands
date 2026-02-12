@@ -196,7 +196,7 @@ public class PortalOwnershipManager extends PersistentState {
     // --- Serialization ---
 
     //? if >=1.21.5 {
-    // In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    /*// In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
     // The Codec in PersistentStateCompat calls writeNbtData() via reflection
     public NbtCompound writeNbtData(NbtCompound nbt) {
         NbtCompound portalsNbt = new NbtCompound();
@@ -209,7 +209,7 @@ public class PortalOwnershipManager extends PersistentState {
         nbt.put("PortalOwners", portalsNbt);
         return nbt;
     }
-    //?} else if >=1.21 {
+    *///?} else if >=1.21 {
     /*@Override
     public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
         NbtCompound portalsNbt = new NbtCompound();
@@ -223,7 +223,7 @@ public class PortalOwnershipManager extends PersistentState {
         return nbt;
     }*/
     //?} else {
-    /*@Override
+    @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtCompound portalsNbt = new NbtCompound();
         for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
@@ -235,7 +235,7 @@ public class PortalOwnershipManager extends PersistentState {
         nbt.put("PortalOwners", portalsNbt);
         return nbt;
     }
-    *///?}
+    //?}
 
     public static PortalOwnershipManager fromNbt(NbtCompound nbt) {
         PortalOwnershipManager manager = new PortalOwnershipManager();

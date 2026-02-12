@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (BREAKING)
+- Translation keys renamed from `personalworlds.*` to `pocketislands.*` — resource packs and custom language files must update key names
+- Permission nodes renamed from `personalworlds.admin.*` / `personalworlds.player.*` to `pocketislands.admin.*` / `pocketislands.player.*` — LuckPerms configurations must be updated
+- Config file renamed from `config/personalworlds.json` to `config/pocketislands.json` — existing config is auto-migrated on first load
+- Mixin config renamed from `personalworlds.mixins.json` to `pocketislands.mixins.json`
+- JAR output renamed from `personalworlds-*.jar` to `pocketislands-*.jar`
+
 ## [0.6.1] - 2026-02-12
 
 ### Added

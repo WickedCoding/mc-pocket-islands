@@ -82,11 +82,11 @@ public class PersonalPortalBlock extends Block {
      * Triggers teleportation for server-side players who don't have portal cooldown.
      */
     //? if >=1.21.11 {
-    @Override
+    /*@Override
     protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, net.minecraft.entity.EntityCollisionHandler handler, boolean bl) {
         handleEntityCollision(state, world, pos, entity);
     }
-    //?} else if >=1.21.5 {
+    *///?} else if >=1.21.5 {
     /*@Override
     protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, net.minecraft.entity.EntityCollisionHandler handler) {
         handleEntityCollision(state, world, pos, entity);
@@ -97,11 +97,11 @@ public class PersonalPortalBlock extends Block {
         handleEntityCollision(state, world, pos, entity);
     }*/
     //?} else {
-    /*@Override
+    @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         handleEntityCollision(state, world, pos, entity);
     }
-    *///?}
+    //?}
 
     private void handleEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         if (world.isClient()) {
@@ -115,7 +115,7 @@ public class PersonalPortalBlock extends Block {
         // Prevent mounted players from entering portals
         if (player.hasVehicle()) {
             player.sendMessage(
-                Text.translatable("personalworlds.portal.dismount_required"),
+                Text.translatable("pocketislands.portal.dismount_required"),
                 true  // Action bar message (less intrusive)
             );
             return;
@@ -138,21 +138,21 @@ public class PersonalPortalBlock extends Block {
      * Checks if the portal frame is still valid; if not, removes this portal block.
      */
     //? if >=1.21.5 {
-    @Override
+    /*@Override
     protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @org.jetbrains.annotations.Nullable net.minecraft.world.block.WireOrientation wireOrientation, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }
-    //?} else if >=1.21 {
+    *///?} else if >=1.21 {
     /*@Override
     protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }*/
     //?} else {
-    /*@Override
+    @Override
     public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }
-    *///?}
+    //?}
 
     private void handleNeighborUpdate(BlockState state, World world, BlockPos pos) {
         if (world.isClient()) {
@@ -174,7 +174,7 @@ public class PersonalPortalBlock extends Block {
      * Cleans up portal ownership record when the portal is destroyed.
      */
     //? if >=1.21.5 {
-    @Override
+    /*@Override
     protected void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
         // In 1.21.5+, onStateReplaced receives the old state
         // Clean up portal ownership when destroyed
@@ -182,7 +182,7 @@ public class PersonalPortalBlock extends Block {
         ownershipManager.removePortal(world, pos);
         super.onStateReplaced(state, world, pos, moved);
     }
-    //?} else if >=1.21 {
+    *///?} else if >=1.21 {
     /*@Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         // Only clean up if the block is actually being removed (not just state change)
@@ -195,7 +195,7 @@ public class PersonalPortalBlock extends Block {
         super.onStateReplaced(state, world, pos, newState, moved);
     }*/
     //?} else {
-    /*@Override
+    @Override
     public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         // Only clean up if the block is actually being removed (not just state change)
         if (!state.isOf(newState.getBlock())) {
@@ -206,27 +206,27 @@ public class PersonalPortalBlock extends Block {
         }
         super.onStateReplaced(state, world, pos, newState, moved);
     }
-    *///?}
+    //?}
 
     /**
      * Portal blocks are transparent (not full cubes).
      */
     //? if >=1.21.5 {
-    @Override
+    /*@Override
     protected boolean isTransparent(BlockState state) {
         return true;
     }
-    //?} else if >=1.21 {
+    *///?} else if >=1.21 {
     /*@Override
     protected boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
         return true;
     }*/
     //?} else {
-    /*@Override
+    @Override
     public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
         return true;
     }
-    *///?}
+    //?}
 
     /**
      * Get the axis for a block state.

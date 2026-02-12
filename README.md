@@ -25,9 +25,9 @@ pocket dimension island.
 Download the version matching your Minecraft version from
 [Releases](https://github.com/wickedsik/pocket-islands/releases):
 
-- `personalworlds-X.X.X+1.20.1.jar` for Minecraft 1.20.1
-- `personalworlds-X.X.X+1.20.4.jar` for Minecraft 1.20.4
-- `personalworlds-X.X.X+1.21.11.jar` for Minecraft 1.21.11
+- `pocketislands-X.X.X+1.20.1.jar` for Minecraft 1.20.1
+- `pocketislands-X.X.X+1.20.4.jar` for Minecraft 1.20.4
+- `pocketislands-X.X.X+1.21.11.jar` for Minecraft 1.21.11
 
 ### Server
 
@@ -107,7 +107,7 @@ checking.
 
 ## Configuration
 
-**Config file:** `config/personalworlds.json`
+**Config file:** `config/pocketislands.json`
 
 Pocket Islands offers extensive customization options, particularly for **island
 composition**. You can define multiple portal types, each creating islands with
@@ -329,8 +329,8 @@ To add support for another language (e.g., German, Dutch, Spanish):
 
 ```json lines
 {
-    "personalworlds.message.invite_sent": "Eingeladen %s zu deiner Dimension",
-    "personalworlds.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
+    "pocketislands.message.invite_sent": "Eingeladen %s zu deiner Dimension",
+    "pocketislands.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
     // ...
 }
 ```
@@ -350,8 +350,8 @@ To customize messages while keeping the English language:
 
 ```json
 {
-    "personalworlds.message.invite_sent": "You invited %s to your island!",
-    "personalworlds.message.invite_received": "%s wants you to visit their island!"
+    "pocketislands.message.invite_sent": "You invited %s to your island!",
+    "pocketislands.message.invite_received": "%s wants you to visit their island!"
 }
 ```
 
@@ -359,15 +359,15 @@ To customize messages while keeping the English language:
 
 All translation keys are documented in `lang/en_us.json`. Key categories include:
 
-- **`personalworlds.message.*`** — Player-facing messages (invitations, ejections, teleports)
-- **`personalworlds.command.*`** — Command feedback and info
-- **`personalworlds.command.error.*`** — Error messages
-- **`personalworlds.invitations.*`** — Invitation list UI text
-- **`personalworlds.command.perf.*`** — Performance monitoring messages
-- **`personalworlds.command.list.*`** — Admin list command output
-- **`personalworlds.command.info.*`** — Admin info command output
-- **`personalworlds.command.delete.*`** — Admin delete command warnings
-- **`command.personalworlds.portals.*`** — Portal types listing and island status
+- **`pocketislands.message.*`** — Player-facing messages (invitations, ejections, teleports)
+- **`pocketislands.command.*`** — Command feedback and info
+- **`pocketislands.command.error.*`** — Error messages
+- **`pocketislands.invitations.*`** — Invitation list UI text
+- **`pocketislands.command.perf.*`** — Performance monitoring messages
+- **`pocketislands.command.list.*`** — Admin list command output
+- **`pocketislands.command.info.*`** — Admin info command output
+- **`pocketislands.command.delete.*`** — Admin delete command warnings
+- **`pocketislands.command.portals.*`** — Portal types listing and island status
 
 ## Technical Details
 

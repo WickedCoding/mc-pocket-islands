@@ -53,11 +53,11 @@ public class DevCommandExecutor {
             TeleportCompat.teleport(player, dimension, TeleportHelper.toDefaultSpawn(dimension, player));
 
             return CommandResult.successBroadcast(
-                Text.translatable("personalworlds.command.info.dimension_created", type.name())
+                Text.translatable("pocketislands.command.info.dimension_created", type.name())
             );
         } catch (Exception e) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.create_failed", e.getMessage())
+                Text.translatable("pocketislands.command.error.create_failed", e.getMessage())
             );
         }
     }
@@ -75,14 +75,14 @@ public class DevCommandExecutor {
 
         if (!registry.hasDimension(playerUuid)) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.no_dimension")
+                Text.translatable("pocketislands.command.error.no_dimension")
             );
         }
 
         Optional<PlayerDimensionData> optData = registry.getDimensionData(playerUuid);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.load_failed")
+                Text.translatable("pocketislands.command.error.load_failed")
             );
         }
 
@@ -104,11 +104,11 @@ public class DevCommandExecutor {
             );
 
             return CommandResult.successBroadcast(
-                Text.translatable("personalworlds.command.enter.success")
+                Text.translatable("pocketislands.command.enter.success")
             );
         } catch (Exception e) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.enter_failed", e.getMessage())
+                Text.translatable("pocketislands.command.error.enter_failed", e.getMessage())
             );
         }
     }

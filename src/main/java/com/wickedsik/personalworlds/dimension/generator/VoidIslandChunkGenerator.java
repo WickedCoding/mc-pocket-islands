@@ -63,16 +63,16 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     // ==================== CODEC METHOD ====================
 
     //? if >=1.21 {
-    @Override
+    /*@Override
     public com.mojang.serialization.MapCodec<? extends ChunkGenerator> getCodec() {
         return CODEC.fieldOf("void_island");
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     protected Codec<? extends ChunkGenerator> getCodec() {
         return CODEC;
     }
-    *///?}
+    //?}
 
     // ==================== CORE GENERATION METHODS ====================
 
@@ -80,7 +80,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
      * Main terrain generation. For void world, we only place blocks in island chunks.
      */
     //? if >=1.21 {
-    @Override
+    /*@Override
     public CompletableFuture<Chunk> populateNoise(
             Blender blender,
             NoiseConfig noiseConfig,
@@ -98,8 +98,8 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
         return CompletableFuture.completedFuture(chunk);
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     public CompletableFuture<Chunk> populateNoise(
             Executor executor,
             Blender blender,
@@ -118,7 +118,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
         return CompletableFuture.completedFuture(chunk);
     }
-    *///?}
+    //?}
 
     /**
      * Check if this chunk is part of the 8x8 island area.
@@ -144,10 +144,10 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
                         chunk.getPos().getStartZ() + z
                     );
                     //? if >=1.21 {
-                    chunk.setBlockState(pos, islandLayers[layerIdx], 0);
-                    //?} else {
-                    /*chunk.setBlockState(pos, islandLayers[layerIdx], false);
-                    *///?}
+                    /*chunk.setBlockState(pos, islandLayers[layerIdx], 0);
+                    *///?} else {
+                    chunk.setBlockState(pos, islandLayers[layerIdx], false);
+                    //?}
                 }
             }
         }
@@ -166,7 +166,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     }
 
     //? if >=1.21 {
-    @Override
+    /*@Override
     public void carve(
             ChunkRegion chunkRegion,
             long seed,
@@ -177,8 +177,8 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     ) {
         // No carving for void world
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     public void carve(
             ChunkRegion chunkRegion,
             long seed,
@@ -190,7 +190,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     ) {
         // No carving for void world
     }
-    *///?}
+    //?}
 
     @Override
     public void populateEntities(ChunkRegion region) {
@@ -279,20 +279,20 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     // ==================== DEBUG ====================
 
     //? if >=1.21 {
-    @Override
+    /*@Override
     public void appendDebugHudText(List<String> text, NoiseConfig noiseConfig, BlockPos pos) {
         text.add("VoidIsland Generator");
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
         text.add("Island chunk: " + isIslandChunk(chunkX, chunkZ));
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     public void getDebugHudText(List<String> text, NoiseConfig noiseConfig, BlockPos pos) {
         text.add("VoidIsland Generator");
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
         text.add("Island chunk: " + isIslandChunk(chunkX, chunkZ));
     }
-    *///?}
+    //?}
 }

@@ -4,9 +4,9 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 //? if >=1.21 {
-import net.minecraft.command.permission.LeveledPermissionPredicate;
+/*import net.minecraft.command.permission.LeveledPermissionPredicate;
 import net.minecraft.command.permission.PermissionLevel;
-//?}
+*///?}
 
 /**
  * Compatibility layer for command permission checking.
@@ -31,11 +31,11 @@ public final class CommandCompat {
      */
     public static boolean hasPermissionLevel(ServerCommandSource source, int level) {
         //? if >=1.21 {
-        LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) source.getPermissions();
+        /*LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) source.getPermissions();
         return permissions.getLevel().isAtLeast(PermissionLevel.fromLevel(level));
-        //?} else {
-        /*return source.hasPermissionLevel(level);
-        *///?}
+        *///?} else {
+        return source.hasPermissionLevel(level);
+        //?}
     }
 
     /**
@@ -47,11 +47,11 @@ public final class CommandCompat {
      */
     public static boolean hasPermissionLevel(ServerPlayerEntity player, int level) {
         //? if >=1.21 {
-        LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) player.getPermissions();
+        /*LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) player.getPermissions();
         return permissions.getLevel().isAtLeast(PermissionLevel.fromLevel(level));
-        //?} else {
-        /*return player.hasPermissionLevel(level);
-        *///?}
+        *///?} else {
+        return player.hasPermissionLevel(level);
+        //?}
     }
 
     /**

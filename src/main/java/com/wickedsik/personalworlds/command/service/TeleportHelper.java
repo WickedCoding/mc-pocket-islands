@@ -30,7 +30,7 @@ public final class TeleportHelper {
      */
     public static TeleportTarget toPosition(ServerWorld world, Vec3d pos, ServerPlayerEntity player) {
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             pos,
             Vec3d.ZERO,
@@ -38,14 +38,14 @@ public final class TeleportHelper {
             player.getPitch(),
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             pos,
             Vec3d.ZERO,
             player.getYaw(),
             player.getPitch()
         );
-        *///?}
+        //?}
     }
 
     /**
@@ -59,7 +59,7 @@ public final class TeleportHelper {
      */
     public static TeleportTarget toPosition(ServerWorld world, Vec3d pos, float yaw, float pitch) {
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             pos,
             Vec3d.ZERO,
@@ -67,14 +67,14 @@ public final class TeleportHelper {
             pitch,
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             pos,
             Vec3d.ZERO,
             yaw,
             pitch
         );
-        *///?}
+        //?}
     }
 
     /**
@@ -93,7 +93,7 @@ public final class TeleportHelper {
             blockPos.getZ() + 0.5
         );
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             pos,
             Vec3d.ZERO,
@@ -101,14 +101,14 @@ public final class TeleportHelper {
             player.getPitch(),
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             pos,
             Vec3d.ZERO,
             player.getYaw(),
             player.getPitch()
         );
-        *///?}
+        //?}
     }
 
     /**
@@ -128,7 +128,7 @@ public final class TeleportHelper {
             blockPos.getZ() + 0.5
         );
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             pos,
             Vec3d.ZERO,
@@ -136,14 +136,14 @@ public final class TeleportHelper {
             pitch,
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             pos,
             Vec3d.ZERO,
             yaw,
             pitch
         );
-        *///?}
+        //?}
     }
 
     /**
@@ -156,7 +156,7 @@ public final class TeleportHelper {
     public static TeleportTarget toWorldSpawn(ServerWorld world, ServerPlayerEntity player) {
         Vec3d spawnPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(world));
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             spawnPos,
             Vec3d.ZERO,
@@ -164,14 +164,14 @@ public final class TeleportHelper {
             player.getPitch(),
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             spawnPos,
             Vec3d.ZERO,
             player.getYaw(),
             player.getPitch()
         );
-        *///?}
+        //?}
     }
 
     /**
@@ -185,7 +185,7 @@ public final class TeleportHelper {
     public static TeleportTarget toDefaultSpawn(ServerWorld world, ServerPlayerEntity player) {
         Vec3d pos = new Vec3d(0.5, 65, 0.5);
         //? if >=1.21 {
-        return new TeleportTarget(
+        /*return new TeleportTarget(
             world,
             pos,
             Vec3d.ZERO,
@@ -193,13 +193,13 @@ public final class TeleportHelper {
             player.getPitch(),
             TeleportTarget.NO_OP
         );
-        //?} else {
-        /*return new TeleportTarget(
+        *///?} else {
+        return new TeleportTarget(
             pos,
             Vec3d.ZERO,
             player.getYaw(),
             player.getPitch()
         );
-        *///?}
+        //?}
     }
 }

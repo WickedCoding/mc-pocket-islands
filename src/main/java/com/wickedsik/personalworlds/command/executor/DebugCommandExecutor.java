@@ -25,7 +25,7 @@ public class DebugCommandExecutor {
     public CommandResult enablePerf() {
         PerformanceMonitor.enable();
         return CommandResult.successBroadcast(
-            Text.translatable("personalworlds.command.perf.enabled")
+            Text.translatable("pocketislands.command.perf.enabled")
                 .formatted(Formatting.GREEN)
         );
     }
@@ -36,7 +36,7 @@ public class DebugCommandExecutor {
     public CommandResult disablePerf() {
         PerformanceMonitor.disable();
         return CommandResult.successBroadcast(
-            Text.translatable("personalworlds.command.perf.disabled")
+            Text.translatable("pocketislands.command.perf.disabled")
                 .formatted(Formatting.YELLOW)
         );
     }
@@ -62,7 +62,7 @@ public class DebugCommandExecutor {
     public CommandResult resetCounters() {
         PerformanceMonitor.resetCounters();
         return CommandResult.successBroadcast(
-            Text.translatable("personalworlds.command.perf.reset")
+            Text.translatable("pocketislands.command.perf.reset")
                 .formatted(Formatting.YELLOW)
         );
     }

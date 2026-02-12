@@ -221,7 +221,7 @@ public class ModCommands {
 
     private static int handleCreate(ServerCommandSource source, String typeStr) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.createDimension(player, typeStr).applyTo(source);
@@ -229,7 +229,7 @@ public class ModCommands {
 
     private static int handleEnter(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.enterDimension(player).applyTo(source);
@@ -237,7 +237,7 @@ public class ModCommands {
 
     private static int handleLeave(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.leaveDimension(player).applyTo(source);
@@ -245,7 +245,7 @@ public class ModCommands {
 
     private static int handleInvite(ServerCommandSource source, ServerPlayerEntity guest, boolean alwaysWelcome) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.invite(owner, guest, alwaysWelcome).applyTo(source);
@@ -253,7 +253,7 @@ public class ModCommands {
 
     private static int handleToggleWelcome(ServerCommandSource source, String guestName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.toggleWelcome(owner, guestName).applyTo(source);
@@ -261,7 +261,7 @@ public class ModCommands {
 
     private static int handleUninvite(ServerCommandSource source, String guestName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.uninvite(owner, guestName).applyTo(source);
@@ -269,7 +269,7 @@ public class ModCommands {
 
     private static int handleInvites(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.showInvitations(player).applyTo(source);
@@ -277,7 +277,7 @@ public class ModCommands {
 
     private static int handlePortals(ServerCommandSource source) {
         if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         playerExecutor.showPortals(player, source);
@@ -303,7 +303,7 @@ public class ModCommands {
 
     private static int handleAdminTeleport(ServerCommandSource source, String playerName) {
         if (!(source.getEntity() instanceof ServerPlayerEntity admin)) {
-            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return adminExecutor.teleport(admin, playerName).applyTo(source);

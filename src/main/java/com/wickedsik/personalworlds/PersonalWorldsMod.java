@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 
 public class PersonalWorldsMod implements ModInitializer {
     public static final String MOD_ID = "personalworlds";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final Logger LOGGER = LoggerFactory.getLogger("PocketIslands");
 
     @Override
     public void onInitialize() {
-        LOGGER.info("Personal Worlds initializing...");
+        LOGGER.info("Pocket Islands initializing...");
 
         // Load configuration FIRST (other components may depend on it)
         ModConfig.load();
@@ -34,6 +34,6 @@ public class PersonalWorldsMod implements ModInitializer {
         // Register commands
         ModCommands.register();
 
-        LOGGER.info("Personal Worlds initialized!");
+        LOGGER.info("Pocket Islands initialized!");
     }
 }

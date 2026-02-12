@@ -74,7 +74,7 @@ public class PlayerCommandExecutor {
 
         if (playerRef.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.player_not_found", guestName)
+                Text.translatable("pocketislands.command.error.player_not_found", guestName)
             );
         }
 
@@ -99,7 +99,7 @@ public class PlayerCommandExecutor {
 
         if (playerRef.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.not_invited_by_you", guestName)
+                Text.translatable("pocketislands.command.error.not_invited_by_you", guestName)
             );
         }
 
@@ -110,13 +110,13 @@ public class PlayerCommandExecutor {
 
         if (newValue.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.not_invited_by_you", ref.resolvedName())
+                Text.translatable("pocketislands.command.error.not_invited_by_you", ref.resolvedName())
             );
         }
 
         String messageKey = newValue.get()
-            ? "personalworlds.command.toggle_welcome_on"
-            : "personalworlds.command.toggle_welcome_off";
+            ? "pocketislands.command.toggle_welcome_on"
+            : "pocketislands.command.toggle_welcome_off";
 
         return CommandResult.success(Text.translatable(messageKey, ref.resolvedName()));
     }
@@ -143,11 +143,11 @@ public class PlayerCommandExecutor {
         List<ModConfig.PortalConfig> portalTypes = ModConfig.get().portalTypes;
 
         // === Portal Types Header ===
-        source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.header")
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.header")
             .formatted(Formatting.GOLD), false);
 
         if (portalTypes.isEmpty()) {
-            source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.no_portals")
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.no_portals")
                 .formatted(Formatting.GRAY), false);
         } else {
             for (int i = 0; i < portalTypes.size(); i++) {
@@ -156,14 +156,14 @@ public class PlayerCommandExecutor {
         }
 
         // === Your Island Section ===
-        source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.your_island_header")
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.your_island_header")
             .formatted(Formatting.GOLD), false);
 
         DimensionRegistry registry = DimensionRegistry.get(source.getServer());
         Optional<PlayerDimensionData> islandData = registry.getDimensionData(player.getUuid());
 
         if (islandData.isEmpty()) {
-            source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.no_island")
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.no_island")
                 .formatted(Formatting.GRAY), false);
         } else {
             PlayerDimensionData data = islandData.get();
@@ -176,10 +176,10 @@ public class PlayerCommandExecutor {
                 PortalColor color = ModBlocks.getPortalColor(typeIndex);
                 String colorName = formatColorName(color);
 
-                source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.your_type",
+                source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.your_type",
                     frameName, colorName).formatted(Formatting.GREEN), false);
             } else {
-                source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.your_type_unknown")
+                source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.your_type_unknown")
                     .formatted(Formatting.RED), false);
             }
         }
@@ -198,18 +198,18 @@ public class PlayerCommandExecutor {
         String colorName = formatColorName(color);
 
         // Type header: [1] Nether Bricks (Red)
-        source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.type_header",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.type_header",
             index + 1, frameName, colorName).formatted(Formatting.YELLOW), false);
 
         // Activation item
         Item activationItem = ModItems.getActivationItem(index);
         Text itemName = Text.translatable(activationItem.getTranslationKey());
-        source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.activate",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.activate",
             itemName).formatted(Formatting.GRAY), false);
 
         // Island layers
         Text layersText = buildLayersText(config.islandLayers);
-        source.sendFeedback(() -> Text.translatable("command.personalworlds.portals.layers",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.portals.layers",
             layersText).formatted(Formatting.GRAY), false);
     }
 

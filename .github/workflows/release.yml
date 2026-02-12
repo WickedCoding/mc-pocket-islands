@@ -77,15 +77,15 @@ jobs:
           # Dynamically find and rename all built JARs
           for version_dir in versions/*/; do
             mc_version=$(basename "$version_dir")
-            jar_path="${version_dir}build/libs/personalworlds-${MOD_VERSION}.jar"
-            sources_path="${version_dir}build/libs/personalworlds-${MOD_VERSION}-sources.jar"
+            jar_path="${version_dir}build/libs/pocketislands-${MOD_VERSION}.jar"
+            sources_path="${version_dir}build/libs/pocketislands-${MOD_VERSION}-sources.jar"
 
             if [ -f "$jar_path" ]; then
-              cp "$jar_path" "release-artifacts/personalworlds-${MOD_VERSION}+${mc_version}.jar"
+              cp "$jar_path" "release-artifacts/pocketislands-${MOD_VERSION}+${mc_version}.jar"
             fi
 
             if [ -f "$sources_path" ]; then
-              cp "$sources_path" "release-artifacts/personalworlds-${MOD_VERSION}+${mc_version}-sources.jar"
+              cp "$sources_path" "release-artifacts/pocketislands-${MOD_VERSION}+${mc_version}-sources.jar"
             fi
           done
 

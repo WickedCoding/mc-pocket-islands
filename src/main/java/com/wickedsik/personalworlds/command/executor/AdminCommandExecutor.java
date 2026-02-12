@@ -58,12 +58,12 @@ public class AdminCommandExecutor {
         Map<UUID, PlayerDimensionData> dimensions = registry.getAllDimensions();
 
         if (dimensions.isEmpty()) {
-            source.sendFeedback(() -> Text.translatable("personalworlds.command.list.empty")
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.list.empty")
                 .formatted(Formatting.GRAY), false);
             return;
         }
 
-        MutableText header = Text.translatable("personalworlds.command.list.header")
+        MutableText header = Text.translatable("pocketislands.command.list.header")
             .formatted(Formatting.GOLD);
         source.sendFeedback(() -> header, false);
 
@@ -83,7 +83,7 @@ public class AdminCommandExecutor {
                     .formatted(Formatting.DARK_GRAY));
 
             if (loaded) {
-                line.append(Text.translatable("personalworlds.command.list.loaded")
+                line.append(Text.translatable("pocketislands.command.list.loaded")
                     .formatted(Formatting.GREEN));
                 if (playerCount > 0) {
                     line.append(Text.literal(", " + playerCount + " player" + (playerCount > 1 ? "s" : ""))
@@ -91,7 +91,7 @@ public class AdminCommandExecutor {
                 }
                 line.append(Text.literal("]").formatted(Formatting.GREEN));
             } else {
-                line.append(Text.translatable("personalworlds.command.list.unloaded").formatted(Formatting.GRAY));
+                line.append(Text.translatable("pocketislands.command.list.unloaded").formatted(Formatting.GRAY));
             }
 
             source.sendFeedback(() -> line, false);
@@ -111,7 +111,7 @@ public class AdminCommandExecutor {
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName)
+                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -126,30 +126,30 @@ public class AdminCommandExecutor {
         int inviteCount = sentInvites.size();
 
         // Build info display
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.header",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.header",
             data.ownerName()).formatted(Formatting.GOLD), false);
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.owner",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.owner",
             data.ownerName()), false);
 
         String createdStr = DATE_FORMAT.format(new Date(data.createdAt()));
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.created",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.created",
             createdStr), false);
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.world_type",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.world_type",
             data.generatorType().name()), false);
 
         if (loaded) {
-            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.status_loaded",
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.status_loaded",
                 playerCount), false);
         } else {
-            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.status_unloaded"), false);
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.status_unloaded"), false);
         }
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.invitations",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.invitations",
             inviteCount), false);
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.spawn",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.spawn",
             data.spawnPoint().getX(),
             data.spawnPoint().getY(),
             data.spawnPoint().getZ()), false);
@@ -170,7 +170,7 @@ public class AdminCommandExecutor {
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName)
+                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -186,16 +186,16 @@ public class AdminCommandExecutor {
         int playerCount = world != null ? world.getPlayers().size() : 0;
 
         // Warning message
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.warning",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.warning",
             data.ownerName()), false);
 
         if (playerCount > 0) {
-            source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.players_ejected",
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.players_ejected",
                 playerCount).formatted(Formatting.GOLD), false);
         }
 
         // Confirmation prompt
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.delete.confirm",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.confirm",
             data.ownerName()), false);
 
         return CommandResult.silent();
@@ -214,7 +214,7 @@ public class AdminCommandExecutor {
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName)
+                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -232,7 +232,7 @@ public class AdminCommandExecutor {
                 List<ServerPlayerEntity> playersToEject = new ArrayList<>(dimWorld.getPlayers());
                 for (ServerPlayerEntity player : playersToEject) {
                     TeleportCompat.teleport(player, overworld, TeleportHelper.toWorldSpawn(overworld, player));
-                    player.sendMessage(Text.translatable("personalworlds.message.admin_ejected")
+                    player.sendMessage(Text.translatable("pocketislands.message.admin_ejected")
                         .formatted(Formatting.RED), false);
                 }
             }
@@ -250,7 +250,7 @@ public class AdminCommandExecutor {
         PortalOwnershipManager portalManager = PortalOwnershipManager.get(server);
         int portalsCleared = portalManager.clearPortalsOwnedBy(ownerUuid);
         if (portalsCleared > 0) {
-            source.sendFeedback(() -> Text.translatable("personalworlds.command.info.cleared_portals",
+            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.cleared_portals",
                 portalsCleared).formatted(Formatting.GRAY), false);
         }
 
@@ -263,7 +263,7 @@ public class AdminCommandExecutor {
         }
 
         return CommandResult.successBroadcast(
-            Text.translatable("personalworlds.command.info.deleted", ownerName)
+            Text.translatable("pocketislands.command.info.deleted", ownerName)
                 .formatted(Formatting.GREEN)
         );
     }
@@ -281,7 +281,7 @@ public class AdminCommandExecutor {
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("personalworlds.command.error.no_dimension_for_player", playerName)
+                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -312,7 +312,7 @@ public class AdminCommandExecutor {
         VisualEffects.playTeleportArrivalEffects(admin);
 
         return CommandResult.successBroadcast(
-            Text.translatable("personalworlds.command.info.teleported", data.ownerName())
+            Text.translatable("pocketislands.command.info.teleported", data.ownerName())
                 .formatted(Formatting.GREEN)
         );
     }
@@ -331,10 +331,10 @@ public class AdminCommandExecutor {
         ModBlocks.clearCache();
         ModItems.clearCache();
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.config_reloaded")
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.config_reloaded")
             .formatted(Formatting.GREEN), true);
 
-        source.sendFeedback(() -> Text.translatable("personalworlds.command.info.config_path",
+        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.config_path",
             ModConfig.getConfigPath()).formatted(Formatting.GRAY), false);
 
         return CommandResult.silent();

@@ -35,10 +35,10 @@ public final class EntityCompat {
      */
     public static MinecraftServer getServer(ServerPlayerEntity player) {
         //? if >=1.21 {
-        return player.getEntityWorld().getServer();
-        //?} else {
-        /*return player.getServer();
-        *///?}
+        /*return player.getEntityWorld().getServer();
+        *///?} else {
+        return player.getServer();
+        //?}
     }
 
     /**
@@ -49,10 +49,10 @@ public final class EntityCompat {
      */
     public static ServerWorld getServerWorld(ServerPlayerEntity player) {
         //? if >=1.21 {
-        return (ServerWorld) player.getEntityWorld();
-        //?} else {
-        /*return player.getServerWorld();
-        *///?}
+        /*return (ServerWorld) player.getEntityWorld();
+        *///?} else {
+        return player.getServerWorld();
+        //?}
     }
 
     /**
@@ -63,10 +63,10 @@ public final class EntityCompat {
      */
     public static Vec3d getPos(ServerPlayerEntity player) {
         //? if >=1.21 {
-        return player.getEntityPos();
-        //?} else {
-        /*return player.getPos();
-        *///?}
+        /*return player.getEntityPos();
+        *///?} else {
+        return player.getPos();
+        //?}
     }
 
     /**
@@ -77,15 +77,15 @@ public final class EntityCompat {
      */
     public static @Nullable BlockPos getSpawnPointPosition(ServerPlayerEntity player) {
         //? if >=1.21 {
-        ServerPlayerEntity.Respawn respawn = player.getRespawn();
+        /*ServerPlayerEntity.Respawn respawn = player.getRespawn();
         if (respawn == null) {
             return null;
         }
         // In 1.21.x, Respawn.respawnData() returns SpawnPoint which has getPos()
         return respawn.respawnData().getPos();
-        //?} else {
-        /*return player.getSpawnPointPosition();
-        *///?}
+        *///?} else {
+        return player.getSpawnPointPosition();
+        //?}
     }
 
     /**
@@ -96,14 +96,14 @@ public final class EntityCompat {
      */
     public static @Nullable RegistryKey<World> getSpawnPointDimension(ServerPlayerEntity player) {
         //? if >=1.21 {
-        ServerPlayerEntity.Respawn respawn = player.getRespawn();
+        /*ServerPlayerEntity.Respawn respawn = player.getRespawn();
         if (respawn == null) {
             return null;
         }
         // In 1.21.x, SpawnPoint has getDimension()
         return respawn.respawnData().getDimension();
-        //?} else {
-        /*return player.getSpawnPointDimension();
-        *///?}
+        *///?} else {
+        return player.getSpawnPointDimension();
+        //?}
     }
 }

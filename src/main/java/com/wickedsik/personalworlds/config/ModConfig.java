@@ -13,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration manager for PersonalWorlds.
+ * Configuration manager for Pocket Islands.
  * Uses JSON persistence with GSON (provided by Minecraft).
  *
- * Configuration file location: config/personalworlds.json
+ * Configuration file location: config/pocketislands.json
  */
 public class ModConfig {
 
@@ -59,6 +59,8 @@ public class ModConfig {
 
     private static ModConfig INSTANCE;
     private static final Path CONFIG_PATH = FabricLoader.getInstance()
+            .getConfigDir().resolve("pocketislands.json");
+    private static final Path LEGACY_CONFIG_PATH = FabricLoader.getInstance()
             .getConfigDir().resolve("personalworlds.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -163,6 +165,21 @@ public class ModConfig {
             } catch (Exception e) {
                 PersonalWorldsMod.LOGGER.error("Configuration file malformed, using defaults", e);
                 INSTANCE = new ModConfig();
+            }
+        } else if (Files.exists(LEGACY_CONFIG_PATH)) {
+            // Migrate from legacy config path (personalworlds.json → pocketislands.json)
+            try {
+                PersonalWorldsMod.LOGGER.info("Found legacy config at {}, migrating to {}", LEGACY_CONFIG_PATH, CONFIG_PATH);
+                Files.copy(LEGACY_CONFIG_PATH, CONFIG_PATH);
+                Files.delete(LEGACY_CONFIG_PATH);
+                PersonalWorldsMod.LOGGER.info("Config migrated (old file removed)");
+                load(); // Recurse to load from new path
+                return;
+            } catch (IOException e) {
+                PersonalWorldsMod.LOGGER.error("Failed to migrate legacy config, using defaults", e);
+                INSTANCE = new ModConfig();
+                INSTANCE.portalTypes.add(new PortalConfig());
+                save();
             }
         } else {
             PersonalWorldsMod.LOGGER.info("No configuration file found, creating default at {}", CONFIG_PATH);

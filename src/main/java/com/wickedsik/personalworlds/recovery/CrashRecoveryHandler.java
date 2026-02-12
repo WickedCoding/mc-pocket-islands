@@ -105,7 +105,7 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} no longer has permission to {}'s dimension, evacuating",
                 player.getName().getString(), ownerUuid);
 
-            player.sendMessage(Text.translatable("personalworlds.message.ejected_offline")
+            player.sendMessage(Text.translatable("pocketislands.message.ejected_offline")
                 .formatted(Formatting.GOLD), false);
 
             // Clear tracking and evacuate
@@ -161,7 +161,7 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} lost permission to dimension {}, using fallback",
                 player.getName().getString(), ownerUuid);
             dataManager.clearCurrentPocketDimension(playerUuid);
-            player.sendMessage(Text.translatable("personalworlds.message.ejected_offline")
+            player.sendMessage(Text.translatable("pocketislands.message.ejected_offline")
                 .formatted(Formatting.GOLD), false);
             teleportToFallbackPosition(player, server, dataManager);
             return;
@@ -198,7 +198,7 @@ public class CrashRecoveryHandler {
 
             PersonalWorldsMod.LOGGER.info("Restored player {} to pocket dimension after fallback spawn",
                 player.getName().getString());
-            player.sendMessage(Text.translatable("personalworlds.message.dimension_restored"), false);
+            player.sendMessage(Text.translatable("pocketislands.message.dimension_restored"), false);
 
         } catch (Exception e) {
             PersonalWorldsMod.LOGGER.error("Failed to restore dimension for {}: {}",
@@ -297,7 +297,7 @@ public class CrashRecoveryHandler {
             float pitch
     ) {
         TeleportCompat.teleport(player, world, pos, yaw, pitch);
-        player.sendMessage(Text.translatable("personalworlds.message.returned_overworld"), true);
+        player.sendMessage(Text.translatable("pocketislands.message.returned_overworld"), true);
     }
 
     /**
@@ -318,7 +318,7 @@ public class CrashRecoveryHandler {
 
         TeleportCompat.teleportToBlockPreserveRotation(player, overworld, safePos);
 
-        player.sendMessage(Text.translatable("personalworlds.message.emergency_teleport", reason)
+        player.sendMessage(Text.translatable("pocketislands.message.emergency_teleport", reason)
             .formatted(Formatting.RED), false);
 
         // Clear any corrupt data

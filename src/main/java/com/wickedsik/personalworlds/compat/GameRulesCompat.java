@@ -1,10 +1,10 @@
 package com.wickedsik.personalworlds.compat;
 
 //? if >=1.21 {
-import net.minecraft.world.rule.GameRules;
-//?} else {
-/*import net.minecraft.world.GameRules;
-*///?}
+/*import net.minecraft.world.rule.GameRules;
+*///?} else {
+import net.minecraft.world.GameRules;
+//?}
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 
 /**
@@ -28,9 +28,9 @@ public final class GameRulesCompat {
      */
     public static void disableMobSpawning(RuntimeWorldConfig config) {
         //? if >=1.21 {
-        config.setGameRule(GameRules.DO_MOB_SPAWNING, false);
-        //?} else {
         /*config.setGameRule(GameRules.DO_MOB_SPAWNING, false);
-        *///?}
+        *///?} else {
+        config.setGameRule(GameRules.DO_MOB_SPAWNING, false);
+        //?}
     }
 }

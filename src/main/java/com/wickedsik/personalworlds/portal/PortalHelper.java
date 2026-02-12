@@ -216,9 +216,9 @@ public class PortalHelper {
 
             // Send appropriate denial message to visitor
             Text denialMessage = switch (denialReason) {
-                case NOT_INVITED -> Text.translatable("personalworlds.command.error.not_invited", ownerName);
-                case HOST_OFFLINE -> Text.translatable("personalworlds.visit.denied.offline", ownerName);
-                case HOST_NOT_HOME -> Text.translatable("personalworlds.visit.denied.not_home", ownerName);
+                case NOT_INVITED -> Text.translatable("pocketislands.command.error.not_invited", ownerName);
+                case HOST_OFFLINE -> Text.translatable("pocketislands.visit.denied.offline", ownerName);
+                case HOST_NOT_HOME -> Text.translatable("pocketislands.visit.denied.not_home", ownerName);
                 case ALLOWED -> Text.empty(); // Should never happen
             };
 

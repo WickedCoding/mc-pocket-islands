@@ -1,16 +1,16 @@
 package com.wickedsik.personalworlds.compat;
 
 //? if >=1.21 {
-import com.mojang.serialization.Codec;
+/*import com.mojang.serialization.Codec;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.PersistentStateType;
-//?} else {
-/*import net.minecraft.nbt.NbtCompound;
+*///?} else {
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
-*///?}
+//?}
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -49,7 +49,7 @@ public final class PersistentStateCompat {
             Function<NbtCompound, T> deserializer
     ) {
         //? if >=1.21 {
-        // 1.21.x uses PersistentStateType with Codec
+        /*// 1.21.x uses PersistentStateType with Codec
         // Create a codec that wraps the NBT serialization
         // Subclasses must implement save(NbtCompound, WrapperLookup) for serialization
         Codec<T> codec = NbtCompound.CODEC.xmap(
@@ -77,7 +77,7 @@ public final class PersistentStateCompat {
             null  // No DataFixTypes needed for mod data
         );
         return stateManager.getOrCreate(type);
-        //?} else if >=1.20.2 {
+        *///?} else if >=1.20.2 {
         /*PersistentState.Type<T> type = new PersistentState.Type<>(
             constructor,
             deserializer,
@@ -85,7 +85,7 @@ public final class PersistentStateCompat {
         );
         return stateManager.getOrCreate(type, name);
         *///?} else {
-        /*return stateManager.getOrCreate(deserializer, constructor, name);
-        *///?}
+        return stateManager.getOrCreate(deserializer, constructor, name);
+        //?}
     }
 }

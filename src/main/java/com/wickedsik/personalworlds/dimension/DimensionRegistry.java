@@ -78,7 +78,7 @@ public class DimensionRegistry extends PersistentState {
     // --- Serialization ---
 
     //? if >=1.21.5 {
-    // In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    /*// In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
     // The Codec in PersistentStateCompat calls writeNbtData() via reflection
     public NbtCompound writeNbtData(NbtCompound nbt) {
         NbtList dimensionList = new NbtList();
@@ -88,7 +88,7 @@ public class DimensionRegistry extends PersistentState {
         nbt.put("Dimensions", dimensionList);
         return nbt;
     }
-    //?} else if >=1.21 {
+    *///?} else if >=1.21 {
     /*@Override
     public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
         NbtList dimensionList = new NbtList();
@@ -99,7 +99,7 @@ public class DimensionRegistry extends PersistentState {
         return nbt;
     }*/
     //?} else {
-    /*@Override
+    @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtList dimensionList = new NbtList();
         for (PlayerDimensionData data : dimensions.values()) {
@@ -108,7 +108,7 @@ public class DimensionRegistry extends PersistentState {
         nbt.put("Dimensions", dimensionList);
         return nbt;
     }
-    *///?}
+    //?}
 
     public static DimensionRegistry fromNbt(NbtCompound nbt) {
         DimensionRegistry registry = new DimensionRegistry();

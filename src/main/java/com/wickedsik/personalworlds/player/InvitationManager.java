@@ -148,7 +148,7 @@ public class InvitationManager {
         ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
         if (host != null) {
             host.sendMessage(
-                Text.translatable("personalworlds.visit.attempted.not_home", visitorName)
+                Text.translatable("pocketislands.visit.attempted.not_home", visitorName)
                     .formatted(Formatting.GRAY),
                 false
             );
@@ -184,7 +184,7 @@ public class InvitationManager {
 
         // Validation
         if (ownerUuid.equals(guestUuid)) {
-            owner.sendMessage(Text.translatable("personalworlds.message.cannot_invite_self").formatted(Formatting.RED), false);
+            owner.sendMessage(Text.translatable("pocketislands.message.cannot_invite_self").formatted(Formatting.RED), false);
             return false;
         }
 
@@ -196,10 +196,10 @@ public class InvitationManager {
         if (added) {
             // Send appropriate message based on invitation type
             String messageKey = alwaysWelcome
-                ? "personalworlds.command.invited_always_welcome"
-                : "personalworlds.message.invite_sent";
+                ? "pocketislands.command.invited_always_welcome"
+                : "pocketislands.message.invite_sent";
             owner.sendMessage(Text.translatable(messageKey, guest.getName().getString()), false);
-            guest.sendMessage(Text.translatable("personalworlds.message.invite_received", ownerName), false);
+            guest.sendMessage(Text.translatable("pocketislands.message.invite_received", ownerName), false);
 
             // Play notification sounds
             VisualEffects.playInvitationSentEffect(owner);
@@ -208,7 +208,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension (alwaysWelcome={})",
                 ownerName, guest.getName().getString(), alwaysWelcome);
         } else {
-            owner.sendMessage(Text.translatable("personalworlds.message.already_invited", guest.getName().getString()), false);
+            owner.sendMessage(Text.translatable("pocketislands.message.already_invited", guest.getName().getString()), false);
         }
 
         return added;
@@ -231,7 +231,7 @@ public class InvitationManager {
         boolean removed = dataManager.removeInvitation(ownerUuid, guestUuid);
 
         if (removed) {
-            owner.sendMessage(Text.translatable("personalworlds.message.invite_revoked", guestName), false);
+            owner.sendMessage(Text.translatable("pocketislands.message.invite_revoked", guestName), false);
 
             // Check if guest is online and eject if in owner's dimension
             ServerPlayerEntity guest = server.getPlayerManager().getPlayer(guestUuid);
@@ -242,7 +242,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} revoked {}'s invitation",
                 owner.getName().getString(), guestName);
         } else {
-            owner.sendMessage(Text.translatable("personalworlds.message.not_invited", guestName), false);
+            owner.sendMessage(Text.translatable("pocketislands.message.not_invited", guestName), false);
         }
 
         return removed;
@@ -275,7 +275,7 @@ public class InvitationManager {
         // Play warning sound before ejection
         VisualEffects.playInvitationRevokedEffect(guest);
 
-        guest.sendMessage(Text.translatable("personalworlds.message.ejected")
+        guest.sendMessage(Text.translatable("pocketislands.message.ejected")
             .formatted(Formatting.GOLD), false);
 
         // Try to return to stored position, fallback to overworld spawn
@@ -329,15 +329,15 @@ public class InvitationManager {
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         UUID playerUuid = player.getUuid();
 
-        player.sendMessage(Text.translatable("personalworlds.invitations.header").formatted(Formatting.GOLD), false);
+        player.sendMessage(Text.translatable("pocketislands.invitations.header").formatted(Formatting.GOLD), false);
 
         // Sent invitations (players who can visit you)
         Set<UUID> sent = dataManager.getSentInvitations(playerUuid);
         player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.translatable("personalworlds.invitations.sent.header").formatted(Formatting.GREEN), false);
+        player.sendMessage(Text.translatable("pocketislands.invitations.sent.header").formatted(Formatting.GREEN), false);
 
         if (sent.isEmpty()) {
-            player.sendMessage(Text.translatable("personalworlds.invitations.sent.none").formatted(Formatting.GRAY), false);
+            player.sendMessage(Text.translatable("pocketislands.invitations.sent.none").formatted(Formatting.GRAY), false);
         } else {
             boolean alwaysWelcomeEnabled = ModConfig.get().enableAlwaysWelcome;
 
@@ -354,8 +354,8 @@ public class InvitationManager {
                     String toggleIcon = isAlwaysWelcome ? "★" : "☆";
                     Formatting toggleColor = isAlwaysWelcome ? Formatting.GREEN : Formatting.GRAY;
                     String toggleTooltipKey = isAlwaysWelcome
-                        ? "personalworlds.invitations.sent.toggle_off_tooltip"
-                        : "personalworlds.invitations.sent.toggle_on_tooltip";
+                        ? "pocketislands.invitations.sent.toggle_off_tooltip"
+                        : "pocketislands.invitations.sent.toggle_on_tooltip";
 
                     MutableText toggleButton = Text.literal("[" + toggleIcon + "]")
                         .formatted(toggleColor)
@@ -368,37 +368,37 @@ public class InvitationManager {
                 }
 
                 // Create clickable [Revoke] button
-                MutableText revokeButton = Text.translatable("personalworlds.invitations.sent.revoke_button")
+                MutableText revokeButton = Text.translatable("pocketislands.invitations.sent.revoke_button")
                     .formatted(Formatting.RED)
                     .styled(style -> style
                         .withClickEvent(TextCompat.runCommand("/pw uninvite " + guestName))
-                        .withHoverEvent(TextCompat.showText(Text.translatable("personalworlds.invitations.sent.revoke_tooltip")))
+                        .withHoverEvent(TextCompat.showText(Text.translatable("pocketislands.invitations.sent.revoke_tooltip")))
                     );
 
                 entryText = entryText.append(" ").append(revokeButton);
 
-                player.sendMessage(Text.translatable("personalworlds.invitations.sent.entry", entryText), false);
+                player.sendMessage(Text.translatable("pocketislands.invitations.sent.entry", entryText), false);
             }
         }
 
         // Received invitations (dimensions you can visit)
         List<InvitationData> received = dataManager.getReceivedInvitations(playerUuid);
         player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.translatable("personalworlds.invitations.received.header").formatted(Formatting.AQUA), false);
+        player.sendMessage(Text.translatable("pocketislands.invitations.received.header").formatted(Formatting.AQUA), false);
 
         if (received.isEmpty()) {
-            player.sendMessage(Text.translatable("personalworlds.invitations.received.none").formatted(Formatting.GRAY), false);
+            player.sendMessage(Text.translatable("pocketislands.invitations.received.none").formatted(Formatting.GRAY), false);
         } else {
             for (InvitationData inv : received) {
                 // Create clickable world name to teleport there
-                MutableText worldLink = Text.translatable("personalworlds.invitations.received.world_name", inv.ownerName())
+                MutableText worldLink = Text.translatable("pocketislands.invitations.received.world_name", inv.ownerName())
                     .formatted(Formatting.YELLOW)
                     .styled(style -> style
                         .withClickEvent(TextCompat.runCommand("/pw go " + inv.ownerName()))
-                        .withHoverEvent(TextCompat.showText(Text.translatable("personalworlds.invitations.received.visit_tooltip", inv.ownerName())))
+                        .withHoverEvent(TextCompat.showText(Text.translatable("pocketislands.invitations.received.visit_tooltip", inv.ownerName())))
                     );
 
-                player.sendMessage(Text.translatable("personalworlds.invitations.received.entry", worldLink), false);
+                player.sendMessage(Text.translatable("pocketislands.invitations.received.entry", worldLink), false);
             }
         }
     }

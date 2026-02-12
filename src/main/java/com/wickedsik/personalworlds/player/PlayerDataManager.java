@@ -407,11 +407,11 @@ public class PlayerDataManager extends PersistentState {
         return writeNbtData(nbt);
     }*/
     //?} else {
-    /*@Override
+    @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         return writeNbtData(nbt);
     }
-    *///?}
+    //?}
 
     private NbtCompound writeNbtData(NbtCompound nbt) {
         // Return positions

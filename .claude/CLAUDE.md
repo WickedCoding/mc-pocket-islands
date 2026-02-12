@@ -54,9 +54,9 @@ support from a single codebase.
 ```
 
 **Output locations (after chiseledBuild):**
-- MC 1.20.1: `versions/1.20.1/build/libs/personalworlds-<version>.jar`
-- MC 1.20.4: `versions/1.20.4/build/libs/personalworlds-<version>.jar`
-- MC 1.21.11: `versions/1.21.11/build/libs/personalworlds-<version>.jar`
+- MC 1.20.1: `versions/1.20.1/build/libs/pocketislands-<version>.jar`
+- MC 1.20.4: `versions/1.20.4/build/libs/pocketislands-<version>.jar`
+- MC 1.21.11: `versions/1.21.11/build/libs/pocketislands-<version>.jar`
 
 ## Project Structure
 
@@ -403,7 +403,7 @@ git push origin main --tags
 
 ### Release Artifacts
 
-- **GitHub:** `personalworlds-<version>+<mc-version>.jar` (e.g., `personalworlds-0.5.1+1.20.4.jar`)
+- **GitHub:** `pocketislands-<version>+<mc-version>.jar` (e.g., `pocketislands-0.5.1+1.20.4.jar`)
 - **Modrinth:** Three versions published automatically (`0.5.1+1.20.1`, `0.5.1+1.20.4`, `0.5.1+1.21.11`)
 
 ### Distribution

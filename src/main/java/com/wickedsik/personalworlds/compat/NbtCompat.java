@@ -34,10 +34,10 @@ public final class NbtCompat {
      */
     public static int getInt(NbtCompound nbt, String key, int defaultValue) {
         //? if >=1.21 {
-        return nbt.getInt(key, defaultValue);
-        //?} else {
-        /*return nbt.contains(key, NbtElement.INT_TYPE) ? nbt.getInt(key) : defaultValue;
-        *///?}
+        /*return nbt.getInt(key, defaultValue);
+        *///?} else {
+        return nbt.contains(key, NbtElement.INT_TYPE) ? nbt.getInt(key) : defaultValue;
+        //?}
     }
 
     /**
@@ -45,10 +45,10 @@ public final class NbtCompat {
      */
     public static String getString(NbtCompound nbt, String key, String defaultValue) {
         //? if >=1.21 {
-        return nbt.getString(key, defaultValue);
-        //?} else {
-        /*return nbt.contains(key, NbtElement.STRING_TYPE) ? nbt.getString(key) : defaultValue;
-        *///?}
+        /*return nbt.getString(key, defaultValue);
+        *///?} else {
+        return nbt.contains(key, NbtElement.STRING_TYPE) ? nbt.getString(key) : defaultValue;
+        //?}
     }
 
     /**
@@ -56,10 +56,10 @@ public final class NbtCompat {
      */
     public static float getFloat(NbtCompound nbt, String key, float defaultValue) {
         //? if >=1.21 {
-        return nbt.getFloat(key, defaultValue);
-        //?} else {
-        /*return nbt.contains(key, NbtElement.FLOAT_TYPE) ? nbt.getFloat(key) : defaultValue;
-        *///?}
+        /*return nbt.getFloat(key, defaultValue);
+        *///?} else {
+        return nbt.contains(key, NbtElement.FLOAT_TYPE) ? nbt.getFloat(key) : defaultValue;
+        //?}
     }
 
     /**
@@ -67,10 +67,10 @@ public final class NbtCompat {
      */
     public static boolean getBoolean(NbtCompound nbt, String key, boolean defaultValue) {
         //? if >=1.21 {
-        return nbt.getBoolean(key, defaultValue);
-        //?} else {
-        /*return nbt.contains(key, NbtElement.BYTE_TYPE) ? nbt.getBoolean(key) : defaultValue;
-        *///?}
+        /*return nbt.getBoolean(key, defaultValue);
+        *///?} else {
+        return nbt.contains(key, NbtElement.BYTE_TYPE) ? nbt.getBoolean(key) : defaultValue;
+        //?}
     }
 
     // ==================== UUID Handling ====================
@@ -81,10 +81,10 @@ public final class NbtCompat {
      */
     public static void putUuid(NbtCompound nbt, String key, UUID uuid) {
         //? if >=1.21 {
-        nbt.putString(key, uuid.toString());
-        //?} else {
-        /*nbt.putUuid(key, uuid);
-        *///?}
+        /*nbt.putString(key, uuid.toString());
+        *///?} else {
+        nbt.putUuid(key, uuid);
+        //?}
     }
 
     /**
@@ -95,7 +95,7 @@ public final class NbtCompat {
      */
     public static @Nullable UUID getUuid(NbtCompound nbt, String key) {
         //? if >=1.21 {
-        String uuidStr = nbt.getString(key, "");
+        /*String uuidStr = nbt.getString(key, "");
         if (uuidStr.isEmpty()) {
             return null;
         }
@@ -104,9 +104,9 @@ public final class NbtCompat {
         } catch (IllegalArgumentException e) {
             return null;
         }
-        //?} else {
-        /*return nbt.containsUuid(key) ? nbt.getUuid(key) : null;
-        *///?}
+        *///?} else {
+        return nbt.containsUuid(key) ? nbt.getUuid(key) : null;
+        //?}
     }
 
     /**
@@ -114,7 +114,7 @@ public final class NbtCompat {
      */
     public static boolean containsUuid(NbtCompound nbt, String key) {
         //? if >=1.21 {
-        String uuidStr = nbt.getString(key, "");
+        /*String uuidStr = nbt.getString(key, "");
         if (uuidStr.isEmpty()) {
             return false;
         }
@@ -124,9 +124,9 @@ public final class NbtCompat {
         } catch (IllegalArgumentException e) {
             return false;
         }
-        //?} else {
-        /*return nbt.containsUuid(key);
-        *///?}
+        *///?} else {
+        return nbt.containsUuid(key);
+        //?}
     }
 
     // ==================== Type-checked Contains ====================
@@ -136,15 +136,15 @@ public final class NbtCompat {
      */
     public static boolean contains(NbtCompound nbt, String key, int type) {
         //? if >=1.21 {
-        // In 1.21.x, we need to check if the key exists and then verify type
+        /*// In 1.21.x, we need to check if the key exists and then verify type
         if (!nbt.contains(key)) {
             return false;
         }
         NbtElement element = nbt.get(key);
         return element != null && element.getType() == type;
-        //?} else {
-        /*return nbt.contains(key, type);
-        *///?}
+        *///?} else {
+        return nbt.contains(key, type);
+        //?}
     }
 
     // ==================== Compound Getters ====================
@@ -154,10 +154,10 @@ public final class NbtCompat {
      */
     public static NbtCompound getCompound(NbtCompound nbt, String key) {
         //? if >=1.21 {
-        return nbt.getCompound(key).orElse(new NbtCompound());
-        //?} else {
-        /*return nbt.getCompound(key);
-        *///?}
+        /*return nbt.getCompound(key).orElse(new NbtCompound());
+        *///?} else {
+        return nbt.getCompound(key);
+        //?}
     }
 
     /**
@@ -165,10 +165,10 @@ public final class NbtCompat {
      */
     public static long getLong(NbtCompound nbt, String key, long defaultValue) {
         //? if >=1.21 {
-        return nbt.getLong(key, defaultValue);
-        //?} else {
-        /*return nbt.contains(key, NbtElement.LONG_TYPE) ? nbt.getLong(key) : defaultValue;
-        *///?}
+        /*return nbt.getLong(key, defaultValue);
+        *///?} else {
+        return nbt.contains(key, NbtElement.LONG_TYPE) ? nbt.getLong(key) : defaultValue;
+        //?}
     }
 
     // ==================== List Getters ====================
@@ -178,10 +178,10 @@ public final class NbtCompat {
      */
     public static net.minecraft.nbt.NbtList getList(NbtCompound nbt, String key, int type) {
         //? if >=1.21 {
-        return nbt.getList(key).orElse(new net.minecraft.nbt.NbtList());
-        //?} else {
-        /*return nbt.getList(key, type);
-        *///?}
+        /*return nbt.getList(key).orElse(new net.minecraft.nbt.NbtList());
+        *///?} else {
+        return nbt.getList(key, type);
+        //?}
     }
 
     /**
@@ -189,9 +189,9 @@ public final class NbtCompat {
      */
     public static NbtCompound getCompound(net.minecraft.nbt.NbtList list, int index) {
         //? if >=1.21 {
-        return list.getCompound(index).orElse(new NbtCompound());
-        //?} else {
-        /*return list.getCompound(index);
-        *///?}
+        /*return list.getCompound(index).orElse(new NbtCompound());
+        *///?} else {
+        return list.getCompound(index);
+        //?}
     }
 }

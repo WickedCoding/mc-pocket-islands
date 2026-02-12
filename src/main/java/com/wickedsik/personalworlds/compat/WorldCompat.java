@@ -29,10 +29,10 @@ public final class WorldCompat {
      */
     public static BlockPos getSpawnPos(ServerWorld world) {
         //? if >=1.21 {
-        return world.getSpawnPoint().getPos();
-        //?} else {
-        /*return world.getSpawnPos();
-        *///?}
+        /*return world.getSpawnPoint().getPos();
+        *///?} else {
+        return world.getSpawnPos();
+        //?}
     }
 
     /**
@@ -43,9 +43,9 @@ public final class WorldCompat {
      */
     public static int getTopY(World world) {
         //? if >=1.21 {
-        return world.getBottomY() + world.getHeight();
-        //?} else {
-        /*return world.getTopY();
-        *///?}
+        /*return world.getBottomY() + world.getHeight();
+        *///?} else {
+        return world.getTopY();
+        //?}
     }
 }

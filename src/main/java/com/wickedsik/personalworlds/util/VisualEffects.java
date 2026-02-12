@@ -144,10 +144,10 @@ public final class VisualEffects {
 
         // Pleasant notification sound
         //? if >=1.21 {
-        guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
-        //?} else {
-        /*guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
-        *///?}
+        /*guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
+        *///?} else {
+        guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
+        //?}
     }
 
     /**
@@ -163,10 +163,10 @@ public final class VisualEffects {
 
         // Warning bass note
         //? if >=1.21 {
-        guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 0.7f, 0.5f);
-        //?} else {
-        /*guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.7f, 0.5f);
-        *///?}
+        /*guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 0.7f, 0.5f);
+        *///?} else {
+        guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.7f, 0.5f);
+        //?}
     }
 
     /**
@@ -181,10 +181,10 @@ public final class VisualEffects {
 
         // Subtle confirmation sound
         //? if >=1.21 {
-        owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
-        //?} else {
-        /*owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3f, 1.5f);
-        *///?}
+        /*owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
+        *///?} else {
+        owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3f, 1.5f);
+        //?}
     }
 
     // ==================== Dimension Entry/Exit Effects ====================
@@ -202,10 +202,10 @@ public final class VisualEffects {
 
         // Mystical arrival sound
         //? if >=1.21 {
-        player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
-        //?} else {
-        /*player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.AMBIENT, 0.5f, 1.5f);
-        *///?}
+        /*player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
+        *///?} else {
+        player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.AMBIENT, 0.5f, 1.5f);
+        //?}
     }
 
     /**
@@ -220,10 +220,10 @@ public final class VisualEffects {
 
         // Subtle deactivation sound
         //? if >=1.21 {
-        player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, 0.3f, 1.2f);
-        //?} else {
-        /*player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.AMBIENT, 0.3f, 1.2f);
-        *///?}
+        /*player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, 0.3f, 1.2f);
+        *///?} else {
+        player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.AMBIENT, 0.3f, 1.2f);
+        //?}
     }
 
     // ==================== Admin Command Effects ====================
@@ -235,10 +235,10 @@ public final class VisualEffects {
      */
     public static void playAdminWarningEffect(ServerPlayerEntity admin) {
         //? if >=1.21 {
-        admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0f, 0.5f);
-        //?} else {
-        /*admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 1.0f, 0.5f);
-        *///?}
+        /*admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0f, 0.5f);
+        *///?} else {
+        admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 1.0f, 0.5f);
+        //?}
     }
 
     /**
@@ -248,10 +248,10 @@ public final class VisualEffects {
      */
     public static void playAdminSuccessEffect(ServerPlayerEntity admin) {
         //? if >=1.21 {
-        admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 0.3f, 2.0f);
-        //?} else {
-        /*admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.3f, 2.0f);
-        *///?}
+        /*admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 0.3f, 2.0f);
+        *///?} else {
+        admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.3f, 2.0f);
+        //?}
     }
 
     // Prevent instantiation

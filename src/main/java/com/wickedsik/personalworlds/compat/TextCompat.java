@@ -24,10 +24,10 @@ public final class TextCompat {
      */
     public static ClickEvent runCommand(String command) {
         //? if >=1.21 {
-        return new ClickEvent.RunCommand(command);
-        //?} else {
-        /*return new ClickEvent(ClickEvent.Action.RUN_COMMAND, command);
-        *///?}
+        /*return new ClickEvent.RunCommand(command);
+        *///?} else {
+        return new ClickEvent(ClickEvent.Action.RUN_COMMAND, command);
+        //?}
     }
 
     /**
@@ -35,10 +35,10 @@ public final class TextCompat {
      */
     public static ClickEvent suggestCommand(String command) {
         //? if >=1.21 {
-        return new ClickEvent.SuggestCommand(command);
-        //?} else {
-        /*return new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
-        *///?}
+        /*return new ClickEvent.SuggestCommand(command);
+        *///?} else {
+        return new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
+        //?}
     }
 
     /**
@@ -46,10 +46,10 @@ public final class TextCompat {
      */
     public static ClickEvent openUrl(String url) {
         //? if >=1.21 {
-        return new ClickEvent.OpenUrl(java.net.URI.create(url));
-        //?} else {
-        /*return new ClickEvent(ClickEvent.Action.OPEN_URL, url);
-        *///?}
+        /*return new ClickEvent.OpenUrl(java.net.URI.create(url));
+        *///?} else {
+        return new ClickEvent(ClickEvent.Action.OPEN_URL, url);
+        //?}
     }
 
     /**
@@ -57,9 +57,9 @@ public final class TextCompat {
      */
     public static HoverEvent showText(Text text) {
         //? if >=1.21 {
-        return new HoverEvent.ShowText(text);
-        //?} else {
-        /*return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
-        *///?}
+        /*return new HoverEvent.ShowText(text);
+        *///?} else {
+        return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+        //?}
     }
 }

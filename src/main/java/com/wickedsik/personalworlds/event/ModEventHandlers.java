@@ -124,7 +124,7 @@ public class ModEventHandlers {
 
                 // Notify player
                 player.sendMessage(
-                    Text.translatable("personalworlds.void_ejection"),
+                    Text.translatable("pocketislands.void_ejection"),
                     false
                 );
 

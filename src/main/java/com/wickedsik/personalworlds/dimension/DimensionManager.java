@@ -286,14 +286,14 @@ public class DimensionManager {
                 // Create VoidIslandChunkGenerator with THE_VOID biome
                 // Using THE_VOID prevents structure generation (no villages, etc.)
                 //? if >=1.21 {
-                var biomeRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.BIOME);
+                /*var biomeRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.BIOME);
                 RegistryEntry<Biome> voidBiome = biomeRegistry.getOptional(BiomeKeys.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
-                //?} else {
-                /*var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
+                *///?} else {
+                var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
                 RegistryEntry<Biome> voidBiome = biomeRegistry.getEntry(BiomeKeys.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
-                *///?}
+                //?}
 
                 // Convert island layer strings to BlockStates
                 BlockState[] islandLayers = convertIslandLayers(portalTypeIndex);

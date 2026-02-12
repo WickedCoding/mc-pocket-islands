@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.player;
 
 //? if >=1.20.2 {
-import com.wickedsik.personalworlds.compat.IdentifierCompat;
+/*import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.NbtCompat;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryKey;
@@ -16,14 +16,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
+/^*
  * Unit tests for ReturnData record.
  * Tests record construction and NBT serialization for player return positions.
  *
  * Note: These tests require Minecraft's registry to be initialized, which works
  * in 1.20.2+ but fails in 1.20.1 without full game bootstrap. Therefore, these
  * tests are conditionally compiled for 1.20.2+ only.
- */
+ ^/
 class ReturnDataTest {
 
     private RegistryKey<World> testDimension;
@@ -407,4 +407,4 @@ class ReturnDataTest {
         }
     }
 }
-//?}
+*///?}
