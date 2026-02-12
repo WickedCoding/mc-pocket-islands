@@ -75,5 +75,15 @@
   "personalworlds.command.toggle_welcome_off": "%s now requires you to be home to visit",
   "personalworlds.command.error.not_invited_by_you": "%s has not been invited by you",
   "personalworlds.invitations.sent.toggle_on_tooltip": "Click to enable Always Welcome",
-  "personalworlds.invitations.sent.toggle_off_tooltip": "Click to disable Always Welcome"
+  "personalworlds.invitations.sent.toggle_off_tooltip": "Click to disable Always Welcome",
+
+  "command.personalworlds.portals.header": "=== Portal Types ===",
+  "command.personalworlds.portals.type_header": "[%d] %s (%s)",
+  "command.personalworlds.portals.activate": "    Activate: %s",
+  "command.personalworlds.portals.layers": "    Layers: %s",
+  "command.personalworlds.portals.your_island_header": "=== Your Island ===",
+  "command.personalworlds.portals.no_island": "You do not have an island yet.",
+  "command.personalworlds.portals.no_portals": "No portal types configured.",
+  "command.personalworlds.portals.your_type": "Type: %s (%s)",
+  "command.personalworlds.portals.your_type_unknown": "Type: Unknown (portal type no longer configured)"
 }

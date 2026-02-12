@@ -86,6 +86,7 @@ Enter the portal on your pocket island to return to your original location.
 - `/pi invite <player> always` - Invite with Always Welcome status (if enabled)
 - `/pi uninvite <player>` - Revoke a player's invitation
 - `/pi togglewelcome <player>` - Toggle Always Welcome for an existing invitation (if enabled)
+- `/pi portals` - View all configured portal types and your island status
 
 **Admin commands (op level 2+):**
 
@@ -154,7 +155,7 @@ Define multiple portal types to create islands with different materials:
     - Each portal type creates a unique island composition
     - Each layer is 1 block thick, for 2 dirt block layers, repeat the material in the array
 - **`portalColor`** — Color of the portal effect (default: `"red"`)
-    - Available colors: `"red"`, `"cyan"`
+    - Available colors: `"white"`, `"light_gray"`, `"gray"`, `"black"`, `"brown"`, `"red"`, `"orange"`, `"yellow"`, `"lime"`, `"green"`, `"cyan"`, `"light_blue"`, `"blue"`, `"purple"`, `"magenta"`, `"pink"`
     - Helps visually distinguish different portal types
 
 #### Invitations
@@ -366,6 +367,7 @@ All translation keys are documented in `lang/en_us.json`. Key categories include
 - **`personalworlds.command.list.*`** — Admin list command output
 - **`personalworlds.command.info.*`** — Admin info command output
 - **`personalworlds.command.delete.*`** — Admin delete command warnings
+- **`command.personalworlds.portals.*`** — Portal types listing and island status
 
 ## Technical Details
 

@@ -22,7 +22,7 @@ import net.minecraft.text.Text;
  *
  * This class registers all /pi commands and delegates execution to specialized executors:
  * - {@link DevCommandExecutor} - create, enter, leave (OP 2)
- * - {@link PlayerCommandExecutor} - invite, uninvite, invites (no permission)
+ * - {@link PlayerCommandExecutor} - invite, uninvite, invites, portals (no permission)
  * - {@link AdminCommandExecutor} - list, info, delete, tp, reload (configurable permission)
  * - {@link DebugCommandExecutor} - perf commands (OP 4)
  */
@@ -94,6 +94,10 @@ public class ModCommands {
 
                 .then(CommandManager.literal("invites")
                     .executes(ctx -> handleInvites(ctx.getSource()))
+                )
+
+                .then(CommandManager.literal("portals")
+                    .executes(ctx -> handlePortals(ctx.getSource()))
                 )
 
                 // === Admin Commands ===
@@ -269,6 +273,15 @@ public class ModCommands {
             return CommandResult.FAILURE;
         }
         return playerExecutor.showInvitations(player).applyTo(source);
+    }
+
+    private static int handlePortals(ServerCommandSource source) {
+        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
+            source.sendError(Text.translatable("personalworlds.command.error.must_be_player"));
+            return CommandResult.FAILURE;
+        }
+        playerExecutor.showPortals(player, source);
+        return CommandResult.SUCCESS;
     }
 
     private static int handleAdminList(ServerCommandSource source) {

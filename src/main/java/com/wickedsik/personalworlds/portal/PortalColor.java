@@ -50,6 +50,25 @@ public enum PortalColor implements StringIdentifiable {
     }
 
     /**
+     * Get the human-readable display name for this color.
+     * Converts snake_case to Title Case (e.g., "light_blue" → "Light Blue").
+     *
+     * @return capitalized display name
+     */
+    public String getDisplayName() {
+        String[] parts = name.split("_");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) sb.append(" ");
+            if (!parts[i].isEmpty()) {
+                sb.append(Character.toUpperCase(parts[i].charAt(0)));
+                sb.append(parts[i].substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Parse a color from string, with fallback to RED for invalid values.
      * Case-insensitive matching.
      *

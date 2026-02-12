@@ -312,6 +312,7 @@ Run with `./gradlew test`. Tests cover:
 - Data record serialization (NBT round-trips)
 - Concurrent portal guard logic
 - Portal frame detection
+- Portal color parsing, display names, and texture name generation
 - Data validation and sanitization
 
 ## Minecraft Version Notes
