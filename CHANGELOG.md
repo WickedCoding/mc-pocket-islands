@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-02-12
+
 ### Added
 - `/pi portals` command - shows all configured portal types with frame block, activation item, island layers, and portal color, plus the player's current island type
 
