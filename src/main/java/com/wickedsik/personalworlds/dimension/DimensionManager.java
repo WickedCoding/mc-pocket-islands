@@ -260,10 +260,8 @@ public class DimensionManager {
         // Set chunk generator based on type and portal config
         config.setGenerator(createChunkGenerator(server, genType, portalTypeIndex));
 
-        // For void worlds, disable mob spawning to keep the dimension pristine
-        if (genType == WorldGenType.VOID) {
-            GameRulesCompat.disableMobSpawning(config);
-        }
+        // Apply game rules: baseline from overworld, then config overrides
+        GameRulesCompat.applyGameRules(config, server);
 
         return config;
     }
