@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-09
+
 ### Added
 - Configurable dimension game rules — pocket dimensions now inherit all overworld game rules by default, with per-rule overrides via `dimensionGameRules` config (e.g., `keepInventory`, `randomTickSpeed`) (#1)
 
