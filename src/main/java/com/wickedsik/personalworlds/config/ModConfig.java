@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration manager for Pocket Islands.
@@ -107,6 +109,24 @@ public class ModConfig {
 
     /** Cleanup check interval in ticks. Default: 600 (30 seconds) */
     public int cleanupIntervalTicks = 600;
+
+    // ==================== Dimension Game Rules ====================
+
+    /**
+     * Game rules to apply to all pocket dimensions.
+     * Keys are game rule names (e.g., "keepInventory", "doMobSpawning").
+     * Values are Boolean or Number (integer rules like randomTickSpeed).
+     *
+     * Listed rules are forced to the specified value in all pocket dimensions.
+     * Unlisted rules are copied from the overworld at dimension creation/reload time.
+     *
+     * Default: {"doMobSpawning": false}
+     */
+    //? if >=1.21 {
+    /*public Map<String, Object> dimensionGameRules = new LinkedHashMap<>(Map.of("spawn_mobs", false));
+    *///?} else {
+    public Map<String, Object> dimensionGameRules = new LinkedHashMap<>(Map.of("doMobSpawning", false));
+    //?}
 
     // ==================== Visual Effects ====================
 
@@ -309,6 +329,35 @@ public class ModConfig {
         if (cleanupIntervalTicks < 20) {
             PersonalWorldsMod.LOGGER.warn("cleanupIntervalTicks {} too low, using minimum 20", cleanupIntervalTicks);
             cleanupIntervalTicks = 20;
+        }
+
+        // Validate dimension game rules
+        if (dimensionGameRules == null) {
+            //? if >=1.21 {
+            /*PersonalWorldsMod.LOGGER.warn("dimensionGameRules is null, using default (spawn_mobs=false)");
+            dimensionGameRules = new LinkedHashMap<>(Map.of("spawn_mobs", false));
+            *///?} else {
+            PersonalWorldsMod.LOGGER.warn("dimensionGameRules is null, using default (doMobSpawning=false)");
+            dimensionGameRules = new LinkedHashMap<>(Map.of("doMobSpawning", false));
+            //?}
+        } else {
+            var iterator = dimensionGameRules.entrySet().iterator();
+            while (iterator.hasNext()) {
+                var entry = iterator.next();
+                if (entry.getKey() == null) {
+                    PersonalWorldsMod.LOGGER.warn("Removing null key from dimensionGameRules");
+                    iterator.remove();
+                    continue;
+                }
+                if (entry.getValue() == null) {
+                    PersonalWorldsMod.LOGGER.warn("Removing game rule '{}' with null value from dimensionGameRules", entry.getKey());
+                    iterator.remove();
+                } else if (!(entry.getValue() instanceof Boolean) && !(entry.getValue() instanceof Number)) {
+                    PersonalWorldsMod.LOGGER.warn("Game rule '{}' has invalid value type '{}' (expected Boolean or Number), removing",
+                        entry.getKey(), entry.getValue().getClass().getSimpleName());
+                    iterator.remove();
+                }
+            }
         }
     }
 

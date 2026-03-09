@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Configurable dimension game rules — pocket dimensions now inherit all overworld game rules by default, with per-rule overrides via `dimensionGameRules` config (e.g., `keepInventory`, `randomTickSpeed`) (#1)
+
+### Fixed
+- Permission check crash on 1.21.11 when teleporting to pocket dimensions (ClassCastException in CommandCompat)
+
 ### Changed (BREAKING)
 - Translation keys renamed from `personalworlds.*` to `pocketislands.*` — resource packs and custom language files must update key names
 - Permission nodes renamed from `personalworlds.admin.*` / `personalworlds.player.*` to `pocketislands.admin.*` / `pocketislands.player.*` — LuckPerms configurations must be updated

@@ -348,6 +348,7 @@ The 1.21.x series introduced major API changes. All differences are abstracted i
 - **Block methods**: `onEntityCollision` added EntityCollisionHandler param, signature changes
 - **World methods**: `getTopY()` signature changed
 - **Entity methods**: Various API adjustments for entity interaction
+- **GameRules**: Complete API overhaul — `GameRules.Key`/`BooleanRule`/`IntRule`/`Visitor` (1.20.x) → standalone `GameRule<T>`/`GameRuleVisitor` (1.21.x); Fantasy API changed from typed overloads to generic `setGameRule(GameRule<T>, T)`; game rule names changed from camelCase to snake_case with many renames (e.g., `doMobSpawning` → `spawn_mobs`)
 
 ### Future Version Support
 

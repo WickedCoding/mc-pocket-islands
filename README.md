@@ -137,7 +137,10 @@ different materials and properties.
     "enableTeleportParticles": true,
     "enableTeleportSounds": true,
     "enablePortalActivationEffects": true,
-    "enableInvitationNotifications": true
+    "enableInvitationNotifications": true,
+    "dimensionGameRules": {
+        "doMobSpawning": false
+    }
 }
 ```
 
@@ -244,6 +247,59 @@ Click the star to toggle the status directly from the chat.
 #### Advanced Options
 
 - **`consumeActivationItem`** — Whether the activation item is consumed on portal activation (default: `false`)
+
+### Dimension Game Rules
+
+Pocket dimensions inherit all game rules from the overworld by default. You can override specific rules using the `dimensionGameRules` configuration:
+
+```json
+{
+    "dimensionGameRules": {
+        "keepInventory": true,
+        "randomTickSpeed": 3,
+        "doMobSpawning": false
+    }
+}
+```
+
+This configuration will:
+- Force `keepInventory` to **true** (players keep items on death)
+- Force `randomTickSpeed` to **3** (crop and plant growth multiplier)
+- Force `doMobSpawning` to **false** (mobs cannot spawn naturally)
+- All other rules inherit from the overworld
+
+**Version-Specific Game Rule Names:**
+
+Minecraft 1.21.x renamed many game rules. Use the appropriate names for your server version:
+
+| Feature                 | 1.20.x (camelCase)   | 1.21.x (snake_case) |
+|-------------------------|----------------------|---------------------|
+| Keep inventory on death | `keepInventory`      | `keep_inventory`    |
+| Mob spawning            | `doMobSpawning`      | `spawn_mobs`        |
+| Crop/plant growth speed | `randomTickSpeed`    | `random_tick_speed` |
+| Mob item drops          | `doMobLoot`          | `mob_drops`         |
+| Block drops             | `doTileDrops`        | `block_drops`       |
+| Mob griefing            | `mobGriefing`        | `mob_griefing`      |
+| Immediate respawn       | `doImmediateRespawn` | `immediate_respawn` |
+
+**Default behavior:**
+- 1.20.x: `{"doMobSpawning": false}` — Creates void islands with no mobs
+- 1.21.x: `{"spawn_mobs": false}` — Same behavior with renamed rule
+
+> **NOTE:** The intended behavior is that mob spawning is disabled in the 
+> pocket dimension, it makes no sense to enable it as it is a `VOID` type world
+> but if you want to, you can enable it. Just set `doMobSpawning` / `spawn_mobs`
+> to `true` in the configuration.
+> 
+> _This is an unsupported feature, and will not be accepted as a bug._
+
+To inherit all rules from the overworld without changes, use an empty map:
+
+```json
+{
+    "dimensionGameRules": {}
+}
+```
 
 ### Creating Multiple Portal Types
 
@@ -464,6 +520,9 @@ progress are preserved.
 MIT License
 
 ## Credits
+
+> First of all I want to credit my friend, Bktwone, for inspiring this mod as well
+> as providing a platform to test this mod.
 
 - Built with [Fantasy](https://github.com/NucleoidMC/fantasy) for runtime dimension creation
 - Fabric API for mod hooks
