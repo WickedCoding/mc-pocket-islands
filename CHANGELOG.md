@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-08-16
+
 ### Added
 - `/pi admin sanitize <player> [radius]` — force-loads a player's pocket dimension and runs the chunk sanitizer across a chunk radius around spawn (default 4, max 16). Bypasses the `sanitizeChunksOnLoad` / `sanitizeRemoveOrphanBlocks` config gates and sweeps the full 16×16 chunk footprint since all neighbours are force-loaded. Reports per-invocation totals for orphan block entities, unsupported blocks, and malformed inventory stacks removed. Requires permission `pocketislands.admin.sanitize` (OP fallback 3).
 
