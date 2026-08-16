@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-16
+
 ### Added
 - Chunk sanitizer for pocket dimensions — orphaned block entities and unsupported blocks (e.g., floating fires left after a mod is removed from the modpack) are purged on chunk load, with toggles via `sanitizeChunksOnLoad` and `sanitizeRemoveOrphanBlocks` config
 
