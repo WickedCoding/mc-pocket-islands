@@ -5,12 +5,12 @@ import com.wickedsik.personalworlds.config.ModConfig;
 import net.minecraft.server.MinecraftServer;
 
 //? if >=1.21 {
-import net.minecraft.world.rule.GameRule;
+/*import net.minecraft.world.rule.GameRule;
 import net.minecraft.world.rule.GameRules;
 import net.minecraft.world.rule.GameRuleVisitor;
-//?} else {
-/*import net.minecraft.world.GameRules;
-*///?}
+*///?} else {
+import net.minecraft.world.GameRules;
+//?}
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 
 import java.util.HashMap;
@@ -35,12 +35,12 @@ public final class GameRulesCompat {
     }
 
     //? if >=1.21 {
-    /** Cached lookup map: game rule name → GameRule. Built lazily once. */
+    /*/^* Cached lookup map: game rule name → GameRule. Built lazily once. ^/
     private static Map<String, GameRule<?>> rulesByName;
-    //?} else {
-    /*// Cached lookup map: game rule name → GameRules.Key. Built lazily once.
+    *///?} else {
+    // Cached lookup map: game rule name → GameRules.Key. Built lazily once.
     private static Map<String, GameRules.Key<?>> ruleKeysByName;
-    *///?}
+    //?}
 
     /**
      * Apply game rules to a RuntimeWorldConfig using a two-phase approach:
@@ -71,7 +71,7 @@ public final class GameRulesCompat {
      * Copy all game rules from the overworld to a RuntimeWorldConfig.
      */
     //? if >=1.21 {
-    private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
+    /*private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
         overworldRules.accept(new GameRuleVisitor() {
             @Override
             public <T> void visit(GameRule<T> rule) {
@@ -80,8 +80,8 @@ public final class GameRulesCompat {
             }
         });
     }
-    //?} else {
-    /*private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
+    *///?} else {
+    private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
         overworldRules.accept(new GameRules.Visitor() {
             @Override
             public void visitBoolean(GameRules.Key<GameRules.BooleanRule> key, GameRules.Type<GameRules.BooleanRule> type) {
@@ -94,13 +94,13 @@ public final class GameRulesCompat {
             }
         });
     }
-    *///?}
+    //?}
 
     /**
      * Apply config overrides to the RuntimeWorldConfig.
      */
     //? if >=1.21 {
-    @SuppressWarnings("unchecked")
+    /*@SuppressWarnings("unchecked")
     private static void applyOverrides(RuntimeWorldConfig config, GameRules overworldRules, Map<String, Object> overrides) {
         Map<String, GameRule<?>> nameMap = getOrBuildNameMap(overworldRules);
 
@@ -142,8 +142,8 @@ public final class GameRulesCompat {
         PersonalWorldsMod.LOGGER.debug("Built game rule name map with {} entries", map.size());
         return map;
     }
-    //?} else {
-    /*@SuppressWarnings("unchecked")
+    *///?} else {
+    @SuppressWarnings("unchecked")
     private static void applyOverrides(RuntimeWorldConfig config, GameRules overworldRules, Map<String, Object> overrides) {
         Map<String, GameRules.Key<?>> keyMap = getOrBuildKeyMap(overworldRules);
 
@@ -190,5 +190,5 @@ public final class GameRulesCompat {
         PersonalWorldsMod.LOGGER.debug("Built game rule key map with {} entries", map.size());
         return map;
     }
-    *///?}
+    //?}
 }

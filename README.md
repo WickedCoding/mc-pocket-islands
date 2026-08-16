@@ -134,6 +134,8 @@ different materials and properties.
     "enableAlwaysWelcome": false,
     "unloadEmptyDimensionDelayTicks": 600,
     "cleanupIntervalTicks": 600,
+    "sanitizeChunksOnLoad": true,
+    "sanitizeRemoveOrphanBlocks": true,
     "enableTeleportParticles": true,
     "enableTeleportSounds": true,
     "enablePortalActivationEffects": true,
@@ -236,6 +238,11 @@ Click the star to toggle the status directly from the chat.
 
 - **`unloadEmptyDimensionDelayTicks`** — Delay before unloading empty dimensions (default: `600` = 30 seconds)
 - **`cleanupIntervalTicks`** — How often to check for empty dimensions (default: `600` = 30 seconds)
+
+#### Chunk Sanitizer
+
+- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `true`)
+- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `true`)
 
 #### Visual Effects
 
@@ -458,12 +465,13 @@ main registry is corrupted. This file contains:
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
 - **Invitation revoked while offline**: Player evacuated on next login with fallback chain (return data → bed → spawn)
 - **Player falls off island**: Automatically teleported back before taking void damage
+- **Unknown blocks or container items**: Chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared.
 
 ## Performance
 
 The mod is designed to handle 15+ concurrent islands efficiently:
 
-- Islands unload automatically when empty (after 30 second delay)
+- Islands unload automatically when empty (after 30s delay)
 - Memory-efficient chunk generation for void worlds
 - Performance monitoring available via debug commands
 
