@@ -4,6 +4,10 @@ import com.wickedsik.personalworlds.compat.WorldCompat;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -74,11 +78,60 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
     }
 
     @Override
+    public Iterable<ChunkSanitizer.InventorySlot> inventorySlots() {
+        // Only top-level slots of inventory-bearing BEs. Nested containers
+        // (shulker box inside chest, bundle contents) are not recursed into —
+        // that would need cross-version handling for NBT sub-tags on 1.20.x
+        // vs data components on 1.21.x, and is best left to a dedicated pass.
+        java.util.List<ChunkSanitizer.InventorySlot> slots = new java.util.ArrayList<>();
+        for (BlockEntity be : chunk.getBlockEntities().values()) {
+            if (be instanceof Inventory inv) {
+                int size = inv.size();
+                for (int i = 0; i < size; i++) {
+                    slots.add(new InventorySlotHandle(be, inv, i));
+                }
+            }
+        }
+        return slots;
+    }
+
+    @Override
     public void markDirty() {
         //? if >=1.21 {
         /*chunk.markNeedsSaving();
         *///?} else {
         chunk.setNeedsSaving(true);
         //?}
+    }
+
+    /**
+     * Detects the fingerprint of a malformed stack: item resolved to AIR but
+     * the stored count is non-zero. A well-formed empty slot is
+     * {@link ItemStack#EMPTY} with count 0. Anything else with item=AIR
+     * indicates a deserialization path that survived vanilla's normal
+     * EMPTY-replacement.
+     */
+    private static final class InventorySlotHandle implements ChunkSanitizer.InventorySlot {
+        private final BlockEntity owner;
+        private final Inventory inventory;
+        private final int slot;
+
+        InventorySlotHandle(BlockEntity owner, Inventory inventory, int slot) {
+            this.owner = owner;
+            this.inventory = inventory;
+            this.slot = slot;
+        }
+
+        @Override
+        public boolean isPlaceholder() {
+            ItemStack stack = inventory.getStack(slot);
+            return stack.getItem() == Items.AIR && stack.getCount() > 0;
+        }
+
+        @Override
+        public void clear() {
+            inventory.setStack(slot, ItemStack.EMPTY);
+            owner.markDirty();
+        }
     }
 }

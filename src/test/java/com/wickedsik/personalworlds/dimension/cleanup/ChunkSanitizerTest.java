@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -111,6 +112,51 @@ class ChunkSanitizerTest {
         assertTrue(target.markedDirty);
     }
 
+    @Test
+    @DisplayName("Placeholder inventory slot is cleared and counted")
+    void placeholderInventorySlot_cleared() {
+        FakeInventorySlot bad = new FakeInventorySlot(true);
+        target.inventorySlots.add(bad);
+
+        ChunkSanitizer.Result result = ChunkSanitizer.sanitize(target, false);
+
+        assertEquals(1, result.orphanItems());
+        assertTrue(bad.cleared);
+        assertTrue(target.markedDirty);
+    }
+
+    @Test
+    @DisplayName("Valid inventory slot is left alone")
+    void validInventorySlot_preserved() {
+        FakeInventorySlot good = new FakeInventorySlot(false);
+        target.inventorySlots.add(good);
+
+        ChunkSanitizer.Result result = ChunkSanitizer.sanitize(target, false);
+
+        assertEquals(0, result.orphanItems());
+        assertFalse(good.cleared);
+        assertFalse(target.markedDirty);
+    }
+
+    private static final class FakeInventorySlot implements ChunkSanitizer.InventorySlot {
+        private final boolean placeholder;
+        boolean cleared = false;
+
+        FakeInventorySlot(boolean placeholder) {
+            this.placeholder = placeholder;
+        }
+
+        @Override
+        public boolean isPlaceholder() {
+            return placeholder;
+        }
+
+        @Override
+        public void clear() {
+            cleared = true;
+        }
+    }
+
     /**
      * In-memory fake target. Tests populate sets to describe the initial world
      * state and inspect capture sets to verify removals.
@@ -120,6 +166,7 @@ class ChunkSanitizerTest {
         final Set<BlockPos> airPositions = new HashSet<>();
         final Set<BlockPos> nonAirPositions = new HashSet<>();
         final Set<BlockPos> cannotSurviveAt = new HashSet<>();
+        final List<ChunkSanitizer.InventorySlot> inventorySlots = new ArrayList<>();
 
         final Set<BlockPos> removedBlockEntities = new HashSet<>();
         final Set<BlockPos> setToAir = new HashSet<>();
@@ -153,6 +200,11 @@ class ChunkSanitizerTest {
         @Override
         public void setAir(BlockPos pos) {
             setToAir.add(pos);
+        }
+
+        @Override
+        public Iterable<ChunkSanitizer.InventorySlot> inventorySlots() {
+            return new ArrayList<>(inventorySlots);
         }
 
         @Override

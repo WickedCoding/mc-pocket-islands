@@ -54,12 +54,25 @@ public final class ChunkSanitizer {
 
         void setAir(BlockPos pos);
 
+        Iterable<InventorySlot> inventorySlots();
+
         void markDirty();
     }
 
-    public record Result(int orphanBlockEntities, int orphanBlocks) {
+    /**
+     * A single slot inside an inventory-bearing block entity. The sanitizer
+     * only knows how to ask whether the slot holds a malformed stack and how
+     * to clear it — the adapter decides what "malformed" means.
+     */
+    public interface InventorySlot {
+        boolean isPlaceholder();
+
+        void clear();
+    }
+
+    public record Result(int orphanBlockEntities, int orphanBlocks, int orphanItems) {
         public boolean anyRemoved() {
-            return orphanBlockEntities > 0 || orphanBlocks > 0;
+            return orphanBlockEntities > 0 || orphanBlocks > 0 || orphanItems > 0;
         }
     }
 
@@ -73,8 +86,9 @@ public final class ChunkSanitizer {
     public static Result sanitize(Target target, boolean removeOrphanBlocks) {
         int orphanBEs = removeOrphanBlockEntities(target);
         int orphanBlocks = removeOrphanBlocks ? removeOrphanSupportBlocks(target) : 0;
+        int orphanItems = clearMalformedInventorySlots(target);
 
-        Result result = new Result(orphanBEs, orphanBlocks);
+        Result result = new Result(orphanBEs, orphanBlocks, orphanItems);
         if (result.anyRemoved()) {
             target.markDirty();
         }
@@ -107,6 +121,17 @@ public final class ChunkSanitizer {
         return orphans.size();
     }
 
+    private static int clearMalformedInventorySlots(Target target) {
+        int cleared = 0;
+        for (InventorySlot slot : target.inventorySlots()) {
+            if (slot.isPlaceholder()) {
+                slot.clear();
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
     /**
      * Fabric {@code ServerChunkEvents.CHUNK_LOAD} handler. Enforces
      * pocket-dimension scoping and config flags, then delegates to
@@ -125,9 +150,9 @@ public final class ChunkSanitizer {
 
         if (result.anyRemoved()) {
             PersonalWorldsMod.LOGGER.info(
-                "Sanitized chunk {} in {}: removed {} orphan block entities, {} unsupported blocks",
+                "Sanitized chunk {} in {}: removed {} orphan block entities, {} unsupported blocks, {} malformed items",
                 chunk.getPos(), world.getRegistryKey().getValue(),
-                result.orphanBlockEntities(), result.orphanBlocks()
+                result.orphanBlockEntities(), result.orphanBlocks(), result.orphanItems()
             );
         }
     }
