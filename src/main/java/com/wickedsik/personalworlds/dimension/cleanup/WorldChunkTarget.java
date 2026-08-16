@@ -21,10 +21,28 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
 
     private final ServerWorld world;
     private final WorldChunk chunk;
+    private final boolean interiorOnly;
 
+    /**
+     * Default constructor: interior-only sweep. Safe to use from any context,
+     * including code paths that might race with unloaded neighbour chunks.
+     */
     WorldChunkTarget(ServerWorld world, WorldChunk chunk) {
+        this(world, chunk, true);
+    }
+
+    /**
+     * Explicit-scope constructor. Pass {@code interiorOnly = false} only when
+     * the caller has already guaranteed that every horizontally adjacent
+     * chunk is loaded — for example, an admin-triggered sweep that
+     * force-loads a bounded chunk region before iterating it. Passing
+     * {@code false} in any other context risks the deadlock the interior
+     * filter exists to prevent.
+     */
+    WorldChunkTarget(ServerWorld world, WorldChunk chunk, boolean interiorOnly) {
         this.world = world;
         this.chunk = chunk;
+        this.interiorOnly = interiorOnly;
     }
 
     @Override
@@ -51,19 +69,21 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
         int startX = chunk.getPos().getStartX();
         int startZ = chunk.getPos().getStartZ();
 
-        // Skip the chunk's outer border (localX or localZ in {0, 15}). Vanilla
-        // canPlaceAt implementations look at direct horizontal neighbours; on
-        // a border block that neighbour lives in an adjacent chunk, which
-        // would force a synchronous chunk load out of the caller thread.
-        // Keeping the sweep on interior positions guarantees every neighbour
-        // lookup stays inside this chunk. Vertical checks stay in the same
-        // column and are always safe. Border blocks are handled by the next
-        // normal block update.
+        // Interior-only mode skips the chunk's outer border (localX or
+        // localZ in {0, 15}). Vanilla canPlaceAt implementations look at
+        // direct horizontal neighbours; on a border block that neighbour
+        // lives in an adjacent chunk, which would force a synchronous chunk
+        // load and can deadlock the caller when invoked from a chunk-load
+        // callback. Full-chunk mode is only safe when the caller has
+        // already guaranteed all neighbour chunks are loaded.
+        int minLocal = interiorOnly ? 1 : 0;
+        int maxLocal = interiorOnly ? 15 : 16;
+
         java.util.List<BlockPos> positions = new java.util.ArrayList<>();
         BlockPos.Mutable cursor = new BlockPos.Mutable();
         for (int y = minY; y < maxY; y++) {
-            for (int localX = 1; localX < 15; localX++) {
-                for (int localZ = 1; localZ < 15; localZ++) {
+            for (int localX = minLocal; localX < maxLocal; localX++) {
+                for (int localZ = minLocal; localZ < maxLocal; localZ++) {
                     cursor.set(startX + localX, y, startZ + localZ);
                     if (!chunk.getBlockState(cursor).isAir()) {
                         positions.add(cursor.toImmutable());

@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.wickedsik.personalworlds.command.executor.AdminCommandExecutor;
 import com.wickedsik.personalworlds.command.executor.DebugCommandExecutor;
@@ -23,7 +24,7 @@ import net.minecraft.text.Text;
  * This class registers all /pi commands and delegates execution to specialized executors:
  * - {@link DevCommandExecutor} - create, enter, leave (OP 2)
  * - {@link PlayerCommandExecutor} - invite, uninvite, invites, portals (no permission)
- * - {@link AdminCommandExecutor} - list, info, delete, tp, reload (configurable permission)
+ * - {@link AdminCommandExecutor} - list, info, delete, tp, reload, sanitize (configurable permission)
  * - {@link DebugCommandExecutor} - perf commands (OP 4)
  */
 public class ModCommands {
@@ -146,6 +147,24 @@ public class ModCommands {
                     .then(CommandManager.literal("reload")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_RELOAD, PermissionHelper.DEFAULT_ADMIN_RELOAD_LEVEL))
                         .executes(ctx -> handleAdminReload(ctx.getSource()))
+                    )
+
+                    .then(CommandManager.literal("sanitize")
+                        .requires(PermissionHelper.require(PermissionHelper.ADMIN_SANITIZE, PermissionHelper.DEFAULT_ADMIN_SANITIZE_LEVEL))
+                        .then(CommandManager.argument("player", StringArgumentType.word())
+                            .executes(ctx -> handleAdminSanitize(
+                                ctx.getSource(),
+                                StringArgumentType.getString(ctx, "player"),
+                                4
+                            ))
+                            .then(CommandManager.argument("radius", IntegerArgumentType.integer(0, 16))
+                                .executes(ctx -> handleAdminSanitize(
+                                    ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "player"),
+                                    IntegerArgumentType.getInteger(ctx, "radius")
+                                ))
+                            )
+                        )
                     )
                 )
 
@@ -311,5 +330,9 @@ public class ModCommands {
 
     private static int handleAdminReload(ServerCommandSource source) {
         return adminExecutor.reload(source).applyTo(source);
+    }
+
+    private static int handleAdminSanitize(ServerCommandSource source, String playerName, int radius) {
+        return adminExecutor.sanitize(source, playerName, radius).applyTo(source);
     }
 }

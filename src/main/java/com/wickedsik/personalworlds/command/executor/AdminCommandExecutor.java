@@ -9,6 +9,7 @@ import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
+import com.wickedsik.personalworlds.dimension.cleanup.ChunkSanitizer;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.portal.PortalOwnershipManager;
@@ -22,6 +23,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,6 +40,7 @@ import java.util.*;
  * - /pi admin delete <player> - Delete an island (with confirmation)
  * - /pi admin tp <player> - Teleport to an island
  * - /pi admin reload - Reload configuration
+ * - /pi admin sanitize <player> [radius] - Force-load and sanitize an island
  */
 public class AdminCommandExecutor {
 
@@ -315,6 +320,99 @@ public class AdminCommandExecutor {
             Text.translatable("pocketislands.command.info.teleported", data.ownerName())
                 .formatted(Formatting.GREEN)
         );
+    }
+
+    /** Maximum chunk radius allowed for a single sanitize invocation. */
+    public static final int MAX_SANITIZE_RADIUS = 16;
+
+    /**
+     * Force-load a player's dimension and sanitize every chunk in a bounded
+     * region around spawn. Bypasses the config gates — an admin invoking
+     * this command explicitly wants the full sweep to run.
+     *
+     * @param source     command source for feedback
+     * @param playerName owner name to sanitize
+     * @param radius     chunk radius around (0, 0); the swept region is
+     *                   ({@code 2*radius + 1})² chunks
+     * @return command result
+     */
+    public CommandResult sanitize(ServerCommandSource source, String playerName, int radius) {
+        if (radius < 0) {
+            return CommandResult.error(
+                Text.translatable("pocketislands.command.sanitize.error.negative_radius")
+            );
+        }
+        if (radius > MAX_SANITIZE_RADIUS) {
+            return CommandResult.error(
+                Text.translatable("pocketislands.command.sanitize.error.radius_too_large", MAX_SANITIZE_RADIUS)
+            );
+        }
+
+        MinecraftServer server = source.getServer();
+
+        Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
+        if (optData.isEmpty()) {
+            return CommandResult.error(
+                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+            );
+        }
+
+        PlayerDimensionData data = optData.get();
+
+        // Force-load the dimension. Safe: getOrCreatePlayerDimension is
+        // idempotent for existing dimensions and returns the loaded world.
+        ServerWorld world = DimensionManager.getOrCreatePlayerDimension(
+            server,
+            data.ownerUuid(),
+            data.ownerName(),
+            data.generatorType(),
+            data.portalTypeIndex()
+        );
+
+        int diameter = 2 * radius + 1;
+        int planned = diameter * diameter;
+
+        source.sendFeedback(() -> Text.translatable(
+            "pocketislands.command.sanitize.start",
+            data.ownerName(), planned
+        ).formatted(Formatting.GRAY), false);
+
+        int chunksScanned = 0;
+        int chunksTouched = 0;
+        int totalOrphanBEs = 0;
+        int totalOrphanBlocks = 0;
+        int totalOrphanItems = 0;
+
+        for (int cx = -radius; cx <= radius; cx++) {
+            for (int cz = -radius; cz <= radius; cz++) {
+                Chunk raw = world.getChunk(cx, cz, ChunkStatus.FULL, true);
+                if (!(raw instanceof WorldChunk chunk)) {
+                    continue;
+                }
+                chunksScanned++;
+
+                ChunkSanitizer.Result result = ChunkSanitizer.sanitizeLoadedChunk(world, chunk, true, true);
+                if (result.anyRemoved()) {
+                    chunksTouched++;
+                    totalOrphanBEs += result.orphanBlockEntities();
+                    totalOrphanBlocks += result.orphanBlocks();
+                    totalOrphanItems += result.orphanItems();
+                }
+            }
+        }
+
+        final int scanned = chunksScanned;
+        final int touched = chunksTouched;
+        final int bes = totalOrphanBEs;
+        final int blocks = totalOrphanBlocks;
+        final int items = totalOrphanItems;
+
+        source.sendFeedback(() -> Text.translatable(
+            "pocketislands.command.sanitize.summary",
+            data.ownerName(), scanned, touched, bes, blocks, items
+        ).formatted(touched > 0 ? Formatting.GREEN : Formatting.GRAY), true);
+
+        return CommandResult.silent();
     }
 
     /**

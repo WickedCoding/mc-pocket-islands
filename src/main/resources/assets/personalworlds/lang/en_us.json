@@ -54,6 +54,11 @@
   "pocketislands.command.delete.players_ejected": "  %d player(s) will be ejected!",
   "pocketislands.command.delete.confirm": "Run '/pi admin delete %s confirm' to confirm",
 
+  "pocketislands.command.sanitize.start": "Sanitizing %s's dimension (%d chunks planned)...",
+  "pocketislands.command.sanitize.summary": "Sanitized %s: %d chunks scanned, %d touched, %d orphan block entities, %d unsupported blocks, %d malformed items removed",
+  "pocketislands.command.sanitize.error.negative_radius": "Radius must be zero or positive",
+  "pocketislands.command.sanitize.error.radius_too_large": "Radius exceeds maximum of %d chunks",
+
   "pocketislands.command.perf.enabled": "Performance monitoring enabled",
   "pocketislands.command.perf.disabled": "Performance monitoring disabled",
   "pocketislands.command.perf.reset": "Performance counters reset",

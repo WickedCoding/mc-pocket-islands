@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `/pi admin sanitize <player> [radius]` — force-loads a player's pocket dimension and runs the chunk sanitizer across a chunk radius around spawn (default 4, max 16). Bypasses the `sanitizeChunksOnLoad` / `sanitizeRemoveOrphanBlocks` config gates and sweeps the full 16×16 chunk footprint since all neighbours are force-loaded. Reports per-invocation totals for orphan block entities, unsupported blocks, and malformed inventory stacks removed. Requires permission `pocketislands.admin.sanitize` (OP fallback 3).
+
 ### Fixed
 - Chunk sanitizer no longer deadlocks the server thread — the orphan-support sweep is now deferred off the chunk-load callback via `MinecraftServer#execute`, and only interior positions (localX/localZ ∈ [1..14]) are checked so `canPlaceAt` neighbour lookups can never cross into an unloaded chunk. Fixes a watchdog crash reproducible by walking a portal in a dimension containing bamboo (or any block whose `canPlaceAt` reads a neighbour block state).
 

@@ -26,6 +26,7 @@ public final class PermissionHelper {
     public static final String ADMIN_DELETE = "pocketislands.admin.delete";
     public static final String ADMIN_TELEPORT = "pocketislands.admin.teleport";
     public static final String ADMIN_RELOAD = "pocketislands.admin.reload";
+    public static final String ADMIN_SANITIZE = "pocketislands.admin.sanitize";
 
     // Player permissions (for future use)
     public static final String PLAYER_CREATE = "pocketislands.player.create";
@@ -45,6 +46,7 @@ public final class PermissionHelper {
     public static final int DEFAULT_ADMIN_DELETE_LEVEL = 4;
     public static final int DEFAULT_ADMIN_TELEPORT_LEVEL = 2;
     public static final int DEFAULT_ADMIN_RELOAD_LEVEL = 3;
+    public static final int DEFAULT_ADMIN_SANITIZE_LEVEL = 3;
 
     public static final int DEFAULT_PLAYER_CREATE_LEVEL = 0;
     public static final int DEFAULT_PLAYER_INVITE_LEVEL = 0;

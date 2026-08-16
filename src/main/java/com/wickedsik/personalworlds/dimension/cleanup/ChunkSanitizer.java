@@ -169,6 +169,30 @@ public final class ChunkSanitizer {
         server.execute(() -> runDeferredSanitize(world, pos, removeOrphans));
     }
 
+    /**
+     * Directly sanitize a live chunk. Intended for admin-triggered sweeps
+     * that run on the tick thread and have already ensured the target chunk
+     * and its neighbours are loaded.
+     *
+     * @param world              the world containing the chunk
+     * @param chunk              the chunk to sanitize
+     * @param fullChunk          when true, sweeps the entire 16×16 chunk
+     *                           footprint. Only pass true if all four
+     *                           horizontally adjacent chunks are loaded —
+     *                           otherwise a border block's {@code canPlaceAt}
+     *                           may force a synchronous neighbour-chunk load
+     * @param removeOrphanBlocks whether to run the canPlaceAt sweep
+     * @return counts of what was removed
+     */
+    public static Result sanitizeLoadedChunk(
+        ServerWorld world,
+        WorldChunk chunk,
+        boolean fullChunk,
+        boolean removeOrphanBlocks
+    ) {
+        return sanitize(new WorldChunkTarget(world, chunk, !fullChunk), removeOrphanBlocks);
+    }
+
     private static void runDeferredSanitize(ServerWorld world, ChunkPos pos, boolean removeOrphans) {
         // The chunk may have unloaded between the load event and this tick
         // (player left, server flushed the ticket). Fetch without forcing a
