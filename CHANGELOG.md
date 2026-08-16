@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-08-16
+
 ### Added
 - Chunk sanitizer inventory sweep — malformed inventory stacks (item resolved to AIR but count > 0) inside container block entities are cleared on chunk load, complementing the existing orphan block entity and unsupported block passes
 
