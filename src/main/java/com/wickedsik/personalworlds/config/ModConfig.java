@@ -110,6 +110,31 @@ public class ModConfig {
     /** Cleanup check interval in ticks. Default: 600 (30 seconds) */
     public int cleanupIntervalTicks = 600;
 
+    // ==================== Chunk Sanitizer ====================
+
+    /**
+     * Enable the chunk sanitizer for pocket dimensions.
+     * When true, chunks in pocket dimensions are cleaned on load: orphaned
+     * block entities (BEs whose backing block state is air) are removed, and
+     * (if {@link #sanitizeRemoveOrphanBlocks} is true) blocks that fail their
+     * own canPlaceAt check are replaced with air.
+     * Fixes visual corruption after removing mods from the modpack that added
+     * blocks or items previously stored in the dimension.
+     * Default: true
+     */
+    public boolean sanitizeChunksOnLoad = true;
+
+    /**
+     * When the chunk sanitizer runs, also sweep for support-dependent blocks
+     * (fire, torches, redstone, snow layers, carpets, saplings, ladders, etc.)
+     * whose supporting block has been removed. These would break on the next
+     * natural block update anyway; removing them at load time prevents ghost
+     * geometry from lingering.
+     * Only used when {@link #sanitizeChunksOnLoad} is true.
+     * Default: true
+     */
+    public boolean sanitizeRemoveOrphanBlocks = true;
+
     // ==================== Dimension Game Rules ====================
 
     /**

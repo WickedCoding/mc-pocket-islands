@@ -6,12 +6,14 @@ import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
+import com.wickedsik.personalworlds.dimension.cleanup.ChunkSanitizer;
 import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.PerformanceMonitor;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -59,6 +61,9 @@ public class ModEventHandlers {
         // Player disconnect - release portal locks
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
             ConcurrentPortalGuard.forceRelease(handler.getPlayer().getUuid()));
+
+        // Chunk sanitizer - purge orphaned state in pocket dimensions on load
+        ServerChunkEvents.CHUNK_LOAD.register(ChunkSanitizer::onChunkLoad);
 
         PersonalWorldsMod.LOGGER.info("Event handlers registered");
     }
