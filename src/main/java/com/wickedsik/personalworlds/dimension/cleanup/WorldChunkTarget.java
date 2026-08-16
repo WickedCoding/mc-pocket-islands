@@ -51,12 +51,20 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
         int startX = chunk.getPos().getStartX();
         int startZ = chunk.getPos().getStartZ();
 
+        // Skip the chunk's outer border (localX or localZ in {0, 15}). Vanilla
+        // canPlaceAt implementations look at direct horizontal neighbours; on
+        // a border block that neighbour lives in an adjacent chunk, which
+        // would force a synchronous chunk load out of the caller thread.
+        // Keeping the sweep on interior positions guarantees every neighbour
+        // lookup stays inside this chunk. Vertical checks stay in the same
+        // column and are always safe. Border blocks are handled by the next
+        // normal block update.
         java.util.List<BlockPos> positions = new java.util.ArrayList<>();
         BlockPos.Mutable cursor = new BlockPos.Mutable();
         for (int y = minY; y < maxY; y++) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    cursor.set(startX + x, y, startZ + z);
+            for (int localX = 1; localX < 15; localX++) {
+                for (int localZ = 1; localZ < 15; localZ++) {
+                    cursor.set(startX + localX, y, startZ + localZ);
                     if (!chunk.getBlockState(cursor).isAir()) {
                         positions.add(cursor.toImmutable());
                     }
