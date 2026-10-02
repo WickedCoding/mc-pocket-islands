@@ -20,7 +20,8 @@ support from a single codebase.
 ./gradlew chiseledBuild
 
 # IMPORTANT: Do NOT use `./gradlew build` directly - it fails with Stonecutter.
-# The chiseledBuild task properly coordinates version switching and source processing.
+# chiseledBuild/chiseledTest are aggregate tasks (stonecutter.gradle.kts) that run
+# build/test for every version; non-active versions compile from generated sources.
 
 # Switch active version to 1.20.1
 ./gradlew "Set active project to 1.20.1"
@@ -80,10 +81,10 @@ This is a standard Fabric mod project with split environment source sets:
 
 Under `src/main/java/com/wickedsik/personalworlds/`:
 
-- **`compat/`** — Version-specific API abstraction layer (Identifier, Nbt, TeleportTarget, etc.)
+- **`compat/`** — Version-specific API abstraction layer (ResourceLocation, Nbt, PortalInfo, Registry, etc.)
 - **`dimension/`** — Dimension creation, registry, lifecycle management (uses Fantasy)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
-- **`player/`** — Player data, invitations, return positions (PersistentState)
+- **`player/`** — Player data, invitations, return positions (SavedData)
 - **`config/`** — Configuration options
 - **`registry/`** — Block/item registration
 - **`event/`** — Server lifecycle, player events
@@ -91,27 +92,33 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 
 ### Dependencies
 
-| MC Version | Java | Yarn Mappings | Fabric Loader | Fabric API    | Fantasy         |
-|------------|------|---------------|---------------|---------------|-----------------|
-| 1.20.1     | 17   | 1.20.1+build.9| 0.15.0+       | 0.92.6+1.20.1 | 0.4.11+1.20-rc1 |
-| 1.20.4     | 17   | 1.20.4+build.2| 0.15.0+       | 0.97.0+1.20.4 | 0.5.0+1.20.4    |
-| 1.21.11    | 21   | 1.21.11+build.4| 0.18.4+      | 0.141.1+1.21.11 | 0.7.0+1.21.11 |
+| MC Version | Java | Parchment  | Fabric Loader | Fabric API      | Fantasy         |
+|------------|------|------------|---------------|-----------------|-----------------|
+| 1.20.1     | 17   | 2023.09.03 | 0.16.10       | 0.92.6+1.20.1   | 0.4.11+1.20-rc1 |
+| 1.20.4     | 17   | 2024.04.14 | 0.15.11       | 0.97.0+1.20.4   | 0.5.0+1.20.4    |
+| 1.21.11    | 21   | 2025.12.20 | 0.18.4        | 0.141.1+1.21.11 | 0.7.0+1.21.11   |
+
+Mappings are Mojang's official mappings layered with Parchment (parameter names
+and Javadoc). The `parchment_version` property lives in `versions/<mc>/gradle.properties`.
 
 - **Fantasy** — Required for runtime dimension creation (version varies by MC version)
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration
 
 ## Multi-Version Support (Stonecutter)
 
-This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version
+This project uses [Stonecutter](https://stonecutter.kikugie.dev/) 0.9.x for multi-version
 management from a single codebase.
 
 ### Supported Versions
 
 | MC Version | Status    | Active      |
 |------------|-----------|-------------|
-| 1.20.1     | Supported |             |
+| 1.20.1     | Supported | ✓ (commit with this active) |
 | 1.20.4     | Supported |             |
-| 1.21.11    | Supported | ✓ (default) |
+| 1.21.11    | Supported |             |
+
+Always switch back to 1.20.1 before committing. Don't use the "Reset active project"
+task: it switches to `vcsVersion` (1.20.4).
 
 ### Versioned Comment Syntax
 
@@ -119,13 +126,13 @@ Stonecutter uses special comments for conditional compilation:
 
 ```java
 //? if >=1.20.2 {
-// Code for MC 1.20.2 and newer (uses PersistentState.Type)
+// Code for MC 1.20.2 and newer (uses SavedData.Factory)
 //?}
 
 //? if >=1.20.2 {
-return stateManager.getOrCreate(TYPE, DATA_NAME);
+return stateManager.computeIfAbsent(TYPE, DATA_NAME);
 //?} else {
-/*return stateManager.getOrCreate(T::fromNbt, T::new, DATA_NAME);*/
+/*return stateManager.computeIfAbsent(T::fromNbt, T::new, DATA_NAME);*/
 //?}
 ```
 
@@ -135,22 +142,30 @@ active version is >= 1.20.2.
 ### Version-Specific Code
 
 **1.20.1 vs 1.20.4** (handled by Stonecutter conditionals):
-- `PersistentState.getOrCreate()` signature changed in 1.20.2
+- `DimensionDataStorage.computeIfAbsent()` signature changed in 1.20.2
+
+**Class renames in 1.21.11** (handled by Stonecutter replacements in `build.gradle.kts`):
+Mojang renamed `ResourceLocation` → `Identifier`, `PortalInfo` → `TeleportTransition` and
+`ResourceLocationException` → `IdentifierException`. Sources always use the pre-1.21.11
+names, in code and comments; Stonecutter rewrites them (word-bounded regex) when
+switching to 1.21.11. Never write a standalone `Identifier` in sources: switching back
+from 1.21.11 would turn it into `ResourceLocation` and leave a diff.
 
 **1.21.x Major API Changes** (handled by Compat package):
 The 1.21.x series introduced significant API changes. Rather than adding Stonecutter
 conditionals throughout the codebase, all version-specific differences are abstracted
 in `src/main/java/com/wickedsik/personalworlds/compat/`:
 
-- **IdentifierCompat.java** — `new Identifier()` → `Identifier.of()`
+- **IdentifierCompat.java** — `new ResourceLocation()` → `ResourceLocation.fromNamespaceAndPath()`; `ResourceKey.location()` → `identifier()`
 - **NbtCompat.java** — Optional return types, UUID handling (stored as strings), new methods with defaults
-- **TeleportCompat.java** — `TeleportTarget` constructor changed (4 → 6 parameters)
+- **TeleportCompat.java** — `PortalInfo` (1.20.x) → `TeleportTransition` with 6 parameters (1.21.x)
 - **PersistentStateCompat.java** — 1.21.5+ uses Codec-based serialization
-- **WorldCompat.java** — `getTopY()` signature changes
+- **WorldCompat.java** — `getMaxBuildHeight()`/`getMinBuildHeight()` → `getMinY()` + `getHeight()`
 - **EntityCompat.java** — Entity-related API updates
 - **CommandCompat.java** — Command registration and feedback changes
 - **GameRulesCompat.java** — Game rules API adjustments
 - **BlockSettingsCompat.java** — Block settings and registration updates
+- **RegistryCompat.java** — `Registry.get(id)` → `Registry.getValue(id)`
 
 This abstraction layer allows the core business logic to remain version-agnostic while
 containing all version-specific implementation details.
@@ -215,7 +230,7 @@ Player dimensions are stored under `world/dimensions/personalworlds/pw_<uuid>/`
 and survive world resets because they are separate from the main world folders
 (`world/region/`, `world/DIM-1/`, `world/DIM1/`).
 
-A `DimensionRegistry` (PersistentState saved to `world/data/personalworlds/registry.dat`)
+A `DimensionRegistry` (SavedData saved to `world/data/personalworlds/registry.dat`)
 tracks all player dimensions for restoration on server start.
 
 ### Fantasy Integration
@@ -261,13 +276,13 @@ reconnects quickly.
 ### Return Position Handling
 
 When a player enters their personal dimension, store their exact position and
-dimension in `PlayerDataManager` (PersistentState). The return portal must
+dimension in `PlayerDataManager` (SavedData). The return portal must
 teleport them back to this exact location, not to spawn or a generic position.
 
 ### Portal Collision Detection
 
-The `PersonalPortalBlock` must implement `onEntityCollision()` to detect when
-players enter the portal. Use `entity.hasPortalCooldown()` to prevent rapid
+The `PersonalPortalBlock` must implement `entityInside()` to detect when
+players enter the portal. Use `entity.isOnPortalCooldown()` to prevent rapid
 flickering when standing in the portal.
 
 ### Invitation System
@@ -325,30 +340,30 @@ multi-version support.
 - MC 1.21.11: Java 21
 
 **Mapping Preferences:**
-- All versions use Yarn mappings (not Mojang mappings)
-- All versions use `FabricDimensions.teleport()` for cross-dimension teleportation
+- All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11; NeoForge uses Mojang names)
+- 1.20.x uses `FabricDimensions.teleport()` for cross-dimension teleportation; 1.21.x uses `Entity#teleport(TeleportTransition)`
 
 ### API Differences Between Supported Versions
 
 **1.20.1 vs 1.20.4** (handled by Stonecutter):
 
-- `PersistentState.getOrCreate()` signature changed in 1.20.2
-  - 1.20.1: `getOrCreate(fromNbt, constructor, name)`
-  - 1.20.4: `getOrCreate(Type<T>, name)`
+- `DimensionDataStorage.computeIfAbsent()` signature changed in 1.20.2
+  - 1.20.1: `computeIfAbsent(fromNbt, constructor, name)`
+  - 1.20.4: `computeIfAbsent(SavedData.Factory<T>, name)`
 
 **1.20.x vs 1.21.x** (handled by Compat package):
 
 The 1.21.x series introduced major API changes. All differences are abstracted in the
 `compat/` package to keep core code clean and version-agnostic:
 
-- **Identifier**: `new Identifier(namespace, path)` → `Identifier.of(namespace, path)`
-- **NbtCompound**: Getters return Optional, UUID methods removed (stored as strings), new methods with defaults
-- **TeleportTarget**: Constructor signature changed from 4 to 6 parameters with world and callback
-- **PersistentState**: 1.21.5+ uses Codec-based serialization instead of writeNbt override
-- **Block methods**: `onEntityCollision` added EntityCollisionHandler param, signature changes
-- **World methods**: `getTopY()` signature changed
+- **ResourceLocation**: `new ResourceLocation(namespace, path)` → `Identifier.fromNamespaceAndPath(namespace, path)` (class renamed in 1.21.11)
+- **CompoundTag**: Getters return Optional, UUID methods removed (stored as strings), new methods with defaults
+- **PortalInfo** → **TeleportTransition**: Constructor signature changed from 4 to 6 parameters with world and callback
+- **SavedData**: 1.21.5+ uses Codec-based serialization (`SavedDataType`) instead of a `save` override
+- **Block methods**: `entityInside` added InsideBlockEffectApplier param, signature changes
+- **Level methods**: `getMaxBuildHeight()`/`getMinBuildHeight()` replaced by `getMinY()` + `getHeight()`
 - **Entity methods**: Various API adjustments for entity interaction
-- **GameRules**: Complete API overhaul — `GameRules.Key`/`BooleanRule`/`IntRule`/`Visitor` (1.20.x) → standalone `GameRule<T>`/`GameRuleVisitor` (1.21.x); Fantasy API changed from typed overloads to generic `setGameRule(GameRule<T>, T)`; game rule names changed from camelCase to snake_case with many renames (e.g., `doMobSpawning` → `spawn_mobs`)
+- **GameRules**: Complete API overhaul — `GameRules.Key`/`BooleanValue`/`IntegerValue`/`GameRuleTypeVisitor` (1.20.x) → standalone `GameRule<T>`/`GameRuleTypeVisitor` (1.21.x); Fantasy API changed from typed overloads to generic `setGameRule(GameRule<T>, T)`; game rule names changed from camelCase to snake_case with many renames (e.g., `doMobSpawning` → `spawn_mobs`)
 
 ### Future Version Support
 
