@@ -1,24 +1,24 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 
 import java.util.UUID;
 
 public record PlayerDimensionData(
     UUID ownerUuid,
     String ownerName,
-    Identifier dimensionId,
+    ResourceLocation dimensionId,
     long createdAt,
     BlockPos spawnPoint,
     WorldGenType generatorType,
     int portalTypeIndex  // Index into ModConfig.portalTypes array
 ) {
 
-    public NbtCompound toNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public CompoundTag toNbt() {
+        CompoundTag nbt = new CompoundTag();
         com.wickedsik.personalworlds.compat.NbtCompat.putUuid(nbt, "OwnerUuid", ownerUuid);
         nbt.putString("OwnerName", ownerName);
         nbt.putString("DimensionId", dimensionId.toString());
@@ -31,7 +31,7 @@ public record PlayerDimensionData(
         return nbt;
     }
 
-    public static PlayerDimensionData fromNbt(NbtCompound nbt) {
+    public static PlayerDimensionData fromNbt(CompoundTag nbt) {
         // Backward compatibility: default to portal type 0 if not present
         int portalTypeIndex = com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "PortalTypeIndex", 0);
 

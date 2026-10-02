@@ -4,16 +4,16 @@ import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.util.DataValidator;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.Level;
 
 import java.util.*;
 
@@ -23,7 +23,7 @@ import java.util.*;
  *
  * Saved to: world/data/personalworlds_player_data.dat
  */
-public class PlayerDataManager extends PersistentState {
+public class PlayerDataManager extends SavedData {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_player_data";
 
@@ -50,7 +50,7 @@ public class PlayerDataManager extends PersistentState {
      * Tracks which pocket dimension a player is currently in (null if not in one).
      * Used for recovery when player logs out on island and dimension unloads.
      */
-    private final Map<UUID, RegistryKey<World>> currentPocketDimensions = new HashMap<>();
+    private final Map<UUID, ResourceKey<Level>> currentPocketDimensions = new HashMap<>();
 
     public PlayerDataManager() {
         // Default constructor for new state
@@ -73,7 +73,7 @@ public class PlayerDataManager extends PersistentState {
         }
 
         returnPositions.put(playerUuid, data);
-        markDirty();
+        setDirty();
         PersonalWorldsMod.LOGGER.debug("Stored return data for player: {}", playerUuid);
     }
 
@@ -94,7 +94,7 @@ public class PlayerDataManager extends PersistentState {
      */
     public void clearReturnData(UUID playerUuid) {
         if (returnPositions.remove(playerUuid) != null) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.debug("Cleared return data for player: {}", playerUuid);
         }
     }
@@ -148,7 +148,7 @@ public class PlayerDataManager extends PersistentState {
         // Add to sent invitations
         sentInvitations.computeIfAbsent(ownerUuid, k -> new HashSet<>()).add(guestUuid);
 
-        markDirty();
+        setDirty();
         PersonalWorldsMod.LOGGER.debug("Added invitation: {} invited {} to their dimension (alwaysWelcome={})",
             ownerName, guestUuid, alwaysWelcome);
         return true;
@@ -183,7 +183,7 @@ public class PlayerDataManager extends PersistentState {
         }
 
         if (removed) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.debug("Removed invitation: {} revoked invitation to {}",
                 ownerUuid, guestUuid);
         }
@@ -267,7 +267,7 @@ public class PlayerDataManager extends PersistentState {
         for (int i = 0; i < guestInvitations.size(); i++) {
             if (guestInvitations.get(i).ownerUuid().equals(ownerUuid)) {
                 guestInvitations.set(i, updated);
-                markDirty();
+                setDirty();
                 PersonalWorldsMod.LOGGER.debug("Updated invitation from {} to {}: alwaysWelcome={}",
                     ownerUuid, guestUuid, updated.alwaysWelcome());
                 return;
@@ -338,7 +338,7 @@ public class PlayerDataManager extends PersistentState {
         }
 
         if (changed) {
-            markDirty();
+            setDirty();
         }
     }
 
@@ -351,7 +351,7 @@ public class PlayerDataManager extends PersistentState {
      * @param playerUuid The player's UUID
      * @param dimension The pocket dimension registry key
      */
-    public void setCurrentPocketDimension(UUID playerUuid, RegistryKey<World> dimension) {
+    public void setCurrentPocketDimension(UUID playerUuid, ResourceKey<Level> dimension) {
         if (!DataValidator.isValidUuid(playerUuid) || dimension == null) {
             PersonalWorldsMod.LOGGER.warn("Attempted to set invalid pocket dimension tracking for {}",
                 playerUuid);
@@ -359,7 +359,7 @@ public class PlayerDataManager extends PersistentState {
         }
 
         currentPocketDimensions.put(playerUuid, dimension);
-        markDirty();
+        setDirty();
         PersonalWorldsMod.LOGGER.debug("Tracking player {} in pocket dimension: {}",
             playerUuid, IdentifierCompat.fromKey(dimension));
     }
@@ -370,7 +370,7 @@ public class PlayerDataManager extends PersistentState {
      * @param playerUuid The player's UUID
      * @return Optional containing the dimension key if player is tracked in a pocket dimension
      */
-    public Optional<RegistryKey<World>> getCurrentPocketDimension(UUID playerUuid) {
+    public Optional<ResourceKey<Level>> getCurrentPocketDimension(UUID playerUuid) {
         return Optional.ofNullable(currentPocketDimensions.get(playerUuid));
     }
 
@@ -382,7 +382,7 @@ public class PlayerDataManager extends PersistentState {
      */
     public void clearCurrentPocketDimension(UUID playerUuid) {
         if (currentPocketDimensions.remove(playerUuid) != null) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.debug("Cleared pocket dimension tracking for player: {}", playerUuid);
         }
     }
@@ -403,23 +403,23 @@ public class PlayerDataManager extends PersistentState {
     //? if >=1.21.5 {
     //?} else {
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
+    public CompoundTag save(CompoundTag nbt) {
         return writeNbtData(nbt);
     }
     //?}
 
-    private NbtCompound writeNbtData(NbtCompound nbt) {
+    private CompoundTag writeNbtData(CompoundTag nbt) {
         // Return positions
-        NbtCompound returnDataNbt = new NbtCompound();
+        CompoundTag returnDataNbt = new CompoundTag();
         for (Map.Entry<UUID, ReturnData> entry : returnPositions.entrySet()) {
             returnDataNbt.put(entry.getKey().toString(), entry.getValue().toNbt());
         }
         nbt.put("ReturnPositions", returnDataNbt);
 
         // Received invitations
-        NbtCompound receivedNbt = new NbtCompound();
+        CompoundTag receivedNbt = new CompoundTag();
         for (Map.Entry<UUID, List<InvitationData>> entry : receivedInvitations.entrySet()) {
-            NbtList invList = new NbtList();
+            ListTag invList = new ListTag();
             for (InvitationData inv : entry.getValue()) {
                 invList.add(inv.toNbt());
             }
@@ -428,11 +428,11 @@ public class PlayerDataManager extends PersistentState {
         nbt.put("ReceivedInvitations", receivedNbt);
 
         // Sent invitations
-        NbtCompound sentNbt = new NbtCompound();
+        CompoundTag sentNbt = new CompoundTag();
         for (Map.Entry<UUID, Set<UUID>> entry : sentInvitations.entrySet()) {
-            NbtList guestList = new NbtList();
+            ListTag guestList = new ListTag();
             for (UUID guestUuid : entry.getValue()) {
-                NbtCompound guestNbt = new NbtCompound();
+                CompoundTag guestNbt = new CompoundTag();
                 com.wickedsik.personalworlds.compat.NbtCompat.putUuid(guestNbt, "Uuid", guestUuid);
                 guestList.add(guestNbt);
             }
@@ -441,8 +441,8 @@ public class PlayerDataManager extends PersistentState {
         nbt.put("SentInvitations", sentNbt);
 
         // Current pocket dimensions
-        NbtCompound pocketDimNbt = new NbtCompound();
-        for (Map.Entry<UUID, RegistryKey<World>> entry : currentPocketDimensions.entrySet()) {
+        CompoundTag pocketDimNbt = new CompoundTag();
+        for (Map.Entry<UUID, ResourceKey<Level>> entry : currentPocketDimensions.entrySet()) {
             pocketDimNbt.putString(entry.getKey().toString(), IdentifierCompat.fromKey(entry.getValue()).toString());
         }
         nbt.put("CurrentPocketDimensions", pocketDimNbt);
@@ -450,12 +450,12 @@ public class PlayerDataManager extends PersistentState {
         return nbt;
     }
 
-    public static PlayerDataManager fromNbt(NbtCompound nbt) {
+    public static PlayerDataManager fromNbt(CompoundTag nbt) {
         PlayerDataManager manager = new PlayerDataManager();
 
         // Return positions
-        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReturnPositions", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound returnDataNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReturnPositions");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReturnPositions", Tag.TAG_COMPOUND)) {
+            CompoundTag returnDataNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReturnPositions");
             for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(returnDataNbt)) {
                 try {
                     UUID uuid = UUID.fromString(key);
@@ -468,12 +468,12 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Received invitations
-        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReceivedInvitations", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound receivedNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReceivedInvitations");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "ReceivedInvitations", Tag.TAG_COMPOUND)) {
+            CompoundTag receivedNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "ReceivedInvitations");
             for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(receivedNbt)) {
                 try {
                     UUID guestUuid = UUID.fromString(key);
-                    NbtList invList = com.wickedsik.personalworlds.compat.NbtCompat.getList(receivedNbt, key, NbtElement.COMPOUND_TYPE);
+                    ListTag invList = com.wickedsik.personalworlds.compat.NbtCompat.getList(receivedNbt, key, Tag.TAG_COMPOUND);
                     List<InvitationData> invitations = new ArrayList<>();
                     for (int i = 0; i < invList.size(); i++) {
                         invitations.add(InvitationData.fromNbt(com.wickedsik.personalworlds.compat.NbtCompat.getCompound(invList, i)));
@@ -488,15 +488,15 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Sent invitations
-        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "SentInvitations", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound sentNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "SentInvitations");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "SentInvitations", Tag.TAG_COMPOUND)) {
+            CompoundTag sentNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "SentInvitations");
             for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(sentNbt)) {
                 try {
                     UUID ownerUuid = UUID.fromString(key);
-                    NbtList guestList = com.wickedsik.personalworlds.compat.NbtCompat.getList(sentNbt, key, NbtElement.COMPOUND_TYPE);
+                    ListTag guestList = com.wickedsik.personalworlds.compat.NbtCompat.getList(sentNbt, key, Tag.TAG_COMPOUND);
                     Set<UUID> guests = new HashSet<>();
                     for (int i = 0; i < guestList.size(); i++) {
-                        NbtCompound guestNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(guestList, i);
+                        CompoundTag guestNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(guestList, i);
                         UUID guestUuid = com.wickedsik.personalworlds.compat.NbtCompat.getUuid(guestNbt, "Uuid");
                         if (guestUuid != null) {
                             guests.add(guestUuid);
@@ -512,14 +512,14 @@ public class PlayerDataManager extends PersistentState {
         }
 
         // Current pocket dimensions (backward compatible - missing = empty)
-        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "CurrentPocketDimensions", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound pocketDimNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "CurrentPocketDimensions");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "CurrentPocketDimensions", Tag.TAG_COMPOUND)) {
+            CompoundTag pocketDimNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "CurrentPocketDimensions");
             for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(pocketDimNbt)) {
                 try {
                     UUID playerUuid = UUID.fromString(key);
-                    Identifier dimId = IdentifierCompat.fromNbtString(com.wickedsik.personalworlds.compat.NbtCompat.getString(pocketDimNbt, key, ""));
+                    ResourceLocation dimId = IdentifierCompat.fromNbtString(com.wickedsik.personalworlds.compat.NbtCompat.getString(pocketDimNbt, key, ""));
                     if (dimId != null) {
-                        RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
+                        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, dimId);
                         manager.currentPocketDimensions.put(playerUuid, dimension);
                     }
                 } catch (IllegalArgumentException e) {
@@ -546,7 +546,7 @@ public class PlayerDataManager extends PersistentState {
      * @return The PlayerDataManager instance
      */
     public static PlayerDataManager get(MinecraftServer server) {
-        PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
+        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
             stateManager,
             DATA_NAME,

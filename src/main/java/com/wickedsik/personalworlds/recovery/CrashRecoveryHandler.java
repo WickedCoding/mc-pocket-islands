@@ -13,15 +13,15 @@ import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -50,12 +50,12 @@ public class CrashRecoveryHandler {
      *
      * @param player The player who just joined
      */
-    public static void onPlayerJoin(ServerPlayerEntity player) {
+    public static void onPlayerJoin(ServerPlayer player) {
         MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) return;
 
-        UUID playerUuid = player.getUuid();
-        ServerWorld currentWorld = EntityCompat.getServerWorld(player);
+        UUID playerUuid = player.getUUID();
+        ServerLevel currentWorld = EntityCompat.getServerWorld(player);
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
         // Case 1: Player IS in personal dimension (normal login or Fantasy restored them)
@@ -65,7 +65,7 @@ public class CrashRecoveryHandler {
         }
 
         // Case 2: Player SHOULD be in personal dimension but isn't (dimension wasn't loaded)
-        Optional<RegistryKey<World>> expectedDimension = dataManager.getCurrentPocketDimension(playerUuid);
+        Optional<ResourceKey<Level>> expectedDimension = dataManager.getCurrentPocketDimension(playerUuid);
         if (expectedDimension.isPresent()) {
             handleMisplacedPlayer(player, server, expectedDimension.get());
             return;
@@ -82,11 +82,11 @@ public class CrashRecoveryHandler {
      * Verify they have permission to be there.
      */
     private static void handleLoginInPersonalDimension(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
-            ServerWorld personalWorld
+            ServerLevel personalWorld
     ) {
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
         Optional<UUID> ownerOpt = PortalHelper.getDimensionOwner(personalWorld);
 
         if (ownerOpt.isEmpty()) {
@@ -106,8 +106,8 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} no longer has permission to {}'s dimension, evacuating",
                 player.getName().getString(), ownerUuid);
 
-            player.sendMessage(Text.translatable("pocketislands.message.ejected_offline")
-                .formatted(Formatting.GOLD), false);
+            player.displayClientMessage(Component.translatable("pocketislands.message.ejected_offline")
+                .withStyle(ChatFormatting.GOLD), false);
 
             // Clear tracking and evacuate
             PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -118,7 +118,7 @@ public class CrashRecoveryHandler {
 
         // Player has permission - ensure tracking is up to date
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        dataManager.setCurrentPocketDimension(playerUuid, personalWorld.getRegistryKey());
+        dataManager.setCurrentPocketDimension(playerUuid, personalWorld.dimension());
 
         PersonalWorldsMod.LOGGER.debug("Player {} logged in to personal dimension with valid permission",
             player.getName().getString());
@@ -134,11 +134,11 @@ public class CrashRecoveryHandler {
      * @param expectedDimension The dimension they should be in
      */
     private static void handleMisplacedPlayer(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
-            RegistryKey<World> expectedDimension
+            ResourceKey<Level> expectedDimension
     ) {
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
         // Extract owner UUID from dimension key (personalworlds:pw_<uuid>)
@@ -162,8 +162,8 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} lost permission to dimension {}, using fallback",
                 player.getName().getString(), ownerUuid);
             dataManager.clearCurrentPocketDimension(playerUuid);
-            player.sendMessage(Text.translatable("pocketislands.message.ejected_offline")
-                .formatted(Formatting.GOLD), false);
+            player.displayClientMessage(Component.translatable("pocketislands.message.ejected_offline")
+                .withStyle(ChatFormatting.GOLD), false);
             teleportToFallbackPosition(player, server, dataManager);
             return;
         }
@@ -185,7 +185,7 @@ public class CrashRecoveryHandler {
 
         // Restore dimension and teleport player there
         try {
-            ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(
+            ServerLevel targetWorld = DimensionManager.getOrCreatePlayerDimension(
                 server, ownerUuid, dimData.ownerName(), dimData.generatorType(), dimData.portalTypeIndex());
 
             if (targetWorld == null) {
@@ -199,7 +199,7 @@ public class CrashRecoveryHandler {
 
             PersonalWorldsMod.LOGGER.info("Restored player {} to pocket dimension after fallback spawn",
                 player.getName().getString());
-            player.sendMessage(Text.translatable("pocketislands.message.dimension_restored"), false);
+            player.displayClientMessage(Component.translatable("pocketislands.message.dimension_restored"), false);
 
         } catch (Exception e) {
             PersonalWorldsMod.LOGGER.error("Failed to restore dimension for {}: {}",
@@ -214,11 +214,11 @@ public class CrashRecoveryHandler {
      * This indicates they crashed/disconnected and respawned at world spawn.
      */
     private static void handleOrphanedReturnData(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
             PlayerDataManager dataManager
     ) {
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
 
         // Check if the return data is stale (more than 24 hours old)
         // For now, just clear it - player can re-enter their dimension via portal
@@ -239,25 +239,25 @@ public class CrashRecoveryHandler {
      * @param dataManager The player data manager
      */
     private static void teleportToFallbackPosition(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
             PlayerDataManager dataManager
     ) {
-        UUID playerUuid = player.getUuid();
-        ServerWorld targetWorld;
-        Vec3d targetPos;
-        float yaw = player.getYaw();
-        float pitch = player.getPitch();
+        UUID playerUuid = player.getUUID();
+        ServerLevel targetWorld;
+        Vec3 targetPos;
+        float yaw = player.getYRot();
+        float pitch = player.getXRot();
 
         // Priority 1: Stored return data
         Optional<ReturnData> returnDataOpt = dataManager.getReturnData(playerUuid);
         if (returnDataOpt.isPresent()) {
             ReturnData returnData = returnDataOpt.get();
-            targetWorld = server.getWorld(returnData.dimension());
+            targetWorld = server.getLevel(returnData.dimension());
 
             if (targetWorld != null) {
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, returnData.position());
-                targetPos = Vec3d.ofCenter(safePos);
+                targetPos = Vec3.atCenterOf(safePos);
                 yaw = returnData.yaw();
                 pitch = returnData.pitch();
                 dataManager.clearReturnData(playerUuid);
@@ -271,19 +271,19 @@ public class CrashRecoveryHandler {
         // Priority 2: Bed spawn
         BlockPos bedPos = com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointPosition(player);
         if (bedPos != null) {
-            ServerWorld bedWorld = server.getWorld(com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointDimension(player));
+            ServerLevel bedWorld = server.getLevel(com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointDimension(player));
             if (bedWorld != null) {
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
-                targetPos = Vec3d.ofCenter(safePos);
+                targetPos = Vec3.atCenterOf(safePos);
                 teleportPlayer(player, bedWorld, targetPos, yaw, pitch);
                 return;
             }
         }
 
         // Priority 3: Overworld spawn (always available)
-        targetWorld = server.getOverworld();
+        targetWorld = server.overworld();
         BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, WorldCompat.getSpawnPos(targetWorld));
-        targetPos = Vec3d.ofCenter(safePos);
+        targetPos = Vec3.atCenterOf(safePos);
         teleportPlayer(player, targetWorld, targetPos, yaw, pitch);
     }
 
@@ -291,21 +291,21 @@ public class CrashRecoveryHandler {
      * Helper method to teleport player and show message.
      */
     private static void teleportPlayer(
-            ServerPlayerEntity player,
-            ServerWorld world,
-            Vec3d pos,
+            ServerPlayer player,
+            ServerLevel world,
+            Vec3 pos,
             float yaw,
             float pitch
     ) {
         TeleportCompat.teleport(player, world, pos, yaw, pitch);
-        player.sendMessage(Text.translatable("pocketislands.message.returned_overworld"), true);
+        player.displayClientMessage(Component.translatable("pocketislands.message.returned_overworld"), true);
     }
 
     /**
      * Evacuate player to their stored return position, or overworld spawn as fallback.
      * Used when player is in a dimension but loses permission.
      */
-    private static void evacuateToReturnPosition(ServerPlayerEntity player, MinecraftServer server) {
+    private static void evacuateToReturnPosition(ServerPlayer player, MinecraftServer server) {
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         teleportToFallbackPosition(player, server, dataManager);
     }
@@ -313,18 +313,18 @@ public class CrashRecoveryHandler {
     /**
      * Emergency evacuation when something is seriously wrong.
      */
-    private static void emergencyEvacuate(ServerPlayerEntity player, MinecraftServer server, String reason) {
-        ServerWorld overworld = server.getOverworld();
+    private static void emergencyEvacuate(ServerPlayer player, MinecraftServer server, String reason) {
+        ServerLevel overworld = server.overworld();
         BlockPos safePos = SafeSpawnFinder.findSafePosition(overworld, WorldCompat.getSpawnPos(overworld));
 
         TeleportCompat.teleportToBlockPreserveRotation(player, overworld, safePos);
 
-        player.sendMessage(Text.translatable("pocketislands.message.emergency_teleport", reason)
-            .formatted(Formatting.RED), false);
+        player.displayClientMessage(Component.translatable("pocketislands.message.emergency_teleport", reason)
+            .withStyle(ChatFormatting.RED), false);
 
         // Clear any corrupt data
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        dataManager.clearReturnData(player.getUuid());
-        dataManager.clearCurrentPocketDimension(player.getUuid());
+        dataManager.clearReturnData(player.getUUID());
+        dataManager.clearCurrentPocketDimension(player.getUUID());
     }
 }

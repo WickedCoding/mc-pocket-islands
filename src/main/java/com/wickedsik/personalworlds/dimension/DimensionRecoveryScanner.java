@@ -3,8 +3,8 @@ package com.wickedsik.personalworlds.dimension;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -253,7 +253,7 @@ public class DimensionRecoveryScanner {
 
         // Construct the dimension ID (same format as DimensionManager)
         String dimIdPath = "pw_" + playerUuid.toString().replace("-", "");
-        Identifier dimensionId = IdentifierCompat.modId(dimIdPath);
+        ResourceLocation dimensionId = IdentifierCompat.modId(dimIdPath);
 
         // Default spawn point (matching void world defaults)
         BlockPos spawnPoint = new BlockPos(0, 65, 0);

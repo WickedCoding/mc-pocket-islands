@@ -1,9 +1,9 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.HeightLimitView;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.Level;
 
 /**
  * Compatibility layer for World method access.
@@ -28,11 +28,11 @@ public final class WorldCompat {
      * @param world The server world
      * @return The spawn position as BlockPos
      */
-    public static BlockPos getSpawnPos(ServerWorld world) {
+    public static BlockPos getSpawnPos(ServerLevel world) {
         //? if >=1.21 {
-        /*return world.getSpawnPoint().getPos();
+        /*return world.getRespawnData().pos();
         *///?} else {
-        return world.getSpawnPos();
+        return world.getSharedSpawnPos();
         //?}
     }
 
@@ -42,11 +42,11 @@ public final class WorldCompat {
      * @param world The world
      * @return The maximum Y coordinate
      */
-    public static int getTopY(World world) {
+    public static int getTopY(Level world) {
         //? if >=1.21 {
-        /*return world.getBottomY() + world.getHeight();
+        /*return world.getMinY() + world.getHeight();
         *///?} else {
-        return world.getTopY();
+        return world.getMaxBuildHeight();
         //?}
     }
 
@@ -56,7 +56,11 @@ public final class WorldCompat {
      * @param world The world or other height-limited view (e.g. a chunk generator's HeightLimitView)
      * @return The minimum Y coordinate
      */
-    public static int getBottomY(HeightLimitView world) {
-        return world.getBottomY();
+    public static int getBottomY(LevelHeightAccessor world) {
+        //? if >=1.21 {
+        /*return world.getMinY();
+        *///?} else {
+        return world.getMinBuildHeight();
+        //?}
     }
 }

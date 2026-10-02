@@ -74,7 +74,7 @@ class PortalColorTest {
         @DisplayName("asString returns lowercase snake_case name")
         void asString_returnsExpectedValue(String enumName, String expected) {
             PortalColor color = PortalColor.valueOf(enumName);
-            assertEquals(expected, color.asString());
+            assertEquals(expected, color.getSerializedName());
         }
     }
 
@@ -190,7 +190,7 @@ class PortalColorTest {
         @DisplayName("All colors round-trip through fromString(asString())")
         void fromString_roundTrip_allColors() {
             for (PortalColor color : PortalColor.values()) {
-                assertEquals(color, PortalColor.fromString(color.asString()),
+                assertEquals(color, PortalColor.fromString(color.getSerializedName()),
                     color.name() + " failed round-trip");
             }
         }

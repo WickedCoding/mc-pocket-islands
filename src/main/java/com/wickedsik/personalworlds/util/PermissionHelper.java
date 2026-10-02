@@ -2,7 +2,7 @@ package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.CommandCompat;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
 
 import java.util.function.Predicate;
 
@@ -66,7 +66,7 @@ public final class PermissionHelper {
      * @param fallbackLevel The OP level required if no permissions plugin
      * @return true if the source has permission
      */
-    public static boolean check(ServerCommandSource source, String permission, int fallbackLevel) {
+    public static boolean check(CommandSourceStack source, String permission, int fallbackLevel) {
         if (isPermissionsApiAvailable()) {
             try {
                 return me.lucko.fabric.api.permissions.v0.Permissions.check(source, permission, fallbackLevel);
@@ -86,7 +86,7 @@ public final class PermissionHelper {
      * @param fallbackLevel The OP level required if no permissions plugin
      * @return A predicate that checks the permission
      */
-    public static Predicate<ServerCommandSource> require(String permission, int fallbackLevel) {
+    public static Predicate<CommandSourceStack> require(String permission, int fallbackLevel) {
         return source -> check(source, permission, fallbackLevel);
     }
 
@@ -95,35 +95,35 @@ public final class PermissionHelper {
     /**
      * Check admin list permission.
      */
-    public static boolean canAdminList(ServerCommandSource source) {
+    public static boolean canAdminList(CommandSourceStack source) {
         return check(source, ADMIN_LIST, DEFAULT_ADMIN_LIST_LEVEL);
     }
 
     /**
      * Check admin info permission.
      */
-    public static boolean canAdminInfo(ServerCommandSource source) {
+    public static boolean canAdminInfo(CommandSourceStack source) {
         return check(source, ADMIN_INFO, DEFAULT_ADMIN_INFO_LEVEL);
     }
 
     /**
      * Check admin delete permission.
      */
-    public static boolean canAdminDelete(ServerCommandSource source) {
+    public static boolean canAdminDelete(CommandSourceStack source) {
         return check(source, ADMIN_DELETE, DEFAULT_ADMIN_DELETE_LEVEL);
     }
 
     /**
      * Check admin teleport permission.
      */
-    public static boolean canAdminTeleport(ServerCommandSource source) {
+    public static boolean canAdminTeleport(CommandSourceStack source) {
         return check(source, ADMIN_TELEPORT, DEFAULT_ADMIN_TELEPORT_LEVEL);
     }
 
     /**
      * Check admin reload permission.
      */
-    public static boolean canAdminReload(ServerCommandSource source) {
+    public static boolean canAdminReload(CommandSourceStack source) {
         return check(source, ADMIN_RELOAD, DEFAULT_ADMIN_RELOAD_LEVEL);
     }
 

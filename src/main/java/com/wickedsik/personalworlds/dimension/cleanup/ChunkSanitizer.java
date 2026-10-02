@@ -5,10 +5,10 @@ import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
  * removed mods.
  *
  * Post-load, vanilla has already resolved unknown block IDs to air and dropped
- * unresolvable ItemStacks to {@link net.minecraft.item.ItemStack#EMPTY}. Two
+ * unresolvable ItemStacks to {@link net.minecraft.world.item.ItemStack#EMPTY}. Two
  * classes of orphan remain:
  *
  * 1. Block entities whose backing block state is air (mod block removed, BE
@@ -36,14 +36,14 @@ import java.util.List;
  */
 public final class ChunkSanitizer {
 
-    private static final PendingChunkQueue<ServerWorld> PENDING = new PendingChunkQueue<>();
+    private static final PendingChunkQueue<ServerLevel> PENDING = new PendingChunkQueue<>();
 
     private ChunkSanitizer() {
     }
 
     /**
      * Abstract surface for the sanitizer's chunk operations. The production
-     * adapter wraps {@link WorldChunk} + {@link ServerWorld}; tests provide an
+     * adapter wraps {@link LevelChunk} + {@link ServerLevel}; tests provide an
      * in-memory fake.
      */
     public interface Target {
@@ -151,7 +151,7 @@ public final class ChunkSanitizer {
      * {@link MinecraftServer#execute} does not help: on the server thread it
      * runs the task immediately instead of queueing it.
      */
-    public static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
+    public static void onChunkLoad(ServerLevel world, LevelChunk chunk) {
         if (!ModConfig.get().sanitizeChunksOnLoad) {
             return;
         }
@@ -176,7 +176,7 @@ public final class ChunkSanitizer {
                 runDeferredSanitize(world, new ChunkPos(chunkPos), removeOrphans);
             } catch (RuntimeException e) {
                 PersonalWorldsMod.LOGGER.warn("Failed to sanitize chunk {} in {}",
-                    new ChunkPos(chunkPos), IdentifierCompat.fromKey(world.getRegistryKey()), e);
+                    new ChunkPos(chunkPos), IdentifierCompat.fromKey(world.dimension()), e);
             }
         });
     }
@@ -202,19 +202,19 @@ public final class ChunkSanitizer {
      * @return counts of what was removed
      */
     public static Result sanitizeLoadedChunk(
-        ServerWorld world,
-        WorldChunk chunk,
+        ServerLevel world,
+        LevelChunk chunk,
         boolean fullChunk,
         boolean removeOrphanBlocks
     ) {
         return sanitize(new WorldChunkTarget(world, chunk, !fullChunk), removeOrphanBlocks);
     }
 
-    private static void runDeferredSanitize(ServerWorld world, ChunkPos pos, boolean removeOrphans) {
+    private static void runDeferredSanitize(ServerLevel world, ChunkPos pos, boolean removeOrphans) {
         // The chunk may have unloaded since the load event (player left,
         // server flushed the ticket). getWorldChunk never waits on a load:
         // it returns null unless the chunk is fully loaded right now.
-        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.x, pos.z);
+        LevelChunk worldChunk = world.getChunkSource().getChunkNow(pos.x, pos.z);
         if (worldChunk == null) {
             return;
         }
@@ -224,7 +224,7 @@ public final class ChunkSanitizer {
         if (result.anyRemoved()) {
             PersonalWorldsMod.LOGGER.info(
                 "Sanitized chunk {} in {}: removed {} orphan block entities, {} unsupported blocks, {} malformed items",
-                pos, IdentifierCompat.fromKey(world.getRegistryKey()),
+                pos, IdentifierCompat.fromKey(world.dimension()),
                 result.orphanBlockEntities(), result.orphanBlocks(), result.orphanItems()
             );
         }

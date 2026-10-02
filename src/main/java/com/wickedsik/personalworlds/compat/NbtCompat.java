@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -33,44 +33,44 @@ public final class NbtCompat {
     /**
      * Get an int value from NBT with a default fallback.
      */
-    public static int getInt(NbtCompound nbt, String key, int defaultValue) {
+    public static int getInt(CompoundTag nbt, String key, int defaultValue) {
         //? if >=1.21 {
-        /*return nbt.getInt(key, defaultValue);
+        /*return nbt.getIntOr(key, defaultValue);
         *///?} else {
-        return nbt.contains(key, NbtElement.INT_TYPE) ? nbt.getInt(key) : defaultValue;
+        return nbt.contains(key, Tag.TAG_INT) ? nbt.getInt(key) : defaultValue;
         //?}
     }
 
     /**
      * Get a string value from NBT with a default fallback.
      */
-    public static String getString(NbtCompound nbt, String key, String defaultValue) {
+    public static String getString(CompoundTag nbt, String key, String defaultValue) {
         //? if >=1.21 {
-        /*return nbt.getString(key, defaultValue);
+        /*return nbt.getStringOr(key, defaultValue);
         *///?} else {
-        return nbt.contains(key, NbtElement.STRING_TYPE) ? nbt.getString(key) : defaultValue;
+        return nbt.contains(key, Tag.TAG_STRING) ? nbt.getString(key) : defaultValue;
         //?}
     }
 
     /**
      * Get a float value from NBT with a default fallback.
      */
-    public static float getFloat(NbtCompound nbt, String key, float defaultValue) {
+    public static float getFloat(CompoundTag nbt, String key, float defaultValue) {
         //? if >=1.21 {
-        /*return nbt.getFloat(key, defaultValue);
+        /*return nbt.getFloatOr(key, defaultValue);
         *///?} else {
-        return nbt.contains(key, NbtElement.FLOAT_TYPE) ? nbt.getFloat(key) : defaultValue;
+        return nbt.contains(key, Tag.TAG_FLOAT) ? nbt.getFloat(key) : defaultValue;
         //?}
     }
 
     /**
      * Get a boolean value from NBT with a default fallback.
      */
-    public static boolean getBoolean(NbtCompound nbt, String key, boolean defaultValue) {
+    public static boolean getBoolean(CompoundTag nbt, String key, boolean defaultValue) {
         //? if >=1.21 {
-        /*return nbt.getBoolean(key, defaultValue);
+        /*return nbt.getBooleanOr(key, defaultValue);
         *///?} else {
-        return nbt.contains(key, NbtElement.BYTE_TYPE) ? nbt.getBoolean(key) : defaultValue;
+        return nbt.contains(key, Tag.TAG_BYTE) ? nbt.getBoolean(key) : defaultValue;
         //?}
     }
 
@@ -80,11 +80,11 @@ public final class NbtCompat {
      * Store a UUID in NBT.
      * In 1.20.x uses putUuid, in 1.21.x stores as string.
      */
-    public static void putUuid(NbtCompound nbt, String key, UUID uuid) {
+    public static void putUuid(CompoundTag nbt, String key, UUID uuid) {
         //? if >=1.21 {
         /*nbt.putString(key, uuid.toString());
         *///?} else {
-        nbt.putUuid(key, uuid);
+        nbt.putUUID(key, uuid);
         //?}
     }
 
@@ -94,9 +94,9 @@ public final class NbtCompat {
      *
      * @return The UUID, or null if not found or invalid
      */
-    public static @Nullable UUID getUuid(NbtCompound nbt, String key) {
+    public static @Nullable UUID getUuid(CompoundTag nbt, String key) {
         //? if >=1.21 {
-        /*String uuidStr = nbt.getString(key, "");
+        /*String uuidStr = nbt.getStringOr(key, "");
         if (uuidStr.isEmpty()) {
             return null;
         }
@@ -106,16 +106,16 @@ public final class NbtCompat {
             return null;
         }
         *///?} else {
-        return nbt.containsUuid(key) ? nbt.getUuid(key) : null;
+        return nbt.hasUUID(key) ? nbt.getUUID(key) : null;
         //?}
     }
 
     /**
      * Check if NBT contains a valid UUID at the given key.
      */
-    public static boolean containsUuid(NbtCompound nbt, String key) {
+    public static boolean containsUuid(CompoundTag nbt, String key) {
         //? if >=1.21 {
-        /*String uuidStr = nbt.getString(key, "");
+        /*String uuidStr = nbt.getStringOr(key, "");
         if (uuidStr.isEmpty()) {
             return false;
         }
@@ -126,7 +126,7 @@ public final class NbtCompat {
             return false;
         }
         *///?} else {
-        return nbt.containsUuid(key);
+        return nbt.hasUUID(key);
         //?}
     }
 
@@ -135,14 +135,14 @@ public final class NbtCompat {
     /**
      * Check if NBT contains a key with a specific NBT element type.
      */
-    public static boolean contains(NbtCompound nbt, String key, int type) {
+    public static boolean contains(CompoundTag nbt, String key, int type) {
         //? if >=1.21 {
         /*// In 1.21.x, we need to check if the key exists and then verify type
         if (!nbt.contains(key)) {
             return false;
         }
-        NbtElement element = nbt.get(key);
-        return element != null && element.getType() == type;
+        Tag element = nbt.get(key);
+        return element != null && element.getId() == type;
         *///?} else {
         return nbt.contains(key, type);
         //?}
@@ -153,9 +153,9 @@ public final class NbtCompat {
     /**
      * Get a compound from NBT, returning empty compound if not found.
      */
-    public static NbtCompound getCompound(NbtCompound nbt, String key) {
+    public static CompoundTag getCompound(CompoundTag nbt, String key) {
         //? if >=1.21 {
-        /*return nbt.getCompound(key).orElse(new NbtCompound());
+        /*return nbt.getCompound(key).orElse(new CompoundTag());
         *///?} else {
         return nbt.getCompound(key);
         //?}
@@ -164,11 +164,11 @@ public final class NbtCompat {
     /**
      * Get a long value from NBT with a default fallback.
      */
-    public static long getLong(NbtCompound nbt, String key, long defaultValue) {
+    public static long getLong(CompoundTag nbt, String key, long defaultValue) {
         //? if >=1.21 {
-        /*return nbt.getLong(key, defaultValue);
+        /*return nbt.getLongOr(key, defaultValue);
         *///?} else {
-        return nbt.contains(key, NbtElement.LONG_TYPE) ? nbt.getLong(key) : defaultValue;
+        return nbt.contains(key, Tag.TAG_LONG) ? nbt.getLong(key) : defaultValue;
         //?}
     }
 
@@ -177,9 +177,9 @@ public final class NbtCompat {
     /**
      * Get a list from NBT by key and element type.
      */
-    public static net.minecraft.nbt.NbtList getList(NbtCompound nbt, String key, int type) {
+    public static net.minecraft.nbt.ListTag getList(CompoundTag nbt, String key, int type) {
         //? if >=1.21 {
-        /*return nbt.getList(key).orElse(new net.minecraft.nbt.NbtList());
+        /*return nbt.getList(key).orElse(new net.minecraft.nbt.ListTag());
         *///?} else {
         return nbt.getList(key, type);
         //?}
@@ -188,9 +188,9 @@ public final class NbtCompat {
     /**
      * Get a compound from an NbtList by index.
      */
-    public static NbtCompound getCompound(net.minecraft.nbt.NbtList list, int index) {
+    public static CompoundTag getCompound(net.minecraft.nbt.ListTag list, int index) {
         //? if >=1.21 {
-        /*return list.getCompound(index).orElse(new NbtCompound());
+        /*return list.getCompound(index).orElse(new CompoundTag());
         *///?} else {
         return list.getCompound(index);
         //?}
@@ -199,7 +199,11 @@ public final class NbtCompat {
     /**
      * Get all keys of an NBT compound.
      */
-    public static Set<String> getKeys(NbtCompound nbt) {
-        return nbt.getKeys();
+    public static Set<String> getKeys(CompoundTag nbt) {
+        //? if >=1.21 {
+        /*return nbt.keySet();
+        *///?} else {
+        return nbt.getAllKeys();
+        //?}
     }
 }

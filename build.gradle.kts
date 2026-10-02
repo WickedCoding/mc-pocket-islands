@@ -15,6 +15,9 @@ repositories {
     maven("https://maven.nucleoid.xyz/") {
         name = "Nucleoid"
     }
+    maven("https://maven.parchmentmc.org") {
+        name = "ParchmentMC"
+    }
     mavenCentral()
 }
 
@@ -32,7 +35,10 @@ loom {
 dependencies {
     // Minecraft and mappings
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
-    mappings("net.fabricmc:yarn:${property("yarn_mappings")}:v2")
+    mappings(loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${property("minecraft_version")}:${property("parchment_version")}@zip")
+    })
     modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
     // Fabric API
@@ -54,6 +60,17 @@ dependencies {
     // Testing — Mockito for mocking
     testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+}
+
+// Mojang renamed these classes in 1.21.11 where Yarn kept one name. Sources use the
+// pre-1.21.11 names; Stonecutter rewrites them when switching versions. Word boundaries
+// keep mod names such as IdentifierCompat and validateIdentifier untouched.
+stonecutter {
+    replacements.regex(current.parsed >= "1.21.11") {
+        replace("\\bResourceLocationException\\b" to "IdentifierException", "\\bIdentifierException\\b" to "ResourceLocationException")
+        replace("\\bResourceLocation\\b" to "Identifier", "\\bIdentifier\\b" to "ResourceLocation")
+        replace("\\bPortalInfo\\b" to "TeleportTransition", "\\bTeleportTransition\\b" to "PortalInfo")
+    }
 }
 
 val minecraft_version: String by project

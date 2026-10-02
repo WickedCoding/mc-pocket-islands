@@ -1,12 +1,12 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,9 +33,9 @@ public final class EntityCompat {
      * @param player The server player
      * @return The MinecraftServer instance
      */
-    public static MinecraftServer getServer(ServerPlayerEntity player) {
+    public static MinecraftServer getServer(ServerPlayer player) {
         //? if >=1.21 {
-        /*return player.getEntityWorld().getServer();
+        /*return player.level().getServer();
         *///?} else {
         return player.getServer();
         //?}
@@ -47,11 +47,11 @@ public final class EntityCompat {
      * @param player The server player
      * @return The ServerWorld the player is in
      */
-    public static ServerWorld getServerWorld(ServerPlayerEntity player) {
+    public static ServerLevel getServerWorld(ServerPlayer player) {
         //? if >=1.21 {
-        /*return (ServerWorld) player.getEntityWorld();
+        /*return (ServerLevel) player.level();
         *///?} else {
-        return player.getServerWorld();
+        return player.serverLevel();
         //?}
     }
 
@@ -61,11 +61,11 @@ public final class EntityCompat {
      * @param player The server player
      * @return The player's position
      */
-    public static Vec3d getPos(ServerPlayerEntity player) {
+    public static Vec3 getPos(ServerPlayer player) {
         //? if >=1.21 {
-        /*return player.getEntityPos();
+        /*return player.position();
         *///?} else {
-        return player.getPos();
+        return player.position();
         //?}
     }
 
@@ -75,16 +75,16 @@ public final class EntityCompat {
      * @param player The server player
      * @return The spawn point position, or null if none set
      */
-    public static @Nullable BlockPos getSpawnPointPosition(ServerPlayerEntity player) {
+    public static @Nullable BlockPos getSpawnPointPosition(ServerPlayer player) {
         //? if >=1.21 {
-        /*ServerPlayerEntity.Respawn respawn = player.getRespawn();
+        /*ServerPlayer.RespawnConfig respawn = player.getRespawnConfig();
         if (respawn == null) {
             return null;
         }
         // In 1.21.x, Respawn.respawnData() returns SpawnPoint which has getPos()
-        return respawn.respawnData().getPos();
+        return respawn.respawnData().pos();
         *///?} else {
-        return player.getSpawnPointPosition();
+        return player.getRespawnPosition();
         //?}
     }
 
@@ -94,16 +94,16 @@ public final class EntityCompat {
      * @param player The server player
      * @return The spawn point dimension, or null if none set
      */
-    public static @Nullable RegistryKey<World> getSpawnPointDimension(ServerPlayerEntity player) {
+    public static @Nullable ResourceKey<Level> getSpawnPointDimension(ServerPlayer player) {
         //? if >=1.21 {
-        /*ServerPlayerEntity.Respawn respawn = player.getRespawn();
+        /*ServerPlayer.RespawnConfig respawn = player.getRespawnConfig();
         if (respawn == null) {
             return null;
         }
         // In 1.21.x, SpawnPoint has getDimension()
-        return respawn.respawnData().getDimension();
+        return respawn.respawnData().dimension();
         *///?} else {
-        return player.getSpawnPointDimension();
+        return player.getRespawnDimension();
         //?}
     }
 }

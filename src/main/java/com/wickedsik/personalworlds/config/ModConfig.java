@@ -410,9 +410,9 @@ public class ModConfig {
             } else {
                 // Validate color is a known enum value
                 PortalColor parsedColor = PortalColor.fromString(portal.portalColor);
-                if (!parsedColor.asString().equalsIgnoreCase(portal.portalColor)) {
+                if (!parsedColor.getSerializedName().equalsIgnoreCase(portal.portalColor)) {
                     PersonalWorldsMod.LOGGER.warn("Portal type {} has invalid color '{}', using '{}' instead",
-                        i, portal.portalColor, parsedColor.asString());
+                        i, portal.portalColor, parsedColor.getSerializedName());
                 }
             }
         }

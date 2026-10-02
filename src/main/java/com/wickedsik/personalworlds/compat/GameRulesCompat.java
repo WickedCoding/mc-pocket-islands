@@ -5,11 +5,11 @@ import com.wickedsik.personalworlds.config.ModConfig;
 import net.minecraft.server.MinecraftServer;
 
 //? if >=1.21 {
-/*import net.minecraft.world.rule.GameRule;
-import net.minecraft.world.rule.GameRules;
-import net.minecraft.world.rule.GameRuleVisitor;
+/*import net.minecraft.world.level.gamerules.GameRule;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
 *///?} else {
-import net.minecraft.world.GameRules;
+import net.minecraft.world.level.GameRules;
 //?}
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 
@@ -53,7 +53,7 @@ public final class GameRulesCompat {
      * @param server The Minecraft server (for reading overworld rules)
      */
     public static void applyGameRules(RuntimeWorldConfig config, MinecraftServer server) {
-        GameRules overworldRules = server.getOverworld().getGameRules();
+        GameRules overworldRules = server.overworld().getGameRules();
 
         // Phase 1: Copy all overworld rules as baseline
         copyAllRules(config, overworldRules);
@@ -72,25 +72,25 @@ public final class GameRulesCompat {
      */
     //? if >=1.21 {
     /*private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
-        overworldRules.accept(new GameRuleVisitor() {
+        overworldRules.visitGameRuleTypes(new GameRuleTypeVisitor() {
             @Override
             public <T> void visit(GameRule<T> rule) {
-                T value = overworldRules.getValue(rule);
+                T value = overworldRules.get(rule);
                 config.setGameRule(rule, value);
             }
         });
     }
     *///?} else {
     private static void copyAllRules(RuntimeWorldConfig config, GameRules overworldRules) {
-        overworldRules.accept(new GameRules.Visitor() {
+        overworldRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
             @Override
-            public void visitBoolean(GameRules.Key<GameRules.BooleanRule> key, GameRules.Type<GameRules.BooleanRule> type) {
-                config.setGameRule(key, overworldRules.get(key).get());
+            public void visitBoolean(GameRules.Key<GameRules.BooleanValue> key, GameRules.Type<GameRules.BooleanValue> type) {
+                config.setGameRule(key, overworldRules.getRule(key).get());
             }
 
             @Override
-            public void visitInt(GameRules.Key<GameRules.IntRule> key, GameRules.Type<GameRules.IntRule> type) {
-                config.setGameRule(key, overworldRules.get(key).get());
+            public void visitInteger(GameRules.Key<GameRules.IntegerValue> key, GameRules.Type<GameRules.IntegerValue> type) {
+                config.setGameRule(key, overworldRules.getRule(key).get());
             }
         });
     }
@@ -131,10 +131,10 @@ public final class GameRulesCompat {
         }
 
         Map<String, GameRule<?>> map = new HashMap<>();
-        rules.accept(new GameRuleVisitor() {
+        rules.visitGameRuleTypes(new GameRuleTypeVisitor() {
             @Override
             public <T> void visit(GameRule<T> rule) {
-                map.put(rule.getId().getPath(), rule);
+                map.put(rule.getIdentifier().getPath(), rule);
             }
         });
 
@@ -158,9 +158,9 @@ public final class GameRulesCompat {
             }
 
             if (value instanceof Boolean boolVal) {
-                config.setGameRule((GameRules.Key<GameRules.BooleanRule>) key, boolVal);
+                config.setGameRule((GameRules.Key<GameRules.BooleanValue>) key, boolVal);
             } else if (value instanceof Number numVal) {
-                config.setGameRule((GameRules.Key<GameRules.IntRule>) key, numVal.intValue());
+                config.setGameRule((GameRules.Key<GameRules.IntegerValue>) key, numVal.intValue());
             } else {
                 PersonalWorldsMod.LOGGER.warn("Game rule '{}' has unsupported value type: {}", ruleName,
                     value.getClass().getSimpleName());
@@ -174,15 +174,15 @@ public final class GameRulesCompat {
         }
 
         Map<String, GameRules.Key<?>> map = new HashMap<>();
-        rules.accept(new GameRules.Visitor() {
+        rules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
             @Override
-            public void visitBoolean(GameRules.Key<GameRules.BooleanRule> key, GameRules.Type<GameRules.BooleanRule> type) {
-                map.put(key.getName(), key);
+            public void visitBoolean(GameRules.Key<GameRules.BooleanValue> key, GameRules.Type<GameRules.BooleanValue> type) {
+                map.put(key.getId(), key);
             }
 
             @Override
-            public void visitInt(GameRules.Key<GameRules.IntRule> key, GameRules.Type<GameRules.IntRule> type) {
-                map.put(key.getName(), key);
+            public void visitInteger(GameRules.Key<GameRules.IntegerValue> key, GameRules.Type<GameRules.IntegerValue> type) {
+                map.put(key.getId(), key);
             }
         });
 

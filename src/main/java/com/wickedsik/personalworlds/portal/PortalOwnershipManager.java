@@ -5,14 +5,14 @@ import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,7 @@ import java.util.UUID;
  *
  * Saved to: world/data/personalworlds_portal_ownership.dat
  */
-public class PortalOwnershipManager extends PersistentState {
+public class PortalOwnershipManager extends SavedData {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_portal_ownership";
 
@@ -65,10 +65,10 @@ public class PortalOwnershipManager extends PersistentState {
      * @param ownerUuid The UUID of the owning player
      * @param portalTypeIndex The portal type index from ModConfig.portalTypes array
      */
-    public void registerPortal(World world, BlockPos pos, UUID ownerUuid, int portalTypeIndex) {
+    public void registerPortal(Level world, BlockPos pos, UUID ownerUuid, int portalTypeIndex) {
         String key = makeKey(world, pos);
         portalOwners.put(key, new PortalOwnershipData(ownerUuid, portalTypeIndex));
-        markDirty();
+        setDirty();
         PersonalWorldsMod.LOGGER.debug("Registered portal type {} at {} owned by {}",
             portalTypeIndex, key, ownerUuid);
     }
@@ -80,7 +80,7 @@ public class PortalOwnershipManager extends PersistentState {
      * @param pos The position of the portal block
      * @return Optional containing owner UUID, or empty if unowned
      */
-    public Optional<UUID> getOwner(World world, BlockPos pos) {
+    public Optional<UUID> getOwner(Level world, BlockPos pos) {
         String key = makeKey(world, pos);
         PortalOwnershipData data = portalOwners.get(key);
         return data != null ? Optional.of(data.ownerUuid) : Optional.empty();
@@ -93,7 +93,7 @@ public class PortalOwnershipManager extends PersistentState {
      * @param pos The position of the portal block
      * @return Optional containing portal type index, or empty if unowned
      */
-    public Optional<Integer> getPortalType(World world, BlockPos pos) {
+    public Optional<Integer> getPortalType(Level world, BlockPos pos) {
         String key = makeKey(world, pos);
         PortalOwnershipData data = portalOwners.get(key);
         return data != null ? Optional.of(data.portalTypeIndex) : Optional.empty();
@@ -106,10 +106,10 @@ public class PortalOwnershipManager extends PersistentState {
      * @param world The world containing the portal
      * @param pos The position of the portal block
      */
-    public void removePortal(World world, BlockPos pos) {
+    public void removePortal(Level world, BlockPos pos) {
         String key = makeKey(world, pos);
         if (portalOwners.remove(key) != null) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.debug("Removed portal ownership at {}", key);
         }
     }
@@ -121,7 +121,7 @@ public class PortalOwnershipManager extends PersistentState {
      * @param pos The position of the portal block
      * @return true if the portal has a registered owner
      */
-    public boolean hasOwner(World world, BlockPos pos) {
+    public boolean hasOwner(Level world, BlockPos pos) {
         String key = makeKey(world, pos);
         return portalOwners.containsKey(key);
     }
@@ -144,7 +144,7 @@ public class PortalOwnershipManager extends PersistentState {
             }
         }
         if (removed > 0) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.info("Cleared {} portal ownership records for {}", removed, ownerUuid);
         }
         return removed;
@@ -164,7 +164,7 @@ public class PortalOwnershipManager extends PersistentState {
      */
     public String getOwnerName(MinecraftServer server, UUID ownerUuid) {
         // Try online player first
-        ServerPlayerEntity player = server.getPlayerManager().getPlayer(ownerUuid);
+        ServerPlayer player = server.getPlayerList().getPlayer(ownerUuid);
         if (player != null) {
             return player.getName().getString();
         }
@@ -189,8 +189,8 @@ public class PortalOwnershipManager extends PersistentState {
      * @param pos The portal block position
      * @return A string key in format "namespace:path:x,y,z"
      */
-    private String makeKey(World world, BlockPos pos) {
-        return IdentifierCompat.fromKey(world.getRegistryKey()).toString() +
+    private String makeKey(Level world, BlockPos pos) {
+        return IdentifierCompat.fromKey(world.dimension()).toString() +
             ":" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
     }
 
@@ -199,10 +199,10 @@ public class PortalOwnershipManager extends PersistentState {
     //? if >=1.21.5 {
     /*// In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
     // The Codec in PersistentStateCompat calls writeNbtData() via reflection
-    public NbtCompound writeNbtData(NbtCompound nbt) {
-        NbtCompound portalsNbt = new NbtCompound();
+    public CompoundTag writeNbtData(CompoundTag nbt) {
+        CompoundTag portalsNbt = new CompoundTag();
         for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
-            NbtCompound portalData = new NbtCompound();
+            CompoundTag portalData = new CompoundTag();
             com.wickedsik.personalworlds.compat.NbtCompat.putUuid(portalData, "OwnerUuid", entry.getValue().ownerUuid);
             portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
             portalsNbt.put(entry.getKey(), portalData);
@@ -212,11 +212,11 @@ public class PortalOwnershipManager extends PersistentState {
     }
     *///?} else {
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        NbtCompound portalsNbt = new NbtCompound();
+    public CompoundTag save(CompoundTag nbt) {
+        CompoundTag portalsNbt = new CompoundTag();
         for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
-            NbtCompound portalData = new NbtCompound();
-            portalData.putUuid("OwnerUuid", entry.getValue().ownerUuid);
+            CompoundTag portalData = new CompoundTag();
+            portalData.putUUID("OwnerUuid", entry.getValue().ownerUuid);
             portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
             portalsNbt.put(entry.getKey(), portalData);
         }
@@ -225,19 +225,19 @@ public class PortalOwnershipManager extends PersistentState {
     }
     //?}
 
-    public static PortalOwnershipManager fromNbt(NbtCompound nbt) {
+    public static PortalOwnershipManager fromNbt(CompoundTag nbt) {
         PortalOwnershipManager manager = new PortalOwnershipManager();
 
-        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "PortalOwners", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound portalsNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "PortalOwners");
+        if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "PortalOwners", Tag.TAG_COMPOUND)) {
+            CompoundTag portalsNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "PortalOwners");
             for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(portalsNbt)) {
                 try {
-                    NbtElement element = portalsNbt.get(key);
+                    Tag element = portalsNbt.get(key);
 
                     // Backward compatibility: check if old format (UUID) or new format (Compound)
-                    if (element instanceof NbtCompound) {
+                    if (element instanceof CompoundTag) {
                         // New format: portal data with UUID and portal type index
-                        NbtCompound portalData = (NbtCompound) element;
+                        CompoundTag portalData = (CompoundTag) element;
                         UUID uuid = com.wickedsik.personalworlds.compat.NbtCompat.getUuid(portalData, "OwnerUuid");
                         int portalTypeIndex = com.wickedsik.personalworlds.compat.NbtCompat.getInt(portalData, "PortalTypeIndex", 0);
                         if (uuid != null) {
@@ -271,7 +271,7 @@ public class PortalOwnershipManager extends PersistentState {
      * @return The PortalOwnershipManager instance
      */
     public static PortalOwnershipManager get(MinecraftServer server) {
-        PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
+        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
             stateManager,
             DATA_NAME,

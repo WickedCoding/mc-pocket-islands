@@ -17,15 +17,19 @@ import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.VisualEffects;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.level.chunk.ChunkAccess;
+//? if >=1.21 {
+/*import net.minecraft.world.level.chunk.status.ChunkStatus;
+*///?} else {
+import net.minecraft.world.level.chunk.ChunkStatus;
+//?}
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -57,49 +61,49 @@ public class AdminCommandExecutor {
      *
      * @param source Command source for output
      */
-    public void list(ServerCommandSource source) {
+    public void list(CommandSourceStack source) {
         MinecraftServer server = source.getServer();
         DimensionRegistry registry = DimensionRegistry.get(server);
         Map<UUID, PlayerDimensionData> dimensions = registry.getAllDimensions();
 
         if (dimensions.isEmpty()) {
-            source.sendFeedback(() -> Text.translatable("pocketislands.command.list.empty")
-                .formatted(Formatting.GRAY), false);
+            source.sendSuccess(() -> Component.translatable("pocketislands.command.list.empty")
+                .withStyle(ChatFormatting.GRAY), false);
             return;
         }
 
-        MutableText header = Text.translatable("pocketislands.command.list.header")
-            .formatted(Formatting.GOLD);
-        source.sendFeedback(() -> header, false);
+        MutableComponent header = Component.translatable("pocketislands.command.list.header")
+            .withStyle(ChatFormatting.GOLD);
+        source.sendSuccess(() -> header, false);
 
         for (PlayerDimensionData data : dimensions.values()) {
             boolean loaded = DimensionManager.isDimensionLoaded(data.ownerUuid());
-            ServerWorld world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
-            int playerCount = world != null ? world.getPlayers().size() : 0;
+            ServerLevel world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
+            int playerCount = world != null ? world.players().size() : 0;
 
-            MutableText line = Text.literal(" - ")
-                .append(Text.literal(data.ownerName())
-                    .formatted(loaded ? Formatting.GREEN : Formatting.GRAY))
-                .append(Text.literal(" (")
-                    .formatted(Formatting.DARK_GRAY))
-                .append(Text.literal(data.generatorType().name())
-                    .formatted(Formatting.AQUA))
-                .append(Text.literal(") ")
-                    .formatted(Formatting.DARK_GRAY));
+            MutableComponent line = Component.literal(" - ")
+                .append(Component.literal(data.ownerName())
+                    .withStyle(loaded ? ChatFormatting.GREEN : ChatFormatting.GRAY))
+                .append(Component.literal(" (")
+                    .withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(data.generatorType().name())
+                    .withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(") ")
+                    .withStyle(ChatFormatting.DARK_GRAY));
 
             if (loaded) {
-                line.append(Text.translatable("pocketislands.command.list.loaded")
-                    .formatted(Formatting.GREEN));
+                line.append(Component.translatable("pocketislands.command.list.loaded")
+                    .withStyle(ChatFormatting.GREEN));
                 if (playerCount > 0) {
-                    line.append(Text.literal(", " + playerCount + " player" + (playerCount > 1 ? "s" : ""))
-                        .formatted(Formatting.YELLOW));
+                    line.append(Component.literal(", " + playerCount + " player" + (playerCount > 1 ? "s" : ""))
+                        .withStyle(ChatFormatting.YELLOW));
                 }
-                line.append(Text.literal("]").formatted(Formatting.GREEN));
+                line.append(Component.literal("]").withStyle(ChatFormatting.GREEN));
             } else {
-                line.append(Text.translatable("pocketislands.command.list.unloaded").formatted(Formatting.GRAY));
+                line.append(Component.translatable("pocketislands.command.list.unloaded").withStyle(ChatFormatting.GRAY));
             }
 
-            source.sendFeedback(() -> line, false);
+            source.sendSuccess(() -> line, false);
         }
     }
 
@@ -110,20 +114,20 @@ public class AdminCommandExecutor {
      * @param playerName The owner name to look up
      * @return Command result
      */
-    public CommandResult info(ServerCommandSource source, String playerName) {
+    public CommandResult info(CommandSourceStack source, String playerName) {
         MinecraftServer server = source.getServer();
 
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+                Component.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
         PlayerDimensionData data = optData.get();
         boolean loaded = DimensionManager.isDimensionLoaded(data.ownerUuid());
-        ServerWorld world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
-        int playerCount = world != null ? world.getPlayers().size() : 0;
+        ServerLevel world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
+        int playerCount = world != null ? world.players().size() : 0;
 
         // Get invitation counts
         PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -131,30 +135,30 @@ public class AdminCommandExecutor {
         int inviteCount = sentInvites.size();
 
         // Build info display
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.header",
-            data.ownerName()).formatted(Formatting.GOLD), false);
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.header",
+            data.ownerName()).withStyle(ChatFormatting.GOLD), false);
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.owner",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.owner",
             data.ownerName()), false);
 
         String createdStr = DATE_FORMAT.format(new Date(data.createdAt()));
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.created",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.created",
             createdStr), false);
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.world_type",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.world_type",
             data.generatorType().name()), false);
 
         if (loaded) {
-            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.status_loaded",
+            source.sendSuccess(() -> Component.translatable("pocketislands.command.info.status_loaded",
                 playerCount), false);
         } else {
-            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.status_unloaded"), false);
+            source.sendSuccess(() -> Component.translatable("pocketislands.command.info.status_unloaded"), false);
         }
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.invitations",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.invitations",
             inviteCount), false);
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.spawn",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.spawn",
             data.spawnPoint().getX(),
             data.spawnPoint().getY(),
             data.spawnPoint().getZ()), false);
@@ -169,38 +173,38 @@ public class AdminCommandExecutor {
      * @param playerName The owner name to delete
      * @return Command result
      */
-    public CommandResult deletePrompt(ServerCommandSource source, String playerName) {
+    public CommandResult deletePrompt(CommandSourceStack source, String playerName) {
         MinecraftServer server = source.getServer();
 
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+                Component.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
         PlayerDimensionData data = optData.get();
 
         // Play warning sound if admin is a player
-        if (source.getEntity() instanceof ServerPlayerEntity admin) {
+        if (source.getEntity() instanceof ServerPlayer admin) {
             VisualEffects.playAdminWarningEffect(admin);
         }
 
         boolean loaded = DimensionManager.isDimensionLoaded(data.ownerUuid());
-        ServerWorld world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
-        int playerCount = world != null ? world.getPlayers().size() : 0;
+        ServerLevel world = loaded ? DimensionManager.getLoadedDimension(data.ownerUuid()) : null;
+        int playerCount = world != null ? world.players().size() : 0;
 
         // Warning message
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.warning",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.delete.warning",
             data.ownerName()), false);
 
         if (playerCount > 0) {
-            source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.players_ejected",
-                playerCount).formatted(Formatting.GOLD), false);
+            source.sendSuccess(() -> Component.translatable("pocketislands.command.delete.players_ejected",
+                playerCount).withStyle(ChatFormatting.GOLD), false);
         }
 
         // Confirmation prompt
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.delete.confirm",
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.delete.confirm",
             data.ownerName()), false);
 
         return CommandResult.silent();
@@ -213,13 +217,13 @@ public class AdminCommandExecutor {
      * @param playerName The owner name to delete
      * @return Command result
      */
-    public CommandResult deleteConfirm(ServerCommandSource source, String playerName) {
+    public CommandResult deleteConfirm(CommandSourceStack source, String playerName) {
         MinecraftServer server = source.getServer();
 
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+                Component.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -229,16 +233,16 @@ public class AdminCommandExecutor {
 
         // Eject all players if dimension is loaded
         if (DimensionManager.isDimensionLoaded(ownerUuid)) {
-            ServerWorld dimWorld = DimensionManager.getLoadedDimension(ownerUuid);
+            ServerLevel dimWorld = DimensionManager.getLoadedDimension(ownerUuid);
             if (dimWorld != null) {
-                ServerWorld overworld = server.getOverworld();
+                ServerLevel overworld = server.overworld();
 
                 // Copy player list to avoid concurrent modification
-                List<ServerPlayerEntity> playersToEject = new ArrayList<>(dimWorld.getPlayers());
-                for (ServerPlayerEntity player : playersToEject) {
+                List<ServerPlayer> playersToEject = new ArrayList<>(dimWorld.players());
+                for (ServerPlayer player : playersToEject) {
                     TeleportCompat.teleport(player, overworld, TeleportHelper.toWorldSpawn(overworld, player));
-                    player.sendMessage(Text.translatable("pocketislands.message.admin_ejected")
-                        .formatted(Formatting.RED), false);
+                    player.displayClientMessage(Component.translatable("pocketislands.message.admin_ejected")
+                        .withStyle(ChatFormatting.RED), false);
                 }
             }
         }
@@ -255,21 +259,21 @@ public class AdminCommandExecutor {
         PortalOwnershipManager portalManager = PortalOwnershipManager.get(server);
         int portalsCleared = portalManager.clearPortalsOwnedBy(ownerUuid);
         if (portalsCleared > 0) {
-            source.sendFeedback(() -> Text.translatable("pocketislands.command.info.cleared_portals",
-                portalsCleared).formatted(Formatting.GRAY), false);
+            source.sendSuccess(() -> Component.translatable("pocketislands.command.info.cleared_portals",
+                portalsCleared).withStyle(ChatFormatting.GRAY), false);
         }
 
         // Delete the dimension and its folder
         DimensionManager.deleteDimension(server, ownerUuid);
 
         // Success feedback
-        if (source.getEntity() instanceof ServerPlayerEntity admin) {
+        if (source.getEntity() instanceof ServerPlayer admin) {
             VisualEffects.playAdminSuccessEffect(admin);
         }
 
         return CommandResult.successBroadcast(
-            Text.translatable("pocketislands.command.info.deleted", ownerName)
-                .formatted(Formatting.GREEN)
+            Component.translatable("pocketislands.command.info.deleted", ownerName)
+                .withStyle(ChatFormatting.GREEN)
         );
     }
 
@@ -280,20 +284,20 @@ public class AdminCommandExecutor {
      * @param playerName The target island owner
      * @return Command result
      */
-    public CommandResult teleport(ServerPlayerEntity admin, String playerName) {
+    public CommandResult teleport(ServerPlayer admin, String playerName) {
         MinecraftServer server = EntityCompat.getServer(admin);
 
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+                Component.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
         PlayerDimensionData data = optData.get();
 
         // Load/create dimension and teleport (admin bypass - no permission check)
-        ServerWorld dimension = DimensionManager.getOrCreatePlayerDimension(
+        ServerLevel dimension = DimensionManager.getOrCreatePlayerDimension(
             server,
             data.ownerUuid(),
             data.ownerName(),
@@ -303,12 +307,12 @@ public class AdminCommandExecutor {
 
         // Store return position
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        dataManager.setReturnData(admin.getUuid(),
+        dataManager.setReturnData(admin.getUUID(),
             new ReturnData(
-                EntityCompat.getServerWorld(admin).getRegistryKey(),
-                admin.getBlockPos(),
-                admin.getYaw(),
-                admin.getPitch()
+                EntityCompat.getServerWorld(admin).dimension(),
+                admin.blockPosition(),
+                admin.getYRot(),
+                admin.getXRot()
             ));
 
         // Teleport with effects
@@ -317,8 +321,8 @@ public class AdminCommandExecutor {
         VisualEffects.playTeleportArrivalEffects(admin);
 
         return CommandResult.successBroadcast(
-            Text.translatable("pocketislands.command.info.teleported", data.ownerName())
-                .formatted(Formatting.GREEN)
+            Component.translatable("pocketislands.command.info.teleported", data.ownerName())
+                .withStyle(ChatFormatting.GREEN)
         );
     }
 
@@ -336,15 +340,15 @@ public class AdminCommandExecutor {
      *                   ({@code 2*radius + 1})² chunks
      * @return command result
      */
-    public CommandResult sanitize(ServerCommandSource source, String playerName, int radius) {
+    public CommandResult sanitize(CommandSourceStack source, String playerName, int radius) {
         if (radius < 0) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.sanitize.error.negative_radius")
+                Component.translatable("pocketislands.command.sanitize.error.negative_radius")
             );
         }
         if (radius > MAX_SANITIZE_RADIUS) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.sanitize.error.radius_too_large", MAX_SANITIZE_RADIUS)
+                Component.translatable("pocketislands.command.sanitize.error.radius_too_large", MAX_SANITIZE_RADIUS)
             );
         }
 
@@ -353,7 +357,7 @@ public class AdminCommandExecutor {
         Optional<PlayerDimensionData> optData = playerLookup.findDimensionByOwnerName(server, playerName);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
+                Component.translatable("pocketislands.command.error.no_dimension_for_player", playerName)
             );
         }
 
@@ -361,7 +365,7 @@ public class AdminCommandExecutor {
 
         // Force-load the dimension. Safe: getOrCreatePlayerDimension is
         // idempotent for existing dimensions and returns the loaded world.
-        ServerWorld world = DimensionManager.getOrCreatePlayerDimension(
+        ServerLevel world = DimensionManager.getOrCreatePlayerDimension(
             server,
             data.ownerUuid(),
             data.ownerName(),
@@ -372,10 +376,10 @@ public class AdminCommandExecutor {
         int diameter = 2 * radius + 1;
         int planned = diameter * diameter;
 
-        source.sendFeedback(() -> Text.translatable(
+        source.sendSuccess(() -> Component.translatable(
             "pocketislands.command.sanitize.start",
             data.ownerName(), planned
-        ).formatted(Formatting.GRAY), false);
+        ).withStyle(ChatFormatting.GRAY), false);
 
         int chunksScanned = 0;
         int chunksTouched = 0;
@@ -385,8 +389,8 @@ public class AdminCommandExecutor {
 
         for (int cx = -radius; cx <= radius; cx++) {
             for (int cz = -radius; cz <= radius; cz++) {
-                Chunk raw = world.getChunk(cx, cz, ChunkStatus.FULL, true);
-                if (!(raw instanceof WorldChunk chunk)) {
+                ChunkAccess raw = world.getChunk(cx, cz, ChunkStatus.FULL, true);
+                if (!(raw instanceof LevelChunk chunk)) {
                     continue;
                 }
                 chunksScanned++;
@@ -407,10 +411,10 @@ public class AdminCommandExecutor {
         final int blocks = totalOrphanBlocks;
         final int items = totalOrphanItems;
 
-        source.sendFeedback(() -> Text.translatable(
+        source.sendSuccess(() -> Component.translatable(
             "pocketislands.command.sanitize.summary",
             data.ownerName(), scanned, touched, bes, blocks, items
-        ).formatted(touched > 0 ? Formatting.GREEN : Formatting.GRAY), true);
+        ).withStyle(touched > 0 ? ChatFormatting.GREEN : ChatFormatting.GRAY), true);
 
         return CommandResult.silent();
     }
@@ -421,7 +425,7 @@ public class AdminCommandExecutor {
      * @param source Command source for output
      * @return Command result
      */
-    public CommandResult reload(ServerCommandSource source) {
+    public CommandResult reload(CommandSourceStack source) {
         // Reload config
         ModConfig.reload();
 
@@ -429,11 +433,11 @@ public class AdminCommandExecutor {
         ModBlocks.clearCache();
         ModItems.clearCache();
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.config_reloaded")
-            .formatted(Formatting.GREEN), true);
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.config_reloaded")
+            .withStyle(ChatFormatting.GREEN), true);
 
-        source.sendFeedback(() -> Text.translatable("pocketislands.command.info.config_path",
-            ModConfig.getConfigPath()).formatted(Formatting.GRAY), false);
+        source.sendSuccess(() -> Component.translatable("pocketislands.command.info.config_path",
+            ModConfig.getConfigPath()).withStyle(ChatFormatting.GRAY), false);
 
         return CommandResult.silent();
     }

@@ -7,20 +7,20 @@ import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
 import com.wickedsik.personalworlds.portal.PortalColor;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.MapColor;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Registers all blocks for the PersonalWorlds mod.
  */
 public class ModBlocks {
 
-    private static final Identifier PERSONAL_PORTAL_ID = IdentifierCompat.modId("personal_portal");
+    private static final ResourceLocation PERSONAL_PORTAL_ID = IdentifierCompat.modId("personal_portal");
 
     /**
      * The personal portal block - similar to nether portal properties.
@@ -28,12 +28,16 @@ public class ModBlocks {
      */
     public static final Block PERSONAL_PORTAL = new PersonalPortalBlock(
         BlockSettingsCompat.create(PERSONAL_PORTAL_ID)
-            .mapColor(MapColor.CYAN)
-            .noCollision()
+            .mapColor(MapColor.COLOR_CYAN)
+            //? if >=1.21 {
+            /*.noCollision()
+            *///?} else {
+            .noCollission()
+            //?}
             .strength(-1.0F)
-            .sounds(BlockSoundGroup.GLASS)
-            .luminance(state -> 11)
-            .dropsNothing()
+            .sound(SoundType.GLASS)
+            .lightLevel(state -> 11)
+            .noLootTable()
     );
 
     /**
@@ -54,7 +58,7 @@ public class ModBlocks {
      */
     public static void register() {
         Registry.register(
-            Registries.BLOCK,
+            BuiltInRegistries.BLOCK,
             PERSONAL_PORTAL_ID,
             PERSONAL_PORTAL
         );
@@ -76,8 +80,8 @@ public class ModBlocks {
 
             for (int i = 0; i < configs.size(); i++) {
                 String blockId = configs.get(i).frameBlock;
-                Identifier id = IdentifierCompat.tryParse(blockId);
-                Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.AIR;
+                ResourceLocation id = IdentifierCompat.tryParse(blockId);
+                Block block = id != null ? RegistryCompat.get(BuiltInRegistries.BLOCK, id) : Blocks.AIR;
 
                 // Validate the block exists (get() returns AIR for unknown IDs)
                 if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {
@@ -88,7 +92,7 @@ public class ModBlocks {
 
                 cachedFrameBlocks[i] = block;
                 PersonalWorldsMod.LOGGER.debug("Portal type {} frame block set to: {}",
-                    i, Registries.BLOCK.getId(block));
+                    i, BuiltInRegistries.BLOCK.getKey(block));
             }
         }
 
@@ -118,7 +122,7 @@ public class ModBlocks {
                 String colorStr = configs.get(i).portalColor;
                 cachedPortalColors[i] = PortalColor.fromString(colorStr);
                 PersonalWorldsMod.LOGGER.debug("Portal type {} color set to: {}",
-                    i, cachedPortalColors[i].asString());
+                    i, cachedPortalColors[i].getSerializedName());
             }
         }
 

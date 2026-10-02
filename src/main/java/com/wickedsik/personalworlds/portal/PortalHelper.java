@@ -19,24 +19,24 @@ import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
 import com.wickedsik.personalworlds.util.VisualEffects;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.item.Item;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,8 +72,8 @@ public class PortalHelper {
      * @param activationItem The item used to activate the portal
      * @return true if portal was successfully activated
      */
-    public static boolean tryActivatePortal(World world, BlockPos clickedPos, ServerPlayerEntity player, Item activationItem) {
-        if (world.isClient()) {
+    public static boolean tryActivatePortal(Level world, BlockPos clickedPos, ServerPlayer player, Item activationItem) {
+        if (world.isClientSide()) {
             return false;
         }
 
@@ -100,26 +100,26 @@ public class PortalHelper {
 
         // Fill interior with portal blocks with the correct color
         PortalColor color = ModBlocks.getPortalColor(portalTypeIndex);
-        BlockState portalState = ModBlocks.PERSONAL_PORTAL.getDefaultState()
-            .with(PersonalPortalBlock.AXIS, portalFrame.axis())
-            .with(PersonalPortalBlock.COLOR, color);
+        BlockState portalState = ModBlocks.PERSONAL_PORTAL.defaultBlockState()
+            .setValue(PersonalPortalBlock.AXIS, portalFrame.axis())
+            .setValue(PersonalPortalBlock.COLOR, color);
 
         for (BlockPos pos : portalFrame.getInteriorPositions()) {
-            world.setBlockState(pos, portalState);
+            world.setBlockAndUpdate(pos, portalState);
         }
 
         // Register portal ownership AND portal type for all portal blocks
         PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
         for (BlockPos pos : portalFrame.getInteriorPositions()) {
-            ownershipManager.registerPortal(world, pos, player.getUuid(), portalTypeIndex);
+            ownershipManager.registerPortal(world, pos, player.getUUID(), portalTypeIndex);
         }
 
         // Play activation sound
         world.playSound(
             null,
             portalFrame.getCenter(),
-            SoundEvents.BLOCK_END_PORTAL_SPAWN,
-            SoundCategory.BLOCKS,
+            SoundEvents.END_PORTAL_SPAWN,
+            SoundSource.BLOCKS,
             1.0f,
             1.0f
         );
@@ -142,7 +142,7 @@ public class PortalHelper {
      * @param player The player entering the portal
      * @param portalPos The position of the portal block
      */
-    public static void handlePortalEntry(ServerPlayerEntity player, BlockPos portalPos) {
+    public static void handlePortalEntry(ServerPlayer player, BlockPos portalPos) {
         MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) {
             return;
@@ -155,7 +155,7 @@ public class PortalHelper {
         }
 
         try {
-            ServerWorld currentWorld = EntityCompat.getServerWorld(player);
+            ServerLevel currentWorld = EntityCompat.getServerWorld(player);
 
             if (isInPersonalDimension(currentWorld)) {
                 // Going back to overworld (or original dimension)
@@ -179,9 +179,9 @@ public class PortalHelper {
      * @param portalPos The position of the portal block
      */
     private static void handleForwardPortalEntry(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
-            ServerWorld fromWorld,
+            ServerLevel fromWorld,
             BlockPos portalPos
     ) {
         PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
@@ -192,8 +192,8 @@ public class PortalHelper {
             // Default to portal type 0 for auto-claimed portals
             PersonalWorldsMod.LOGGER.warn("Unclaimed portal at {} - auto-claiming for {} with default portal type",
                 portalPos, player.getName().getString());
-            ownershipManager.registerPortal(fromWorld, portalPos, player.getUuid(), 0);
-            teleportToOwnerDimension(player, server, fromWorld, player.getUuid(), 0);
+            ownershipManager.registerPortal(fromWorld, portalPos, player.getUUID(), 0);
+            teleportToOwnerDimension(player, server, fromWorld, player.getUUID(), 0);
             return;
         }
 
@@ -216,14 +216,14 @@ public class PortalHelper {
             );
 
             // Send appropriate denial message to visitor
-            Text denialMessage = switch (denialReason) {
-                case NOT_INVITED -> Text.translatable("pocketislands.command.error.not_invited", ownerName);
-                case HOST_OFFLINE -> Text.translatable("pocketislands.visit.denied.offline", ownerName);
-                case HOST_NOT_HOME -> Text.translatable("pocketislands.visit.denied.not_home", ownerName);
-                case ALLOWED -> Text.empty(); // Should never happen
+            Component denialMessage = switch (denialReason) {
+                case NOT_INVITED -> Component.translatable("pocketislands.command.error.not_invited", ownerName);
+                case HOST_OFFLINE -> Component.translatable("pocketislands.visit.denied.offline", ownerName);
+                case HOST_NOT_HOME -> Component.translatable("pocketislands.visit.denied.not_home", ownerName);
+                case ALLOWED -> Component.empty(); // Should never happen
             };
 
-            player.sendMessage(denialMessage.copy().formatted(Formatting.RED), false);
+            player.displayClientMessage(denialMessage.copy().withStyle(ChatFormatting.RED), false);
             PersonalWorldsMod.LOGGER.debug("{} denied entry to {}'s portal at {} (reason: {})",
                 player.getName().getString(), ownerName, portalPos, denialReason);
         }
@@ -241,13 +241,13 @@ public class PortalHelper {
      * @return true if teleportation succeeded, false if it failed
      */
     private static boolean teleportToOwnerDimension(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             MinecraftServer server,
-            ServerWorld fromWorld,
+            ServerLevel fromWorld,
             UUID ownerUuid,
             int portalTypeIndex
     ) {
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
         boolean isOwnDimension = playerUuid.equals(ownerUuid);
 
         // Get dimension data for the owner
@@ -271,11 +271,11 @@ public class PortalHelper {
             // This means the dimension was deleted - don't recreate it!
             PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
             String deletedOwnerName = ownershipManager.getOwnerName(server, ownerUuid);
-            player.sendMessage(
-                Text.literal("This portal's dimension no longer exists. ")
-                    .append(Text.literal(deletedOwnerName).formatted(Formatting.YELLOW))
+            player.displayClientMessage(
+                Component.literal("This portal's dimension no longer exists. ")
+                    .append(Component.literal(deletedOwnerName).withStyle(ChatFormatting.YELLOW))
                     .append("'s world was deleted.")
-                    .formatted(Formatting.RED),
+                    .withStyle(ChatFormatting.RED),
                 false
             );
             PersonalWorldsMod.LOGGER.info("Player {} tried to enter deleted dimension of {}",
@@ -288,19 +288,19 @@ public class PortalHelper {
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         if (!isInPersonalDimension(fromWorld)) {
             // Offset 1 block backward from facing direction to avoid landing inside portal
-            BlockPos returnPos = player.getBlockPos().offset(player.getHorizontalFacing().getOpposite());
+            BlockPos returnPos = player.blockPosition().relative(player.getDirection().getOpposite());
             ReturnData returnData = new ReturnData(
-                fromWorld.getRegistryKey(),
+                fromWorld.dimension(),
                 returnPos,
-                player.getYaw(),
-                player.getPitch()
+                player.getYRot(),
+                player.getXRot()
             );
             dataManager.setReturnData(playerUuid, returnData);
         }
         // If coming from a personal dimension, preserve existing return data (overworld position)
 
         // Get or create the owner's dimension
-        ServerWorld targetWorld = DimensionManager.getOrCreatePlayerDimension(
+        ServerLevel targetWorld = DimensionManager.getOrCreatePlayerDimension(
             server, ownerUuid, ownerName, genType, portalTypeIndex
         );
 
@@ -310,7 +310,7 @@ public class PortalHelper {
             .orElseGet(() -> getOrCreateSpawnPlatform(targetWorld, genType, portalTypeIndex));
 
         // Track that player is now in this pocket dimension (for recovery if they log out)
-        dataManager.setCurrentPocketDimension(playerUuid, targetWorld.getRegistryKey());
+        dataManager.setCurrentPocketDimension(playerUuid, targetWorld.dimension());
 
         // Play departure effects
         VisualEffects.playTeleportDepartureEffects(player);
@@ -323,12 +323,12 @@ public class PortalHelper {
 
         // Send appropriate message
         if (isOwnDimension) {
-            player.sendMessage(Text.literal("Welcome to your pocket island!"), true);
+            player.displayClientMessage(Component.literal("Welcome to your pocket island!"), true);
             PersonalWorldsMod.LOGGER.info("Player {} entered their personal dimension",
                 player.getName().getString());
         } else {
-            player.sendMessage(Text.literal("Entering ")
-                .append(Text.literal(ownerName).formatted(Formatting.YELLOW))
+            player.displayClientMessage(Component.literal("Entering ")
+                .append(Component.literal(ownerName).withStyle(ChatFormatting.YELLOW))
                 .append("'s island"), true);
             PersonalWorldsMod.LOGGER.info("Player {} entered {}'s personal dimension",
                 player.getName().getString(), ownerName);
@@ -341,7 +341,7 @@ public class PortalHelper {
      * Get a player's display name by UUID.
      */
     private static String getPlayerName(MinecraftServer server, UUID playerUuid) {
-        ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+        ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         if (player != null) {
             return player.getName().getString();
         }
@@ -352,39 +352,39 @@ public class PortalHelper {
      * Teleport player back to their stored return position.
      * Public to allow usage by commands (/pw leave) and portal exits.
      */
-    public static void teleportToReturnPosition(ServerPlayerEntity player, MinecraftServer server) {
-        UUID playerUuid = player.getUuid();
+    public static void teleportToReturnPosition(ServerPlayer player, MinecraftServer server) {
+        UUID playerUuid = player.getUUID();
         PlayerDataManager dataManager = PlayerDataManager.get(server);
 
         Optional<ReturnData> returnDataOpt = dataManager.getReturnData(playerUuid);
 
-        ServerWorld targetWorld;
-        Vec3d targetPos;
+        ServerLevel targetWorld;
+        Vec3 targetPos;
         float yaw, pitch;
 
         if (returnDataOpt.isPresent()) {
             ReturnData returnData = returnDataOpt.get();
-            targetWorld = server.getWorld(returnData.dimension());
+            targetWorld = server.getLevel(returnData.dimension());
 
             if (targetWorld == null) {
                 // Dimension deleted - use overworld
                 PersonalWorldsMod.LOGGER.warn("Return dimension not found for player {}, using overworld",
                     player.getName().getString());
-                targetWorld = server.getOverworld();
-                targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
+                targetWorld = server.overworld();
+                targetPos = Vec3.atCenterOf(SafeSpawnFinder.findSafePosition(
                     targetWorld, WorldCompat.getSpawnPos(targetWorld)));
-                yaw = player.getYaw();
-                pitch = player.getPitch();
+                yaw = player.getYRot();
+                pitch = player.getXRot();
             } else if (!SafeSpawnFinder.isSafeSpawn(targetWorld, returnData.position())) {
                 // Position no longer safe - find nearby safe spot
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(targetWorld, returnData.position());
-                targetPos = Vec3d.ofCenter(safePos);
+                targetPos = Vec3.atCenterOf(safePos);
                 yaw = returnData.yaw();
                 pitch = returnData.pitch();
                 PersonalWorldsMod.LOGGER.info("Return position unsafe, relocated player {} to {}",
                     player.getName().getString(), safePos);
             } else {
-                targetPos = Vec3d.ofCenter(returnData.position());
+                targetPos = Vec3.atCenterOf(returnData.position());
                 yaw = returnData.yaw();
                 pitch = returnData.pitch();
             }
@@ -394,30 +394,30 @@ public class PortalHelper {
         } else {
             // No return data - try bed spawn first
             BlockPos bedPos = EntityCompat.getSpawnPointPosition(player);
-            ServerWorld bedWorld = null;
+            ServerLevel bedWorld = null;
 
             if (bedPos != null) {
-                bedWorld = server.getWorld(EntityCompat.getSpawnPointDimension(player));
+                bedWorld = server.getLevel(EntityCompat.getSpawnPointDimension(player));
             }
 
             if (bedWorld != null) {
                 // Use bed spawn
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
                 targetWorld = bedWorld;
-                targetPos = Vec3d.ofCenter(safePos);
-                yaw = player.getYaw();
-                pitch = player.getPitch();
+                targetPos = Vec3.atCenterOf(safePos);
+                yaw = player.getYRot();
+                pitch = player.getXRot();
                 PersonalWorldsMod.LOGGER.debug("No return data for player {}, using bed spawn at {}",
                     player.getName().getString(), safePos);
             } else {
                 // Fallback: overworld world spawn
                 PersonalWorldsMod.LOGGER.debug("No return data for player {}, using overworld spawn",
                     player.getName().getString());
-                targetWorld = server.getOverworld();
-                targetPos = Vec3d.ofCenter(SafeSpawnFinder.findSafePosition(
+                targetWorld = server.overworld();
+                targetPos = Vec3.atCenterOf(SafeSpawnFinder.findSafePosition(
                     targetWorld, WorldCompat.getSpawnPos(targetWorld)));
-                yaw = player.getYaw();
-                pitch = player.getPitch();
+                yaw = player.getYRot();
+                pitch = player.getXRot();
             }
         }
 
@@ -433,7 +433,7 @@ public class PortalHelper {
         // Play arrival effects
         VisualEffects.playTeleportArrivalEffects(player);
 
-        player.sendMessage(Text.literal("Returned to the overworld"), true);
+        player.displayClientMessage(Component.literal("Returned to the overworld"), true);
         PersonalWorldsMod.LOGGER.info("Player {} left personal dimension", player.getName().getString());
     }
 
@@ -448,14 +448,14 @@ public class PortalHelper {
      * @param ownerUuid The UUID of the dimension owner
      * @return true if teleport was successful
      */
-    public static boolean teleportToDimension(ServerPlayerEntity player, MinecraftServer server, UUID ownerUuid) {
+    public static boolean teleportToDimension(ServerPlayer player, MinecraftServer server, UUID ownerUuid) {
         // Check if player is already in the target dimension
-        ServerWorld currentWorld = EntityCompat.getServerWorld(player);
+        ServerLevel currentWorld = EntityCompat.getServerWorld(player);
         if (isInPersonalDimension(currentWorld)) {
-            String dimPath = IdentifierCompat.fromKey(currentWorld.getRegistryKey()).getPath();
+            String dimPath = IdentifierCompat.fromKey(currentWorld.dimension()).getPath();
             String targetPath = "pw_" + ownerUuid.toString();
             if (dimPath.equals(targetPath)) {
-                player.sendMessage(Text.literal("You are already in this dimension!").formatted(Formatting.RED), false);
+                player.displayClientMessage(Component.literal("You are already in this dimension!").withStyle(ChatFormatting.RED), false);
                 return false;
             }
         }
@@ -478,9 +478,9 @@ public class PortalHelper {
      * @param world The world to check
      * @return true if this is a personal dimension
      */
-    public static boolean isInPersonalDimension(ServerWorld world) {
-        String namespace = IdentifierCompat.fromKey(world.getRegistryKey()).getNamespace();
-        String path = IdentifierCompat.fromKey(world.getRegistryKey()).getPath();
+    public static boolean isInPersonalDimension(ServerLevel world) {
+        String namespace = IdentifierCompat.fromKey(world.dimension()).getNamespace();
+        String path = IdentifierCompat.fromKey(world.dimension()).getPath();
         return PersonalWorldsMod.MOD_ID.equals(namespace) && path.startsWith("pw_");
     }
 
@@ -490,12 +490,12 @@ public class PortalHelper {
      * @param world The personal dimension world
      * @return Optional containing the owner UUID, or empty if not a personal dimension
      */
-    public static Optional<UUID> getDimensionOwner(ServerWorld world) {
+    public static Optional<UUID> getDimensionOwner(ServerLevel world) {
         if (!isInPersonalDimension(world)) {
             return Optional.empty();
         }
 
-        String path = IdentifierCompat.fromKey(world.getRegistryKey()).getPath();
+        String path = IdentifierCompat.fromKey(world.dimension()).getPath();
         String uuidStr = path.substring(3); // Remove "pw_" prefix
 
         // Dimension IDs store UUIDs without dashes (e.g., "e8823481a39c3659a564a28f5ed6f193")
@@ -523,7 +523,7 @@ public class PortalHelper {
      * @param dimensionKey The dimension registry key
      * @return Optional containing the owner UUID, or empty if not a personal dimension
      */
-    public static Optional<UUID> getDimensionOwner(RegistryKey<World> dimensionKey) {
+    public static Optional<UUID> getDimensionOwner(ResourceKey<Level> dimensionKey) {
         // Check namespace
         if (!IdentifierCompat.fromKey(dimensionKey).getNamespace().equals(PersonalWorldsMod.MOD_ID)) {
             return Optional.empty();
@@ -568,14 +568,14 @@ public class PortalHelper {
      * @param world The world to search in
      * @return Optional containing the position of a portal block, or empty if none found
      */
-    private static Optional<BlockPos> findExistingPortal(ServerWorld world) {
+    private static Optional<BlockPos> findExistingPortal(ServerLevel world) {
         BlockPos center = new BlockPos(0, PLATFORM_Y, 0);
 
         // Search for portal blocks in a cube around the center
         for (int y = -PORTAL_SEARCH_RADIUS; y <= PORTAL_SEARCH_RADIUS; y++) {
             for (int x = -PORTAL_SEARCH_RADIUS; x <= PORTAL_SEARCH_RADIUS; x++) {
                 for (int z = -PORTAL_SEARCH_RADIUS; z <= PORTAL_SEARCH_RADIUS; z++) {
-                    BlockPos checkPos = center.add(x, y, z);
+                    BlockPos checkPos = center.offset(x, y, z);
 
                     // Ensure Y is within valid range
                     if (checkPos.getY() < WorldCompat.getBottomY(world) || checkPos.getY() >= WorldCompat.getTopY(world)) {
@@ -590,7 +590,7 @@ public class PortalHelper {
             }
         }
 
-        PersonalWorldsMod.LOGGER.debug("No existing portal found in {}", IdentifierCompat.fromKey(world.getRegistryKey()));
+        PersonalWorldsMod.LOGGER.debug("No existing portal found in {}", IdentifierCompat.fromKey(world.dimension()));
         return Optional.empty();
     }
 
@@ -602,10 +602,10 @@ public class PortalHelper {
      * @param portalPos Position of a portal block
      * @return A safe position to teleport to (one block above ground)
      */
-    private static BlockPos findSafePositionNearPortal(ServerWorld world, BlockPos portalPos) {
+    private static BlockPos findSafePositionNearPortal(ServerLevel world, BlockPos portalPos) {
         // Get the portal axis to determine which directions to check
         BlockState portalState = world.getBlockState(portalPos);
-        Direction.Axis axis = portalState.get(PersonalPortalBlock.AXIS);
+        Direction.Axis axis = portalState.getValue(PersonalPortalBlock.AXIS);
 
         // Check positions perpendicular to the portal
         Direction[] checkDirections;
@@ -619,19 +619,19 @@ public class PortalHelper {
 
         // Find the bottom of the portal (search down)
         BlockPos bottomPortal = portalPos;
-        while (world.getBlockState(bottomPortal.down()).getBlock() == ModBlocks.PERSONAL_PORTAL) {
-            bottomPortal = bottomPortal.down();
+        while (world.getBlockState(bottomPortal.below()).getBlock() == ModBlocks.PERSONAL_PORTAL) {
+            bottomPortal = bottomPortal.below();
         }
 
         // Check each direction for a safe landing spot
         for (Direction dir : checkDirections) {
-            BlockPos sidePos = bottomPortal.offset(dir);
+            BlockPos sidePos = bottomPortal.relative(dir);
 
             // Look for solid ground below
             for (int yOffset = 0; yOffset >= -3; yOffset--) {
-                BlockPos groundCheck = sidePos.add(0, yOffset - 1, 0);
-                BlockPos feetPos = sidePos.add(0, yOffset, 0);
-                BlockPos headPos = sidePos.add(0, yOffset + 1, 0);
+                BlockPos groundCheck = sidePos.offset(0, yOffset - 1, 0);
+                BlockPos feetPos = sidePos.offset(0, yOffset, 0);
+                BlockPos headPos = sidePos.offset(0, yOffset + 1, 0);
 
                 // Check: solid ground, empty feet space, empty head space
                 if (!world.getBlockState(groundCheck).isAir() &&
@@ -659,12 +659,12 @@ public class PortalHelper {
      * @param portalTypeIndex The portal type index (determines island materials)
      * @return The spawn position (one block above platform)
      */
-    private static BlockPos getOrCreateSpawnPlatform(ServerWorld world, WorldGenType genType, int portalTypeIndex) {
+    private static BlockPos getOrCreateSpawnPlatform(ServerLevel world, WorldGenType genType, int portalTypeIndex) {
         BlockPos spawnPos = new BlockPos(0, PLATFORM_Y + 1, 0);
 
         // For void worlds, check if platform exists
         if (genType == WorldGenType.VOID) {
-            BlockPos groundCheck = spawnPos.down();
+            BlockPos groundCheck = spawnPos.below();
             if (world.getBlockState(groundCheck).isAir()) {
                 // Create starter platform with portal type materials
                 createStarterPlatform(world, new BlockPos(0, PLATFORM_Y, 0), portalTypeIndex);
@@ -682,33 +682,33 @@ public class PortalHelper {
      * @param center The center position of the platform (Y = platform level)
      * @param portalTypeIndex The portal type index (determines platform material)
      */
-    private static void createStarterPlatform(ServerWorld world, BlockPos center, int portalTypeIndex) {
+    private static void createStarterPlatform(ServerLevel world, BlockPos center, int portalTypeIndex) {
         PersonalWorldsMod.LOGGER.info("Creating starter platform at {} with portal type {}", center, portalTypeIndex);
 
         // Get platform material from portal config (first island layer)
-        BlockState platformMaterial = Blocks.GRASS_BLOCK.getDefaultState(); // Fallback
+        BlockState platformMaterial = Blocks.GRASS_BLOCK.defaultBlockState(); // Fallback
 
         ModConfig.PortalConfig config = ModConfig.get().portalTypes.get(portalTypeIndex);
         if (config.islandLayers.length > 0) {
             String blockId = config.islandLayers[0];
-            Identifier id = IdentifierCompat.tryParse(blockId);
-            Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.GRASS_BLOCK;
+            ResourceLocation id = IdentifierCompat.tryParse(blockId);
+            Block block = id != null ? RegistryCompat.get(BuiltInRegistries.BLOCK, id) : Blocks.GRASS_BLOCK;
 
             if (block != Blocks.AIR || blockId.equals("minecraft:air")) {
-                platformMaterial = block.getDefaultState();
+                platformMaterial = block.defaultBlockState();
             }
         }
 
         // Create 5x5 platform
         for (int x = -PLATFORM_RADIUS; x <= PLATFORM_RADIUS; x++) {
             for (int z = -PLATFORM_RADIUS; z <= PLATFORM_RADIUS; z++) {
-                BlockPos pos = center.add(x, 0, z);
-                world.setBlockState(pos, platformMaterial);
+                BlockPos pos = center.offset(x, 0, z);
+                world.setBlockAndUpdate(pos, platformMaterial);
             }
         }
 
         // Create return portal frame (offset from center)
-        createReturnPortalFrame(world, center.add(4, 1, 0));
+        createReturnPortalFrame(world, center.offset(4, 1, 0));
     }
 
     /**
@@ -719,10 +719,10 @@ public class PortalHelper {
      * @param world The world to create the frame in
      * @param bottomLeft The bottom-left position of the frame
      */
-    private static void createReturnPortalFrame(ServerWorld world, BlockPos bottomLeft) {
+    private static void createReturnPortalFrame(ServerLevel world, BlockPos bottomLeft) {
         // Return portal uses default portal type (index 0)
         Block frameBlock = ModBlocks.getFrameBlock(0);
-        BlockState frameState = frameBlock.getDefaultState();
+        BlockState frameState = frameBlock.defaultBlockState();
 
         // Build 4-wide x 5-tall frame (same as standard portal)
         int frameWidth = PORTAL_WIDTH + 2;  // 4
@@ -730,22 +730,22 @@ public class PortalHelper {
 
         // Bottom row
         for (int x = 0; x < frameWidth; x++) {
-            world.setBlockState(bottomLeft.add(x, 0, 0), frameState);
+            world.setBlockAndUpdate(bottomLeft.offset(x, 0, 0), frameState);
         }
 
         // Top row
         for (int x = 0; x < frameWidth; x++) {
-            world.setBlockState(bottomLeft.add(x, frameHeight - 1, 0), frameState);
+            world.setBlockAndUpdate(bottomLeft.offset(x, frameHeight - 1, 0), frameState);
         }
 
         // Left column (excluding corners)
         for (int y = 1; y < frameHeight - 1; y++) {
-            world.setBlockState(bottomLeft.add(0, y, 0), frameState);
+            world.setBlockAndUpdate(bottomLeft.offset(0, y, 0), frameState);
         }
 
         // Right column (excluding corners)
         for (int y = 1; y < frameHeight - 1; y++) {
-            world.setBlockState(bottomLeft.add(frameWidth - 1, y, 0), frameState);
+            world.setBlockAndUpdate(bottomLeft.offset(frameWidth - 1, y, 0), frameState);
         }
 
         PersonalWorldsMod.LOGGER.debug("Created return portal frame at {}", bottomLeft);
@@ -765,7 +765,7 @@ public class PortalHelper {
      * @return Optional containing portal type index, or empty if no valid frame
      */
     private static Optional<Integer> detectPortalType(
-            World world,
+            Level world,
             BlockPos clickedPos,
             Item activationItem
     ) {
@@ -802,7 +802,7 @@ public class PortalHelper {
      * @param portalTypeIndex The portal type index
      * @return Optional containing the detected frame, or empty if none found
      */
-    public static Optional<PortalFrame> detectFrame(World world, BlockPos clickedPos, int portalTypeIndex) {
+    public static Optional<PortalFrame> detectFrame(Level world, BlockPos clickedPos, int portalTypeIndex) {
         Block frameBlock = ModBlocks.getFrameBlock(portalTypeIndex);
 
         // Try X-axis orientation first
@@ -825,7 +825,7 @@ public class PortalHelper {
      * @return Optional containing the detected frame, or empty if none found
      */
     private static Optional<PortalFrame> detectFrameForAxis(
-            World world,
+            Level world,
             BlockPos clickedPos,
             Block frameBlock,
             Direction.Axis axis
@@ -838,7 +838,7 @@ public class PortalHelper {
 
         // Go left/north until we hit a frame block or search limit
         for (int i = 0; i < PORTAL_WIDTH + 1; i++) {
-            BlockPos nextPos = searchPos.offset(horizontal);
+            BlockPos nextPos = searchPos.relative(horizontal);
             if (world.getBlockState(nextPos).getBlock() == frameBlock) {
                 break;
             }
@@ -847,7 +847,7 @@ public class PortalHelper {
 
         // Go down until we hit a frame block or search limit
         for (int i = 0; i < PORTAL_HEIGHT + 1; i++) {
-            BlockPos downPos = searchPos.down();
+            BlockPos downPos = searchPos.below();
             if (world.getBlockState(downPos).getBlock() == frameBlock) {
                 break;
             }
@@ -856,7 +856,7 @@ public class PortalHelper {
 
         // Now searchPos should be the bottom-left interior block
         // The actual bottom-left frame block is one step left/north and one step down
-        BlockPos bottomLeftFrame = searchPos.offset(horizontal).down();
+        BlockPos bottomLeftFrame = searchPos.relative(horizontal).below();
 
         // Create frame and validate
         PortalFrame frame = new PortalFrame(bottomLeftFrame, PORTAL_WIDTH, PORTAL_HEIGHT, axis);
@@ -876,7 +876,7 @@ public class PortalHelper {
      * @param frameBlock The block type expected for the frame
      * @return true if the frame is valid
      */
-    private static boolean isValidFrame(World world, PortalFrame frame, Block frameBlock) {
+    private static boolean isValidFrame(Level world, PortalFrame frame, Block frameBlock) {
         // Check all frame positions have the correct block
         for (BlockPos pos : frame.getFramePositions()) {
             if (world.getBlockState(pos).getBlock() != frameBlock) {
@@ -906,7 +906,7 @@ public class PortalHelper {
      * @param axis The axis of the portal
      * @return true if frame is still valid
      */
-    public static boolean isFrameValidForPortal(World world, BlockPos portalPos, Direction.Axis axis) {
+    public static boolean isFrameValidForPortal(Level world, BlockPos portalPos, Direction.Axis axis) {
         // Check all portal types - portal is valid if ANY type has a valid frame
         for (int i = 0; i < ModConfig.get().portalTypes.size(); i++) {
             Block frameBlock = ModBlocks.getFrameBlock(i);

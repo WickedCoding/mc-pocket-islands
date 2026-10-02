@@ -12,11 +12,11 @@ import com.wickedsik.personalworlds.compat.CommandCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.util.PermissionHelper;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 
 /**
  * Command registration and delegation for Pocket Islands.
@@ -53,14 +53,14 @@ public class ModCommands {
         debugExecutor = new DebugCommandExecutor();
     }
 
-    private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-            CommandManager.literal("pi")
+            Commands.literal("pi")
                 // === Development/Testing Commands (OP level 2+) ===
-                .then(CommandManager.literal("create")
+                .then(Commands.literal("create")
                     .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
                     .executes(ctx -> handleCreate(ctx.getSource(), "OVERWORLD"))
-                    .then(CommandManager.argument("type", StringArgumentType.word())
+                    .then(Commands.argument("type", StringArgumentType.word())
                         .executes(ctx -> handleCreate(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "type")
@@ -68,12 +68,12 @@ public class ModCommands {
                     )
                 )
 
-                .then(CommandManager.literal("enter")
+                .then(Commands.literal("enter")
                     .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
                     .executes(ctx -> handleEnter(ctx.getSource()))
                 )
 
-                .then(CommandManager.literal("leave")
+                .then(Commands.literal("leave")
                     .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
                     .executes(ctx -> handleLeave(ctx.getSource()))
                 )
@@ -81,8 +81,8 @@ public class ModCommands {
                 // === Player Commands (No Permission Required) ===
                 .then(buildInviteCommand())
 
-                .then(CommandManager.literal("uninvite")
-                    .then(CommandManager.argument("player", StringArgumentType.word())
+                .then(Commands.literal("uninvite")
+                    .then(Commands.argument("player", StringArgumentType.word())
                         .executes(ctx -> handleUninvite(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "player")
@@ -93,24 +93,24 @@ public class ModCommands {
                 // Conditionally add togglewelcome command
                 .then(buildToggleWelcomeCommand())
 
-                .then(CommandManager.literal("invites")
+                .then(Commands.literal("invites")
                     .executes(ctx -> handleInvites(ctx.getSource()))
                 )
 
-                .then(CommandManager.literal("portals")
+                .then(Commands.literal("portals")
                     .executes(ctx -> handlePortals(ctx.getSource()))
                 )
 
                 // === Admin Commands ===
-                .then(CommandManager.literal("admin")
-                    .then(CommandManager.literal("list")
+                .then(Commands.literal("admin")
+                    .then(Commands.literal("list")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_LIST, PermissionHelper.DEFAULT_ADMIN_LIST_LEVEL))
                         .executes(ctx -> handleAdminList(ctx.getSource()))
                     )
 
-                    .then(CommandManager.literal("info")
+                    .then(Commands.literal("info")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_INFO, PermissionHelper.DEFAULT_ADMIN_INFO_LEVEL))
-                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("player", StringArgumentType.word())
                             .executes(ctx -> handleAdminInfo(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "player")
@@ -118,14 +118,14 @@ public class ModCommands {
                         )
                     )
 
-                    .then(CommandManager.literal("delete")
+                    .then(Commands.literal("delete")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_DELETE, PermissionHelper.DEFAULT_ADMIN_DELETE_LEVEL))
-                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("player", StringArgumentType.word())
                             .executes(ctx -> handleAdminDeletePrompt(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "player")
                             ))
-                            .then(CommandManager.literal("confirm")
+                            .then(Commands.literal("confirm")
                                 .executes(ctx -> handleAdminDeleteConfirm(
                                     ctx.getSource(),
                                     StringArgumentType.getString(ctx, "player")
@@ -134,9 +134,9 @@ public class ModCommands {
                         )
                     )
 
-                    .then(CommandManager.literal("tp")
+                    .then(Commands.literal("tp")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_TELEPORT, PermissionHelper.DEFAULT_ADMIN_TELEPORT_LEVEL))
-                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("player", StringArgumentType.word())
                             .executes(ctx -> handleAdminTeleport(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "player")
@@ -144,20 +144,20 @@ public class ModCommands {
                         )
                     )
 
-                    .then(CommandManager.literal("reload")
+                    .then(Commands.literal("reload")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_RELOAD, PermissionHelper.DEFAULT_ADMIN_RELOAD_LEVEL))
                         .executes(ctx -> handleAdminReload(ctx.getSource()))
                     )
 
-                    .then(CommandManager.literal("sanitize")
+                    .then(Commands.literal("sanitize")
                         .requires(PermissionHelper.require(PermissionHelper.ADMIN_SANITIZE, PermissionHelper.DEFAULT_ADMIN_SANITIZE_LEVEL))
-                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("player", StringArgumentType.word())
                             .executes(ctx -> handleAdminSanitize(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "player"),
                                 4
                             ))
-                            .then(CommandManager.argument("radius", IntegerArgumentType.integer(0, 16))
+                            .then(Commands.argument("radius", IntegerArgumentType.integer(0, 16))
                                 .executes(ctx -> handleAdminSanitize(
                                     ctx.getSource(),
                                     StringArgumentType.getString(ctx, "player"),
@@ -169,19 +169,19 @@ public class ModCommands {
                 )
 
                 // === Debug/Testing Commands (OP level 4) ===
-                .then(CommandManager.literal("debug")
+                .then(Commands.literal("debug")
                     .requires(CommandCompat.requiresLevel(4))
-                    .then(CommandManager.literal("perf")
-                        .then(CommandManager.literal("enable")
+                    .then(Commands.literal("perf")
+                        .then(Commands.literal("enable")
                             .executes(ctx -> debugExecutor.enablePerf().applyTo(ctx.getSource())))
-                        .then(CommandManager.literal("disable")
+                        .then(Commands.literal("disable")
                             .executes(ctx -> debugExecutor.disablePerf().applyTo(ctx.getSource())))
-                        .then(CommandManager.literal("status")
+                        .then(Commands.literal("status")
                             .executes(ctx -> {
                                 debugExecutor.showStatus(ctx.getSource(), ctx.getSource().getServer());
                                 return CommandResult.SUCCESS;
                             }))
-                        .then(CommandManager.literal("reset")
+                        .then(Commands.literal("reset")
                             .executes(ctx -> debugExecutor.resetCounters().applyTo(ctx.getSource())))
                     )
                 )
@@ -194,41 +194,41 @@ public class ModCommands {
      * Build the invite command with optional "always" subcommand.
      * The "always" variant is only available when enableAlwaysWelcome is true.
      */
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> buildInviteCommand() {
-        var playerArg = CommandManager.argument("player", EntityArgumentType.player())
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildInviteCommand() {
+        var playerArg = Commands.argument("player", EntityArgument.player())
             .executes(ctx -> handleInvite(
                 ctx.getSource(),
-                EntityArgumentType.getPlayer(ctx, "player"),
+                EntityArgument.getPlayer(ctx, "player"),
                 false
             ));
 
         // Conditionally add "always" subcommand
         if (ModConfig.get().enableAlwaysWelcome) {
-            playerArg = playerArg.then(CommandManager.literal("always")
+            playerArg = playerArg.then(Commands.literal("always")
                 .executes(ctx -> handleInvite(
                     ctx.getSource(),
-                    EntityArgumentType.getPlayer(ctx, "player"),
+                    EntityArgument.getPlayer(ctx, "player"),
                     true
                 ))
             );
         }
 
-        return CommandManager.literal("invite").then(playerArg);
+        return Commands.literal("invite").then(playerArg);
     }
 
     /**
      * Build the togglewelcome command.
      * Returns a no-op command if enableAlwaysWelcome is false.
      */
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> buildToggleWelcomeCommand() {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildToggleWelcomeCommand() {
         if (!ModConfig.get().enableAlwaysWelcome) {
             // Return a hidden command that does nothing (won't show in tab-complete)
-            return CommandManager.literal("togglewelcome")
+            return Commands.literal("togglewelcome")
                 .requires(source -> false);  // Never passes requirements check
         }
 
-        return CommandManager.literal("togglewelcome")
-            .then(CommandManager.argument("player", StringArgumentType.word())
+        return Commands.literal("togglewelcome")
+            .then(Commands.argument("player", StringArgumentType.word())
                 .executes(ctx -> handleToggleWelcome(
                     ctx.getSource(),
                     StringArgumentType.getString(ctx, "player")
@@ -238,101 +238,101 @@ public class ModCommands {
 
     // ==================== Thin Adapter Methods ====================
 
-    private static int handleCreate(ServerCommandSource source, String typeStr) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleCreate(CommandSourceStack source, String typeStr) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.createDimension(player, typeStr).applyTo(source);
     }
 
-    private static int handleEnter(ServerCommandSource source) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleEnter(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.enterDimension(player).applyTo(source);
     }
 
-    private static int handleLeave(ServerCommandSource source) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleLeave(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return devExecutor.leaveDimension(player).applyTo(source);
     }
 
-    private static int handleInvite(ServerCommandSource source, ServerPlayerEntity guest, boolean alwaysWelcome) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleInvite(CommandSourceStack source, ServerPlayer guest, boolean alwaysWelcome) {
+        if (!(source.getEntity() instanceof ServerPlayer owner)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.invite(owner, guest, alwaysWelcome).applyTo(source);
     }
 
-    private static int handleToggleWelcome(ServerCommandSource source, String guestName) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleToggleWelcome(CommandSourceStack source, String guestName) {
+        if (!(source.getEntity() instanceof ServerPlayer owner)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.toggleWelcome(owner, guestName).applyTo(source);
     }
 
-    private static int handleUninvite(ServerCommandSource source, String guestName) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity owner)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleUninvite(CommandSourceStack source, String guestName) {
+        if (!(source.getEntity() instanceof ServerPlayer owner)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.uninvite(owner, guestName).applyTo(source);
     }
 
-    private static int handleInvites(ServerCommandSource source) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleInvites(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return playerExecutor.showInvitations(player).applyTo(source);
     }
 
-    private static int handlePortals(ServerCommandSource source) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity player)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handlePortals(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         playerExecutor.showPortals(player, source);
         return CommandResult.SUCCESS;
     }
 
-    private static int handleAdminList(ServerCommandSource source) {
+    private static int handleAdminList(CommandSourceStack source) {
         adminExecutor.list(source);
         return CommandResult.SUCCESS;
     }
 
-    private static int handleAdminInfo(ServerCommandSource source, String playerName) {
+    private static int handleAdminInfo(CommandSourceStack source, String playerName) {
         return adminExecutor.info(source, playerName).applyTo(source);
     }
 
-    private static int handleAdminDeletePrompt(ServerCommandSource source, String playerName) {
+    private static int handleAdminDeletePrompt(CommandSourceStack source, String playerName) {
         return adminExecutor.deletePrompt(source, playerName).applyTo(source);
     }
 
-    private static int handleAdminDeleteConfirm(ServerCommandSource source, String playerName) {
+    private static int handleAdminDeleteConfirm(CommandSourceStack source, String playerName) {
         return adminExecutor.deleteConfirm(source, playerName).applyTo(source);
     }
 
-    private static int handleAdminTeleport(ServerCommandSource source, String playerName) {
-        if (!(source.getEntity() instanceof ServerPlayerEntity admin)) {
-            source.sendError(Text.translatable("pocketislands.command.error.must_be_player"));
+    private static int handleAdminTeleport(CommandSourceStack source, String playerName) {
+        if (!(source.getEntity() instanceof ServerPlayer admin)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
             return CommandResult.FAILURE;
         }
         return adminExecutor.teleport(admin, playerName).applyTo(source);
     }
 
-    private static int handleAdminReload(ServerCommandSource source) {
+    private static int handleAdminReload(CommandSourceStack source) {
         return adminExecutor.reload(source).applyTo(source);
     }
 
-    private static int handleAdminSanitize(ServerCommandSource source, String playerName, int radius) {
+    private static int handleAdminSanitize(CommandSourceStack source, String playerName, int radius) {
         return adminExecutor.sanitize(source, playerName, radius).applyTo(source);
     }
 }

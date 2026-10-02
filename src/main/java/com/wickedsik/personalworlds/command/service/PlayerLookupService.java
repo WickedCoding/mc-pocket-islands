@@ -4,7 +4,7 @@ import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 import java.util.Set;
@@ -34,10 +34,10 @@ public class PlayerLookupService {
      */
     public Optional<PlayerReference> findByName(MinecraftServer server, String name) {
         // Check online players first
-        ServerPlayerEntity onlinePlayer = server.getPlayerManager().getPlayer(name);
+        ServerPlayer onlinePlayer = server.getPlayerList().getPlayerByName(name);
         if (onlinePlayer != null) {
             return Optional.of(new PlayerReference(
-                onlinePlayer.getUuid(),
+                onlinePlayer.getUUID(),
                 onlinePlayer.getName().getString(),
                 true
             ));
@@ -69,10 +69,10 @@ public class PlayerLookupService {
      */
     public Optional<PlayerReference> findInInvitations(MinecraftServer server, UUID ownerUuid, String name) {
         // Check online players first
-        ServerPlayerEntity onlinePlayer = server.getPlayerManager().getPlayer(name);
+        ServerPlayer onlinePlayer = server.getPlayerList().getPlayerByName(name);
         if (onlinePlayer != null) {
             return Optional.of(new PlayerReference(
-                onlinePlayer.getUuid(),
+                onlinePlayer.getUUID(),
                 onlinePlayer.getName().getString(),
                 true
             ));

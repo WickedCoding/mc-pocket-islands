@@ -1,8 +1,8 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Component;
 
 /**
  * Compatibility layer for Text component API differences.
@@ -55,7 +55,7 @@ public final class TextCompat {
     /**
      * Create a HoverEvent that shows text on hover.
      */
-    public static HoverEvent showText(Text text) {
+    public static HoverEvent showText(Component text) {
         //? if >=1.21 {
         /*return new HoverEvent.ShowText(text);
         *///?} else {

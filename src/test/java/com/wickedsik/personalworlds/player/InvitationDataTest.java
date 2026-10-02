@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.compat.NbtCompat;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -158,7 +158,7 @@ class InvitationDataTest {
         void toNbt_validData_createsCompound() {
             InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertNotNull(nbt);
             assertTrue(NbtCompat.containsUuid(nbt,"OwnerUuid"));
@@ -172,7 +172,7 @@ class InvitationDataTest {
         void toNbt_correctValues() {
             InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals(testOwnerUuid, NbtCompat.getUuid(nbt,"OwnerUuid"));
             assertEquals(testOwnerName, NbtCompat.getString(nbt, "OwnerName", ""));
@@ -185,7 +185,7 @@ class InvitationDataTest {
         void toNbt_alwaysWelcomeFalse_storesCorrectly() {
             InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertFalse(NbtCompat.getBoolean(nbt, "AlwaysWelcome", true));
         }
@@ -193,7 +193,7 @@ class InvitationDataTest {
         @Test
         @DisplayName("fromNbt with valid compound creates record")
         void fromNbt_validCompound_createsRecord() {
-            NbtCompound nbt = new NbtCompound();
+            CompoundTag nbt = new CompoundTag();
             NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             nbt.putLong("InvitedAt", testInvitedAt);
@@ -212,7 +212,7 @@ class InvitationDataTest {
         @DisplayName("fromNbt without AlwaysWelcome defaults to false (backward compatibility)")
         void fromNbt_missingAlwaysWelcome_defaultsFalse() {
             // Simulates loading old world data before Always Welcome feature existed
-            NbtCompound nbt = new NbtCompound();
+            CompoundTag nbt = new CompoundTag();
             NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             nbt.putLong("InvitedAt", testInvitedAt);
@@ -228,7 +228,7 @@ class InvitationDataTest {
         void roundTrip_preservesAllFields_alwaysWelcomeTrue() {
             InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, true);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(original, restored);
@@ -240,7 +240,7 @@ class InvitationDataTest {
         void roundTrip_preservesAllFields_alwaysWelcomeFalse() {
             InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, testInvitedAt, false);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(original, restored);
@@ -250,7 +250,7 @@ class InvitationDataTest {
         @Test
         @DisplayName("fromNbt with missing name returns Unknown default")
         void fromNbt_missingName_returnsUnknown() {
-            NbtCompound nbt = new NbtCompound();
+            CompoundTag nbt = new CompoundTag();
             NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putLong("InvitedAt", testInvitedAt);
             // Missing OwnerName - defaults to "Unknown" for display purposes
@@ -263,7 +263,7 @@ class InvitationDataTest {
         @Test
         @DisplayName("fromNbt with missing timestamp returns 0")
         void fromNbt_missingTimestamp_returnsZero() {
-            NbtCompound nbt = new NbtCompound();
+            CompoundTag nbt = new CompoundTag();
             NbtCompat.putUuid(nbt,"OwnerUuid", testOwnerUuid);
             nbt.putString("OwnerName", testOwnerName);
             // Missing InvitedAt
@@ -309,7 +309,7 @@ class InvitationDataTest {
             long preciseTime = 1704067200123L; // Specific millisecond
             InvitationData original = new InvitationData(testOwnerUuid, testOwnerName, preciseTime);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(preciseTime, restored.invitedAt());
@@ -320,7 +320,7 @@ class InvitationDataTest {
         void maxLongTimestamp_works() {
             InvitationData data = new InvitationData(testOwnerUuid, testOwnerName, Long.MAX_VALUE);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(Long.MAX_VALUE, restored.invitedAt());
@@ -398,7 +398,7 @@ class InvitationDataTest {
             String unicodeName = "プレイヤー123";
             InvitationData original = new InvitationData(testOwnerUuid, unicodeName, testInvitedAt);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(unicodeName, restored.ownerName());
@@ -409,7 +409,7 @@ class InvitationDataTest {
         void emptyName_serializesCorrectly() {
             InvitationData original = new InvitationData(testOwnerUuid, "", testInvitedAt);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals("", restored.ownerName());
@@ -421,7 +421,7 @@ class InvitationDataTest {
             String longName = "A".repeat(1000);
             InvitationData original = new InvitationData(testOwnerUuid, longName, testInvitedAt);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(longName, restored.ownerName());
@@ -433,7 +433,7 @@ class InvitationDataTest {
             String specialName = "Player<>\"'&\n\t";
             InvitationData original = new InvitationData(testOwnerUuid, specialName, testInvitedAt);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             InvitationData restored = InvitationData.fromNbt(nbt);
 
             assertEquals(specialName, restored.ownerName());

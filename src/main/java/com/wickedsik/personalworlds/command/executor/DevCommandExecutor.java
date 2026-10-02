@@ -10,9 +10,9 @@ import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.dimension.WorldGenType;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -35,14 +35,14 @@ public class DevCommandExecutor {
      * @param typeStr World generation type (e.g., "OVERWORLD", "VOID")
      * @return Command result
      */
-    public CommandResult createDimension(ServerPlayerEntity player, String typeStr) {
+    public CommandResult createDimension(ServerPlayer player, String typeStr) {
         WorldGenType type = WorldGenType.fromString(typeStr);
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
         String playerName = player.getName().getString();
         MinecraftServer server = EntityCompat.getServer(player);
 
         try {
-            ServerWorld dimension = DimensionManager.getOrCreatePlayerDimension(
+            ServerLevel dimension = DimensionManager.getOrCreatePlayerDimension(
                 server,
                 playerUuid,
                 playerName,
@@ -53,11 +53,11 @@ public class DevCommandExecutor {
             TeleportCompat.teleport(player, dimension, TeleportHelper.toDefaultSpawn(dimension, player));
 
             return CommandResult.successBroadcast(
-                Text.translatable("pocketislands.command.info.dimension_created", type.name())
+                Component.translatable("pocketislands.command.info.dimension_created", type.name())
             );
         } catch (Exception e) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.create_failed", e.getMessage())
+                Component.translatable("pocketislands.command.error.create_failed", e.getMessage())
             );
         }
     }
@@ -68,28 +68,28 @@ public class DevCommandExecutor {
      * @param player The player entering their dimension
      * @return Command result
      */
-    public CommandResult enterDimension(ServerPlayerEntity player) {
-        UUID playerUuid = player.getUuid();
+    public CommandResult enterDimension(ServerPlayer player) {
+        UUID playerUuid = player.getUUID();
         MinecraftServer server = EntityCompat.getServer(player);
         DimensionRegistry registry = DimensionRegistry.get(server);
 
         if (!registry.hasDimension(playerUuid)) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.no_dimension")
+                Component.translatable("pocketislands.command.error.no_dimension")
             );
         }
 
         Optional<PlayerDimensionData> optData = registry.getDimensionData(playerUuid);
         if (optData.isEmpty()) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.load_failed")
+                Component.translatable("pocketislands.command.error.load_failed")
             );
         }
 
         PlayerDimensionData data = optData.get();
 
         try {
-            ServerWorld dimension = DimensionManager.getOrCreatePlayerDimension(
+            ServerLevel dimension = DimensionManager.getOrCreatePlayerDimension(
                 server,
                 playerUuid,
                 player.getName().getString(),
@@ -104,11 +104,11 @@ public class DevCommandExecutor {
             );
 
             return CommandResult.successBroadcast(
-                Text.translatable("pocketislands.command.enter.success")
+                Component.translatable("pocketislands.command.enter.success")
             );
         } catch (Exception e) {
             return CommandResult.error(
-                Text.translatable("pocketislands.command.error.enter_failed", e.getMessage())
+                Component.translatable("pocketislands.command.error.enter_failed", e.getMessage())
             );
         }
     }
@@ -119,7 +119,7 @@ public class DevCommandExecutor {
      * @param player The player leaving
      * @return Command result (always successful as PortalHelper handles the teleport)
      */
-    public CommandResult leaveDimension(ServerPlayerEntity player) {
+    public CommandResult leaveDimension(ServerPlayer player) {
         PortalHelper.teleportToReturnPosition(player, EntityCompat.getServer(player));
         return CommandResult.silent();
     }

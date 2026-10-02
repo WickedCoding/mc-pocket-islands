@@ -6,21 +6,21 @@ import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.biome.source.FixedBiomeSource;
-import net.minecraft.world.dimension.DimensionTypes;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.biome.FixedBiomeSource;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import xyz.nucleoid.fantasy.Fantasy;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.fantasy.RuntimeWorldHandle;
@@ -44,7 +44,7 @@ public class DimensionManager {
      * @param portalTypeIndex The portal type index from ModConfig.portalTypes
      * @return The ServerWorld for the player's dimension
      */
-    public static ServerWorld getOrCreatePlayerDimension(
+    public static ServerLevel getOrCreatePlayerDimension(
             MinecraftServer server,
             UUID playerUuid,
             String playerName,
@@ -52,7 +52,7 @@ public class DimensionManager {
             int portalTypeIndex
     ) {
         Fantasy fantasy = Fantasy.get(server);
-        Identifier dimId = createDimensionId(playerUuid);
+        ResourceLocation dimId = createDimensionId(playerUuid);
 
         // Check if already loaded
         if (activeHandles.containsKey(playerUuid)) {
@@ -143,7 +143,7 @@ public class DimensionManager {
      */
     public static boolean unloadIfEmpty(UUID playerUuid) {
         RuntimeWorldHandle handle = activeHandles.get(playerUuid);
-        if (handle != null && handle.asWorld().getPlayers().isEmpty()) {
+        if (handle != null && handle.asWorld().players().isEmpty()) {
             handle.unload();
             activeHandles.remove(playerUuid);
             PersonalWorldsMod.LOGGER.info("Unloaded empty dimension for player: {}", playerUuid);
@@ -196,7 +196,7 @@ public class DimensionManager {
     public static void unloadEmptyDimensions() {
         activeHandles.entrySet().removeIf(entry -> {
             RuntimeWorldHandle handle = entry.getValue();
-            if (handle.asWorld().getPlayers().isEmpty()) {
+            if (handle.asWorld().players().isEmpty()) {
                 handle.unload();
                 PersonalWorldsMod.LOGGER.debug("Unloaded empty dimension: {}", entry.getKey());
                 return true;
@@ -226,7 +226,7 @@ public class DimensionManager {
     /**
      * Get a loaded dimension's world, if available.
      */
-    public static ServerWorld getLoadedDimension(UUID playerUuid) {
+    public static ServerLevel getLoadedDimension(UUID playerUuid) {
         RuntimeWorldHandle handle = activeHandles.get(playerUuid);
         return handle != null ? handle.asWorld() : null;
     }
@@ -240,7 +240,7 @@ public class DimensionManager {
 
     // --- Private Helpers ---
 
-    private static Identifier createDimensionId(UUID playerUuid) {
+    private static ResourceLocation createDimensionId(UUID playerUuid) {
         // Format: personalworlds:pw_<uuid>
         return IdentifierCompat.modId("pw_" + playerUuid.toString().replace("-", ""));
     }
@@ -252,11 +252,11 @@ public class DimensionManager {
             int portalTypeIndex
     ) {
         RuntimeWorldConfig config = new RuntimeWorldConfig()
-            .setDimensionType(DimensionTypes.OVERWORLD)
+            .setDimensionType(BuiltinDimensionTypes.OVERWORLD)
             .setSeed(playerUuid.hashCode())
-            .setDifficulty(server.getSaveProperties().getDifficulty())
+            .setDifficulty(server.getWorldData().getDifficulty())
             .setShouldTickTime(true)
-            .setTimeOfDay(server.getOverworld().getTimeOfDay());
+            .setTimeOfDay(server.overworld().getDayTime());
 
         // Set chunk generator based on type and portal config
         config.setGenerator(createChunkGenerator(server, genType, portalTypeIndex));
@@ -285,12 +285,12 @@ public class DimensionManager {
                 // Create VoidIslandChunkGenerator with THE_VOID biome
                 // Using THE_VOID prevents structure generation (no villages, etc.)
                 //? if >=1.21 {
-                /*var biomeRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.BIOME);
-                RegistryEntry<Biome> voidBiome = biomeRegistry.getOptional(BiomeKeys.THE_VOID)
+                /*var biomeRegistry = server.registryAccess().lookupOrThrow(Registries.BIOME);
+                Holder<Biome> voidBiome = biomeRegistry.get(Biomes.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
                 *///?} else {
-                var biomeRegistry = server.getRegistryManager().get(RegistryKeys.BIOME);
-                RegistryEntry<Biome> voidBiome = biomeRegistry.getEntry(BiomeKeys.THE_VOID)
+                var biomeRegistry = server.registryAccess().registryOrThrow(Registries.BIOME);
+                Holder<Biome> voidBiome = biomeRegistry.getHolder(Biomes.THE_VOID)
                     .orElseThrow(() -> new IllegalStateException("The Void biome not found"));
                 //?}
 
@@ -299,10 +299,10 @@ public class DimensionManager {
 
                 yield new VoidIslandChunkGenerator(new FixedBiomeSource(voidBiome), islandLayers);
             }
-            case OVERWORLD -> server.getOverworld().getChunkManager().getChunkGenerator();
+            case OVERWORLD -> server.overworld().getChunkSource().getGenerator();
             case FLAT -> {
                 // Use overworld generator for now; flat generator can be added later
-                yield server.getOverworld().getChunkManager().getChunkGenerator();
+                yield server.overworld().getChunkSource().getGenerator();
             }
         };
     }
@@ -322,15 +322,15 @@ public class DimensionManager {
         if (layerCount == 0) {
             // Fallback to grass if no layers specified
             PersonalWorldsMod.LOGGER.warn("Portal type {} has no island layers, using grass",  portalTypeIndex);
-            return new BlockState[] { Blocks.GRASS_BLOCK.getDefaultState() };
+            return new BlockState[] { Blocks.GRASS_BLOCK.defaultBlockState() };
         }
 
         BlockState[] islandLayers = new BlockState[layerCount];
 
         for (int i = 0; i < layerCount; i++) {
             String blockId = layerIds[i];
-            Identifier id = IdentifierCompat.tryParse(blockId);
-            Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.AIR;
+            ResourceLocation id = IdentifierCompat.tryParse(blockId);
+            Block block = id != null ? RegistryCompat.get(BuiltInRegistries.BLOCK, id) : Blocks.AIR;
 
             if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {
                 PersonalWorldsMod.LOGGER.warn("Invalid island layer block '{}' for portal type {}, using grass_block",
@@ -338,7 +338,7 @@ public class DimensionManager {
                 block = Blocks.GRASS_BLOCK;
             }
 
-            islandLayers[i] = block.getDefaultState();
+            islandLayers[i] = block.defaultBlockState();
         }
 
         return islandLayers;

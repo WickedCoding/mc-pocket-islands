@@ -2,14 +2,14 @@ package com.wickedsik.personalworlds.compat;
 
 //? if >=1.21 {
 /*import com.mojang.serialization.Codec;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.PersistentStateType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.saveddata.SavedDataType;
 *///?} else {
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 //?}
 
 import java.util.function.Function;
@@ -42,50 +42,50 @@ public final class PersistentStateCompat {
      * @param <T>          The PersistentState subtype
      * @return The loaded or newly created state
      */
-    public static <T extends PersistentState> T getOrCreate(
-            PersistentStateManager stateManager,
+    public static <T extends SavedData> T getOrCreate(
+            DimensionDataStorage stateManager,
             String name,
             Supplier<T> constructor,
-            Function<NbtCompound, T> deserializer
+            Function<CompoundTag, T> deserializer
     ) {
         //? if >=1.21 {
         /*// 1.21.x uses PersistentStateType with Codec
         // Create a codec that wraps the NBT serialization
         // Subclasses must implement save(NbtCompound, WrapperLookup) for serialization
-        Codec<T> codec = NbtCompound.CODEC.xmap(
+        Codec<T> codec = CompoundTag.CODEC.xmap(
             deserializer::apply,
             state -> {
-                NbtCompound nbt = new NbtCompound();
+                CompoundTag nbt = new CompoundTag();
                 // Use reflection-free approach: subclasses are expected to implement a toNbt-like pattern
                 // The actual serialization happens in the subclass's save() method which Minecraft calls
                 // For the codec, we need the serialized form - call writeNbtData if available
                 try {
                     // Try to call writeNbtData which our subclasses implement
-                    java.lang.reflect.Method method = state.getClass().getDeclaredMethod("writeNbtData", NbtCompound.class);
+                    java.lang.reflect.Method method = state.getClass().getDeclaredMethod("writeNbtData", CompoundTag.class);
                     method.setAccessible(true);
-                    return (NbtCompound) method.invoke(state, nbt);
+                    return (CompoundTag) method.invoke(state, nbt);
                 } catch (Exception e) {
                     // Fallback: return empty NBT (will trigger save on next markDirty)
                     return nbt;
                 }
             }
         );
-        PersistentStateType<T> type = new PersistentStateType<>(
+        SavedDataType<T> type = new SavedDataType<>(
             name,
             constructor,
             codec,
             null  // No DataFixTypes needed for mod data
         );
-        return stateManager.getOrCreate(type);
+        return stateManager.computeIfAbsent(type);
         *///?} else if >=1.20.2 {
-        /*PersistentState.Type<T> type = new PersistentState.Type<>(
+        /*SavedData.Factory<T> type = new SavedData.Factory<>(
             constructor,
             deserializer,
             null  // No DataFixTypes needed for mod data
         );
-        return stateManager.getOrCreate(type, name);
+        return stateManager.computeIfAbsent(type, name);
         *///?} else {
-        return stateManager.getOrCreate(deserializer, constructor, name);
+        return stateManager.computeIfAbsent(deserializer, constructor, name);
         //?}
     }
 }

@@ -1,21 +1,21 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.Entity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 
 /**
  * The personal portal block that teleports players to/from their personal dimension.
@@ -36,23 +36,23 @@ public class PersonalPortalBlock extends Block {
      * Axis property for portal orientation (X or Z).
      * X-axis portal faces north/south, Z-axis portal faces east/west.
      */
-    public static final EnumProperty<Direction.Axis> AXIS = Properties.HORIZONTAL_AXIS;
+    public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
 
     /**
      * Color property for portal appearance.
      * Determines which texture is used for rendering.
      */
-    public static final EnumProperty<PortalColor> COLOR = EnumProperty.of("color", PortalColor.class);
+    public static final EnumProperty<PortalColor> COLOR = EnumProperty.create("color", PortalColor.class);
 
     /**
      * Collision shape for X-axis portals (thin plane facing north/south).
      */
-    protected static final VoxelShape X_SHAPE = Block.createCuboidShape(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
+    protected static final VoxelShape X_SHAPE = Block.box(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
 
     /**
      * Collision shape for Z-axis portals (thin plane facing east/west).
      */
-    protected static final VoxelShape Z_SHAPE = Block.createCuboidShape(6.0, 0.0, 0.0, 10.0, 16.0, 16.0);
+    protected static final VoxelShape Z_SHAPE = Block.box(6.0, 0.0, 0.0, 10.0, 16.0, 16.0);
 
     /**
      * Portal cooldown in ticks (100 ticks = 5 seconds).
@@ -60,21 +60,21 @@ public class PersonalPortalBlock extends Block {
      */
     private static final int PORTAL_COOLDOWN = 100;
 
-    public PersonalPortalBlock(Settings settings) {
+    public PersonalPortalBlock(Properties settings) {
         super(settings);
-        setDefaultState(getStateManager().getDefaultState()
-            .with(AXIS, Direction.Axis.X)
-            .with(COLOR, PortalColor.RED));
+        registerDefaultState(getStateDefinition().any()
+            .setValue(AXIS, Direction.Axis.X)
+            .setValue(COLOR, PortalColor.RED));
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(AXIS, COLOR);
     }
 
     @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return state.get(AXIS) == Direction.Axis.Z ? Z_SHAPE : X_SHAPE;
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        return state.getValue(AXIS) == Direction.Axis.Z ? Z_SHAPE : X_SHAPE;
     }
 
     /**
@@ -83,36 +83,36 @@ public class PersonalPortalBlock extends Block {
      */
     //? if >=1.21.11 {
     /*@Override
-    protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, net.minecraft.entity.EntityCollisionHandler handler, boolean bl) {
+    protected void entityInside(BlockState state, Level world, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier handler, boolean bl) {
         handleEntityCollision(state, world, pos, entity);
     }
     *///?} else {
     @Override
-    public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+    public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
         handleEntityCollision(state, world, pos, entity);
     }
     //?}
 
-    private void handleEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-        if (world.isClient()) {
+    private void handleEntityCollision(BlockState state, Level world, BlockPos pos, Entity entity) {
+        if (world.isClientSide()) {
             return;
         }
 
-        if (!(entity instanceof ServerPlayerEntity player)) {
+        if (!(entity instanceof ServerPlayer player)) {
             return;
         }
 
         // Prevent mounted players from entering portals
-        if (player.hasVehicle()) {
-            player.sendMessage(
-                Text.translatable("pocketislands.portal.dismount_required"),
+        if (player.isPassenger()) {
+            player.displayClientMessage(
+                Component.translatable("pocketislands.portal.dismount_required"),
                 true  // Action bar message (less intrusive)
             );
             return;
         }
 
         // Check portal cooldown to prevent rapid teleportation
-        if (player.hasPortalCooldown()) {
+        if (player.isOnPortalCooldown()) {
             return;
         }
 
@@ -129,22 +129,22 @@ public class PersonalPortalBlock extends Block {
      */
     //? if >=1.21.5 {
     /*@Override
-    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @org.jetbrains.annotations.Nullable net.minecraft.world.block.WireOrientation wireOrientation, boolean notify) {
+    protected void neighborChanged(BlockState state, Level world, BlockPos pos, Block sourceBlock, @org.jetbrains.annotations.Nullable net.minecraft.world.level.redstone.Orientation wireOrientation, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }
     *///?} else {
     @Override
-    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
+    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }
     //?}
 
-    private void handleNeighborUpdate(BlockState state, World world, BlockPos pos) {
-        if (world.isClient()) {
+    private void handleNeighborUpdate(BlockState state, Level world, BlockPos pos) {
+        if (world.isClientSide()) {
             return;
         }
 
-        Direction.Axis axis = state.get(AXIS);
+        Direction.Axis axis = state.getValue(AXIS);
 
         // Check if the frame is still valid for this portal block
         if (!PortalHelper.isFrameValidForPortal(world, pos, axis)) {
@@ -160,24 +160,24 @@ public class PersonalPortalBlock extends Block {
      */
     //? if >=1.21.5 {
     /*@Override
-    protected void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos, boolean moved) {
         // In 1.21.5+, onStateReplaced receives the old state
         // Clean up portal ownership when destroyed
         PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(world.getServer());
         ownershipManager.removePortal(world, pos);
-        super.onStateReplaced(state, world, pos, moved);
+        super.affectNeighborsAfterRemoval(state, world, pos, moved);
     }
     *///?} else {
     @Override
-    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
         // Only clean up if the block is actually being removed (not just state change)
-        if (!state.isOf(newState.getBlock())) {
-            if (world instanceof ServerWorld serverWorld) {
+        if (!state.is(newState.getBlock())) {
+            if (world instanceof ServerLevel serverWorld) {
                 PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(serverWorld.getServer());
                 ownershipManager.removePortal(world, pos);
             }
         }
-        super.onStateReplaced(state, world, pos, newState, moved);
+        super.onRemove(state, world, pos, newState, moved);
     }
     //?}
 
@@ -186,12 +186,12 @@ public class PersonalPortalBlock extends Block {
      */
     //? if >=1.21.5 {
     /*@Override
-    protected boolean isTransparent(BlockState state) {
+    protected boolean propagatesSkylightDown(BlockState state) {
         return true;
     }
     *///?} else {
     @Override
-    public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter world, BlockPos pos) {
         return true;
     }
     //?}
@@ -200,6 +200,6 @@ public class PersonalPortalBlock extends Block {
      * Get the axis for a block state.
      */
     public static Direction.Axis getAxis(BlockState state) {
-        return state.get(AXIS);
+        return state.getValue(AXIS);
     }
 }

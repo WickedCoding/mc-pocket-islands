@@ -1,12 +1,12 @@
 package com.wickedsik.personalworlds.player;
 
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 /**
  * Stores the return position for a player who entered their personal dimension.
@@ -18,7 +18,7 @@ import net.minecraft.world.World;
  * @param pitch The player's vertical rotation
  */
 public record ReturnData(
-    RegistryKey<World> dimension,
+    ResourceKey<Level> dimension,
     BlockPos position,
     float yaw,
     float pitch
@@ -29,8 +29,8 @@ public record ReturnData(
      *
      * @return NBT compound containing all return data
      */
-    public NbtCompound toNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public CompoundTag toNbt() {
+        CompoundTag nbt = new CompoundTag();
         nbt.putString("Dimension", IdentifierCompat.fromKey(dimension).toString());
         nbt.putInt("X", position.getX());
         nbt.putInt("Y", position.getY());
@@ -46,11 +46,11 @@ public record ReturnData(
      * @param nbt NBT compound containing return data
      * @return Deserialized ReturnData
      */
-    public static ReturnData fromNbt(NbtCompound nbt) {
-        Identifier dimId = IdentifierCompat.fromNbtString(
+    public static ReturnData fromNbt(CompoundTag nbt) {
+        ResourceLocation dimId = IdentifierCompat.fromNbtString(
             com.wickedsik.personalworlds.compat.NbtCompat.getString(nbt, "Dimension", "minecraft:overworld")
         );
-        RegistryKey<World> dimension = RegistryKey.of(RegistryKeys.WORLD, dimId);
+        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, dimId);
 
         BlockPos position = new BlockPos(
             com.wickedsik.personalworlds.compat.NbtCompat.getInt(nbt, "X", 0),

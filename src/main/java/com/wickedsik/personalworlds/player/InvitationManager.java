@@ -13,11 +13,13 @@ import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.util.VisualEffects;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,8 +69,8 @@ public class InvitationManager {
      * @param ownerUuid The UUID of the dimension owner
      * @return VisitDenialReason indicating whether visit is allowed or why it's denied
      */
-    public static VisitDenialReason checkVisitAccess(MinecraftServer server, ServerPlayerEntity visitor, UUID ownerUuid) {
-        UUID visitorUuid = visitor.getUuid();
+    public static VisitDenialReason checkVisitAccess(MinecraftServer server, ServerPlayer visitor, UUID ownerUuid) {
+        UUID visitorUuid = visitor.getUUID();
 
         // 1. Admin bypass (OP level 2+)
         if (CommandCompat.hasPermissionLevel(visitor, 2)) {
@@ -94,7 +96,7 @@ public class InvitationManager {
         }
 
         // 5. Check if host is online
-        ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
+        ServerPlayer host = server.getPlayerList().getPlayer(ownerUuid);
         if (host == null) {
             return VisitDenialReason.HOST_OFFLINE;
         }
@@ -117,8 +119,8 @@ public class InvitationManager {
      * @param playerUuid The player's UUID (for dimension ownership check)
      * @return true if the player is in their own personal dimension
      */
-    private static boolean isPlayerHome(ServerPlayerEntity player, UUID playerUuid) {
-        ServerWorld world = EntityCompat.getServerWorld(player);
+    private static boolean isPlayerHome(ServerPlayer player, UUID playerUuid) {
+        ServerLevel world = EntityCompat.getServerWorld(player);
 
         // Check if player is in any personal dimension
         if (!PortalHelper.isInPersonalDimension(world)) {
@@ -146,11 +148,11 @@ public class InvitationManager {
             return;
         }
 
-        ServerPlayerEntity host = server.getPlayerManager().getPlayer(ownerUuid);
+        ServerPlayer host = server.getPlayerList().getPlayer(ownerUuid);
         if (host != null) {
-            host.sendMessage(
-                Text.translatable("pocketislands.visit.attempted.not_home", visitorName)
-                    .formatted(Formatting.GRAY),
+            host.displayClientMessage(
+                Component.translatable("pocketislands.visit.attempted.not_home", visitorName)
+                    .withStyle(ChatFormatting.GRAY),
                 false
             );
         }
@@ -166,7 +168,7 @@ public class InvitationManager {
      * @param guest The player being invited
      * @return true if invitation was successful
      */
-    public static boolean invite(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest) {
+    public static boolean invite(MinecraftServer server, ServerPlayer owner, ServerPlayer guest) {
         return invite(server, owner, guest, false);
     }
 
@@ -179,13 +181,13 @@ public class InvitationManager {
      * @param alwaysWelcome If true, guest can visit when host is offline/away
      * @return true if invitation was successful
      */
-    public static boolean invite(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest, boolean alwaysWelcome) {
-        UUID ownerUuid = owner.getUuid();
-        UUID guestUuid = guest.getUuid();
+    public static boolean invite(MinecraftServer server, ServerPlayer owner, ServerPlayer guest, boolean alwaysWelcome) {
+        UUID ownerUuid = owner.getUUID();
+        UUID guestUuid = guest.getUUID();
 
         // Validation
         if (ownerUuid.equals(guestUuid)) {
-            owner.sendMessage(Text.translatable("pocketislands.message.cannot_invite_self").formatted(Formatting.RED), false);
+            owner.displayClientMessage(Component.translatable("pocketislands.message.cannot_invite_self").withStyle(ChatFormatting.RED), false);
             return false;
         }
 
@@ -199,8 +201,8 @@ public class InvitationManager {
             String messageKey = alwaysWelcome
                 ? "pocketislands.command.invited_always_welcome"
                 : "pocketislands.message.invite_sent";
-            owner.sendMessage(Text.translatable(messageKey, guest.getName().getString()), false);
-            guest.sendMessage(Text.translatable("pocketislands.message.invite_received", ownerName), false);
+            owner.displayClientMessage(Component.translatable(messageKey, guest.getName().getString()), false);
+            guest.displayClientMessage(Component.translatable("pocketislands.message.invite_received", ownerName), false);
 
             // Play notification sounds
             VisualEffects.playInvitationSentEffect(owner);
@@ -209,7 +211,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} invited {} to their dimension (alwaysWelcome={})",
                 ownerName, guest.getName().getString(), alwaysWelcome);
         } else {
-            owner.sendMessage(Text.translatable("pocketislands.message.already_invited", guest.getName().getString()), false);
+            owner.displayClientMessage(Component.translatable("pocketislands.message.already_invited", guest.getName().getString()), false);
         }
 
         return added;
@@ -225,17 +227,17 @@ public class InvitationManager {
      * @param guestName The name of the guest (for messaging)
      * @return true if the invitation was revoked
      */
-    public static boolean uninvite(MinecraftServer server, ServerPlayerEntity owner, UUID guestUuid, String guestName) {
-        UUID ownerUuid = owner.getUuid();
+    public static boolean uninvite(MinecraftServer server, ServerPlayer owner, UUID guestUuid, String guestName) {
+        UUID ownerUuid = owner.getUUID();
 
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         boolean removed = dataManager.removeInvitation(ownerUuid, guestUuid);
 
         if (removed) {
-            owner.sendMessage(Text.translatable("pocketislands.message.invite_revoked", guestName), false);
+            owner.displayClientMessage(Component.translatable("pocketislands.message.invite_revoked", guestName), false);
 
             // Check if guest is online and eject if in owner's dimension
-            ServerPlayerEntity guest = server.getPlayerManager().getPlayer(guestUuid);
+            ServerPlayer guest = server.getPlayerList().getPlayer(guestUuid);
             if (guest != null) {
                 handleRevocationWhileVisiting(server, owner, guest);
             }
@@ -243,7 +245,7 @@ public class InvitationManager {
             PersonalWorldsMod.LOGGER.info("{} revoked {}'s invitation",
                 owner.getName().getString(), guestName);
         } else {
-            owner.sendMessage(Text.translatable("pocketislands.message.not_invited", guestName), false);
+            owner.displayClientMessage(Component.translatable("pocketislands.message.not_invited", guestName), false);
         }
 
         return removed;
@@ -256,8 +258,8 @@ public class InvitationManager {
      * @param owner The dimension owner
      * @param guest The guest player to check and possibly eject
      */
-    private static void handleRevocationWhileVisiting(MinecraftServer server, ServerPlayerEntity owner, ServerPlayerEntity guest) {
-        ServerWorld guestWorld = EntityCompat.getServerWorld(guest);
+    private static void handleRevocationWhileVisiting(MinecraftServer server, ServerPlayer owner, ServerPlayer guest) {
+        ServerLevel guestWorld = EntityCompat.getServerWorld(guest);
 
         // Check if guest is in a personal dimension
         if (!PortalHelper.isInPersonalDimension(guestWorld)) {
@@ -265,8 +267,8 @@ public class InvitationManager {
         }
 
         // Check if it's the owner's dimension
-        String dimPath = IdentifierCompat.fromKey(guestWorld.getRegistryKey()).getPath();
-        String ownerDimPath = "pw_" + owner.getUuid().toString();
+        String dimPath = IdentifierCompat.fromKey(guestWorld.dimension()).getPath();
+        String ownerDimPath = "pw_" + owner.getUUID().toString();
 
         if (!dimPath.equals(ownerDimPath)) {
             return;
@@ -276,38 +278,38 @@ public class InvitationManager {
         // Play warning sound before ejection
         VisualEffects.playInvitationRevokedEffect(guest);
 
-        guest.sendMessage(Text.translatable("pocketislands.message.ejected")
-            .formatted(Formatting.GOLD), false);
+        guest.displayClientMessage(Component.translatable("pocketislands.message.ejected")
+            .withStyle(ChatFormatting.GOLD), false);
 
         // Try to return to stored position, fallback to overworld spawn
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        Optional<ReturnData> returnDataOpt = dataManager.getReturnData(guest.getUuid());
+        Optional<ReturnData> returnDataOpt = dataManager.getReturnData(guest.getUUID());
 
-        ServerWorld targetWorld;
-        Vec3d targetPos;
+        ServerLevel targetWorld;
+        Vec3 targetPos;
         float yaw, pitch;
 
         if (returnDataOpt.isPresent()) {
             ReturnData returnData = returnDataOpt.get();
-            targetWorld = server.getWorld(returnData.dimension());
+            targetWorld = server.getLevel(returnData.dimension());
 
             if (targetWorld == null) {
-                targetWorld = server.getOverworld();
-                targetPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(targetWorld));
-                yaw = guest.getYaw();
-                pitch = guest.getPitch();
+                targetWorld = server.overworld();
+                targetPos = Vec3.atCenterOf(WorldCompat.getSpawnPos(targetWorld));
+                yaw = guest.getYRot();
+                pitch = guest.getXRot();
             } else {
-                targetPos = Vec3d.ofCenter(returnData.position());
+                targetPos = Vec3.atCenterOf(returnData.position());
                 yaw = returnData.yaw();
                 pitch = returnData.pitch();
             }
 
-            dataManager.clearReturnData(guest.getUuid());
+            dataManager.clearReturnData(guest.getUUID());
         } else {
-            targetWorld = server.getOverworld();
-            targetPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(targetWorld));
-            yaw = guest.getYaw();
-            pitch = guest.getPitch();
+            targetWorld = server.overworld();
+            targetPos = Vec3.atCenterOf(WorldCompat.getSpawnPos(targetWorld));
+            yaw = guest.getYRot();
+            pitch = guest.getXRot();
         }
 
         TeleportCompat.teleport(guest, targetWorld, targetPos, yaw, pitch);
@@ -323,22 +325,22 @@ public class InvitationManager {
      *
      * @param player The player viewing their invitations
      */
-    public static void showInvitations(ServerPlayerEntity player) {
+    public static void showInvitations(ServerPlayer player) {
         MinecraftServer server = EntityCompat.getServer(player);
         if (server == null) return;
 
         PlayerDataManager dataManager = PlayerDataManager.get(server);
-        UUID playerUuid = player.getUuid();
+        UUID playerUuid = player.getUUID();
 
-        player.sendMessage(Text.translatable("pocketislands.invitations.header").formatted(Formatting.GOLD), false);
+        player.displayClientMessage(Component.translatable("pocketislands.invitations.header").withStyle(ChatFormatting.GOLD), false);
 
         // Sent invitations (players who can visit you)
         Set<UUID> sent = dataManager.getSentInvitations(playerUuid);
-        player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.translatable("pocketislands.invitations.sent.header").formatted(Formatting.GREEN), false);
+        player.displayClientMessage(Component.literal(""), false);
+        player.displayClientMessage(Component.translatable("pocketislands.invitations.sent.header").withStyle(ChatFormatting.GREEN), false);
 
         if (sent.isEmpty()) {
-            player.sendMessage(Text.translatable("pocketislands.invitations.sent.none").formatted(Formatting.GRAY), false);
+            player.displayClientMessage(Component.translatable("pocketislands.invitations.sent.none").withStyle(ChatFormatting.GRAY), false);
         } else {
             boolean alwaysWelcomeEnabled = ModConfig.get().enableAlwaysWelcome;
 
@@ -346,60 +348,60 @@ public class InvitationManager {
                 String guestName = getPlayerName(server, guestUuid);
 
                 // Build the entry text
-                MutableText entryText = Text.literal(guestName).formatted(Formatting.YELLOW);
+                MutableComponent entryText = Component.literal(guestName).withStyle(ChatFormatting.YELLOW);
 
                 // Add Always Welcome toggle button if feature is enabled
                 if (alwaysWelcomeEnabled) {
                     boolean isAlwaysWelcome = dataManager.isAlwaysWelcome(playerUuid, guestUuid);
 
                     String toggleIcon = isAlwaysWelcome ? "★" : "☆";
-                    Formatting toggleColor = isAlwaysWelcome ? Formatting.GREEN : Formatting.GRAY;
+                    ChatFormatting toggleColor = isAlwaysWelcome ? ChatFormatting.GREEN : ChatFormatting.GRAY;
                     String toggleTooltipKey = isAlwaysWelcome
                         ? "pocketislands.invitations.sent.toggle_off_tooltip"
                         : "pocketislands.invitations.sent.toggle_on_tooltip";
 
-                    MutableText toggleButton = Text.literal("[" + toggleIcon + "]")
-                        .formatted(toggleColor)
-                        .styled(style -> style
+                    MutableComponent toggleButton = Component.literal("[" + toggleIcon + "]")
+                        .withStyle(toggleColor)
+                        .withStyle(style -> style
                             .withClickEvent(TextCompat.runCommand("/pi togglewelcome " + guestName))
-                            .withHoverEvent(TextCompat.showText(Text.translatable(toggleTooltipKey)))
+                            .withHoverEvent(TextCompat.showText(Component.translatable(toggleTooltipKey)))
                         );
 
                     entryText = entryText.append(" ").append(toggleButton);
                 }
 
                 // Create clickable [Revoke] button
-                MutableText revokeButton = Text.translatable("pocketislands.invitations.sent.revoke_button")
-                    .formatted(Formatting.RED)
-                    .styled(style -> style
+                MutableComponent revokeButton = Component.translatable("pocketislands.invitations.sent.revoke_button")
+                    .withStyle(ChatFormatting.RED)
+                    .withStyle(style -> style
                         .withClickEvent(TextCompat.runCommand("/pw uninvite " + guestName))
-                        .withHoverEvent(TextCompat.showText(Text.translatable("pocketislands.invitations.sent.revoke_tooltip")))
+                        .withHoverEvent(TextCompat.showText(Component.translatable("pocketislands.invitations.sent.revoke_tooltip")))
                     );
 
                 entryText = entryText.append(" ").append(revokeButton);
 
-                player.sendMessage(Text.translatable("pocketislands.invitations.sent.entry", entryText), false);
+                player.displayClientMessage(Component.translatable("pocketislands.invitations.sent.entry", entryText), false);
             }
         }
 
         // Received invitations (dimensions you can visit)
         List<InvitationData> received = dataManager.getReceivedInvitations(playerUuid);
-        player.sendMessage(Text.literal(""), false);
-        player.sendMessage(Text.translatable("pocketislands.invitations.received.header").formatted(Formatting.AQUA), false);
+        player.displayClientMessage(Component.literal(""), false);
+        player.displayClientMessage(Component.translatable("pocketislands.invitations.received.header").withStyle(ChatFormatting.AQUA), false);
 
         if (received.isEmpty()) {
-            player.sendMessage(Text.translatable("pocketislands.invitations.received.none").formatted(Formatting.GRAY), false);
+            player.displayClientMessage(Component.translatable("pocketislands.invitations.received.none").withStyle(ChatFormatting.GRAY), false);
         } else {
             for (InvitationData inv : received) {
                 // Create clickable world name to teleport there
-                MutableText worldLink = Text.translatable("pocketislands.invitations.received.world_name", inv.ownerName())
-                    .formatted(Formatting.YELLOW)
-                    .styled(style -> style
+                MutableComponent worldLink = Component.translatable("pocketislands.invitations.received.world_name", inv.ownerName())
+                    .withStyle(ChatFormatting.YELLOW)
+                    .withStyle(style -> style
                         .withClickEvent(TextCompat.runCommand("/pw go " + inv.ownerName()))
-                        .withHoverEvent(TextCompat.showText(Text.translatable("pocketislands.invitations.received.visit_tooltip", inv.ownerName())))
+                        .withHoverEvent(TextCompat.showText(Component.translatable("pocketislands.invitations.received.visit_tooltip", inv.ownerName())))
                     );
 
-                player.sendMessage(Text.translatable("pocketislands.invitations.received.entry", worldLink), false);
+                player.displayClientMessage(Component.translatable("pocketislands.invitations.received.entry", worldLink), false);
             }
         }
     }
@@ -410,7 +412,7 @@ public class InvitationManager {
      */
     private static String getPlayerName(MinecraftServer server, UUID playerUuid) {
         // Try online player
-        ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+        ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         if (player != null) {
             return player.getName().getString();
         }
