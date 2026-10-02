@@ -7,7 +7,7 @@ pluginManagement {
 }
 
 plugins {
-    id("dev.kikugie.stonecutter") version "0.5.1"
+    id("dev.kikugie.stonecutter") version "0.9.8"
     // Downloads a missing JDK for the per-version Java toolchain
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }

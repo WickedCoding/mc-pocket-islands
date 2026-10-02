@@ -4,18 +4,18 @@ plugins {
 
 stonecutter active "1.20.1" /* [SC] DO NOT EDIT */
 
-// Register chiseled tasks for building all versions at once
-stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {
+// Aggregate tasks that run a task for every version (names kept for CI workflows)
+tasks.register("chiseledBuild") {
     group = "build"
-    ofTask("build")
+    dependsOn(stonecutter.tasks.named("build"))
 }
 
-stonecutter registerChiseled tasks.register("chiseledTest", stonecutter.chiseled) {
+tasks.register("chiseledTest") {
     group = "verification"
-    ofTask("test")
+    dependsOn(stonecutter.tasks.named("test"))
 }
 
-stonecutter registerChiseled tasks.register("chiseledPublishModrinth", stonecutter.chiseled) {
+tasks.register("chiseledPublishModrinth") {
     group = "publishing"
-    ofTask("modrinth")
+    dependsOn(stonecutter.tasks.named("modrinth"))
 }
