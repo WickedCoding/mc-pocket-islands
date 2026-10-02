@@ -4,7 +4,7 @@ import net.minecraft.util.StringRepresentable;
 
 /**
  * Enum representing available portal colors.
- * Implements StringIdentifiable for use as a block state property.
+ * Implements StringRepresentable for use as a block state property.
  *
  * To add new colors:
  * 1. Add enum value (e.g., PURPLE("purple"))

@@ -27,8 +27,8 @@ import net.minecraft.world.level.Level;
  * - Unbreakable by hand: Cannot be mined
  *
  * Behavior:
- * - onEntityCollision: Triggers teleportation for players
- * - neighborUpdate: Checks frame validity, breaks if invalid
+ * - entityInside: Triggers teleportation for players
+ * - neighborChanged: Checks frame validity, breaks if invalid
  */
 public class PersonalPortalBlock extends Block {
 
@@ -161,7 +161,7 @@ public class PersonalPortalBlock extends Block {
     //? if >=1.21.5 {
     /*@Override
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos, boolean moved) {
-        // In 1.21.5+, onStateReplaced receives the old state
+        // In 1.21.5+, affectNeighborsAfterRemoval receives the old state
         // Clean up portal ownership when destroyed
         PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(world.getServer());
         ownershipManager.removePortal(world, pos);

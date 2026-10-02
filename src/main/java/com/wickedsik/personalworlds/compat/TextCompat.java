@@ -5,7 +5,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Component;
 
 /**
- * Compatibility layer for Text component API differences.
+ * Compatibility layer for Component (chat text) API differences.
  * <p>
  * MC 1.20.x uses: new ClickEvent(Action, value), new HoverEvent(Action, content)
  * MC 1.21.x uses: new ClickEvent.RunCommand(command), new HoverEvent.ShowText(text)

@@ -8,10 +8,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.portal.PortalInfo;
 
 /**
- * Factory for creating TeleportTarget instances.
+ * Factory for creating PortalInfo instances.
  * Reduces boilerplate in teleportation code.
  *
- * Note: In 1.21+, TeleportTarget requires ServerWorld and PostDimensionTransition.
+ * Note: In 1.21+, PortalInfo requires ServerLevel and a PostTeleportTransition.
  * This class provides 1.20.x-style API; use TeleportCompat for actual teleportation.
  */
 public final class TeleportHelper {
@@ -26,7 +26,7 @@ public final class TeleportHelper {
      * @param world The target world (required in 1.21+)
      * @param pos The target position
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget for the position
+     * @return PortalInfo for the position
      */
     public static PortalInfo toPosition(ServerLevel world, Vec3 pos, ServerPlayer player) {
         //? if >=1.21 {
@@ -55,7 +55,7 @@ public final class TeleportHelper {
      * @param pos The target position
      * @param yaw The target yaw
      * @param pitch The target pitch
-     * @return TeleportTarget for the position
+     * @return PortalInfo for the position
      */
     public static PortalInfo toPosition(ServerLevel world, Vec3 pos, float yaw, float pitch) {
         //? if >=1.21 {
@@ -84,7 +84,7 @@ public final class TeleportHelper {
      * @param world The target world (required in 1.21+)
      * @param blockPos The target block position
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget centered on the block
+     * @return PortalInfo centered on the block
      */
     public static PortalInfo toBlockPos(ServerLevel world, BlockPos blockPos, ServerPlayer player) {
         Vec3 pos = new Vec3(
@@ -119,7 +119,7 @@ public final class TeleportHelper {
      * @param blockPos The target block position
      * @param yaw The target yaw
      * @param pitch The target pitch
-     * @return TeleportTarget centered on the block
+     * @return PortalInfo centered on the block
      */
     public static PortalInfo toBlockPos(ServerLevel world, BlockPos blockPos, float yaw, float pitch) {
         Vec3 pos = new Vec3(
@@ -151,7 +151,7 @@ public final class TeleportHelper {
      *
      * @param world The target world
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget at world spawn
+     * @return PortalInfo at world spawn
      */
     public static PortalInfo toWorldSpawn(ServerLevel world, ServerPlayer player) {
         Vec3 spawnPos = Vec3.atCenterOf(WorldCompat.getSpawnPos(world));
@@ -180,7 +180,7 @@ public final class TeleportHelper {
      *
      * @param world The target world (required in 1.21+)
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget at default spawn
+     * @return PortalInfo at default spawn
      */
     public static PortalInfo toDefaultSpawn(ServerLevel world, ServerPlayer player) {
         Vec3 pos = new Vec3(0.5, 65, 0.5);

@@ -215,7 +215,7 @@ public class PlayerCommandExecutor {
     }
 
     /**
-     * Build a comma-separated Text of human-readable block names from layer block IDs.
+     * Build a comma-separated Component of human-readable block names from layer block IDs.
      * Falls back to raw block ID string for unresolvable entries.
      */
     private static Component buildLayersText(String[] layers) {

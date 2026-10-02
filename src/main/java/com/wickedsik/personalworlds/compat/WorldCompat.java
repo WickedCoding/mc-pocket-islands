@@ -6,13 +6,13 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.Level;
 
 /**
- * Compatibility layer for World method access.
+ * Compatibility layer for Level method access.
  * <p>
- * MC 1.20.x uses: world.getSpawnPos() returning BlockPos
- * MC 1.21.x uses: world.getSpawnPoint().pos() returning BlockPos from SpawnPoint record
+ * MC 1.20.x uses: world.getSharedSpawnPos() returning BlockPos
+ * MC 1.21.x uses: world.getRespawnData().pos() returning BlockPos from the respawn data record
  * <p>
- * MC 1.20.x uses: world.getTopY() returning int (max Y)
- * MC 1.21.x uses: world.getBottomY() + world.getHeight() for max Y
+ * MC 1.20.x uses: world.getMaxBuildHeight() returning int (max Y)
+ * MC 1.21.x uses: world.getMinY() + world.getHeight() for max Y
  * <p>
  * This class centralizes all world-related method access to simplify version migration.
  */
@@ -53,7 +53,7 @@ public final class WorldCompat {
     /**
      * Get the minimum Y coordinate for a world (inclusive).
      *
-     * @param world The world or other height-limited view (e.g. a chunk generator's HeightLimitView)
+     * @param world The world or other height-limited view (e.g. a chunk generator's LevelHeightAccessor)
      * @return The minimum Y coordinate
      */
     public static int getBottomY(LevelHeightAccessor world) {

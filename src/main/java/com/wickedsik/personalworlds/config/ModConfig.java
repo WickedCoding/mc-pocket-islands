@@ -134,7 +134,7 @@ public class ModConfig {
      * When true, chunks in pocket dimensions are cleaned on load: orphaned
      * block entities (BEs whose backing block state is air) are removed, and
      * (if {@link #sanitizeRemoveOrphanBlocks} is true) blocks that fail their
-     * own canPlaceAt check are replaced with air.
+     * own canSurvive check are replaced with air.
      * Fixes visual corruption after removing mods from the modpack that added
      * blocks or items previously stored in the dimension.
      * Off by default: it rewrites chunk contents, so server owners must opt in.

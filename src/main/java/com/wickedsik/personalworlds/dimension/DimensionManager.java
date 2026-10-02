@@ -42,7 +42,7 @@ public class DimensionManager {
      * @param playerName The player's display name
      * @param genType The world generation type
      * @param portalTypeIndex The portal type index from ModConfig.portalTypes
-     * @return The ServerWorld for the player's dimension
+     * @return The ServerLevel for the player's dimension
      */
     public static ServerLevel getOrCreatePlayerDimension(
             MinecraftServer server,

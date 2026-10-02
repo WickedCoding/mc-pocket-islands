@@ -15,8 +15,8 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
  * Compatibility layer for Block settings creation.
  * <p>
  * MC 1.20.x uses: FabricBlockSettings.create()
- * MC 1.21.0-1.21.1 uses: AbstractBlock.Settings.create()
- * MC 1.21.2+ uses: AbstractBlock.Settings.create().registryKey(key) - REQUIRED
+ * MC 1.21.0-1.21.1 uses: BlockBehaviour.Properties.of()
+ * MC 1.21.2+ uses: BlockBehaviour.Properties.of().setId(key) - REQUIRED
  * <p>
  * This class centralizes block settings creation to simplify version migration.
  */

@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * Not thread-safe: both sides run on the server thread.
  *
- * @param <W> the world handle type (a {@code ServerWorld} in production)
+ * @param <W> the world handle type (a {@code ServerLevel} in production)
  */
 final class PendingChunkQueue<W> {
 

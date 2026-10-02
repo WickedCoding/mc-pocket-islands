@@ -16,13 +16,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Compatibility layer for PersistentState.getOrCreate() API differences.
+ * Compatibility layer for SavedData lookup (DimensionDataStorage.computeIfAbsent()) API differences.
  * <p>
- * MC 1.20.1 uses: getOrCreate(Function fromNbt, Supplier constructor, String name)
- * MC 1.20.2-1.20.6 uses: getOrCreate(Type<T> type, String name)
- * MC 1.21.x uses: getOrCreate(PersistentStateType<T> type) with Codec-based serialization
+ * MC 1.20.1 uses: computeIfAbsent(Function fromNbt, Supplier constructor, String name)
+ * MC 1.20.2-1.20.6 uses: computeIfAbsent(Factory<T> type, String name)
+ * MC 1.21.x uses: computeIfAbsent(SavedDataType<T> type) with Codec-based serialization
  * <p>
- * This class centralizes the version-specific PersistentState access pattern.
+ * This class centralizes the version-specific SavedData access pattern.
  */
 public final class PersistentStateCompat {
 
@@ -31,15 +31,15 @@ public final class PersistentStateCompat {
     }
 
     /**
-     * Get or create a PersistentState with version-appropriate API.
+     * Get or create a SavedData with version-appropriate API.
      * <p>
-     * Note: In 1.21+, the PersistentState subclass MUST implement save() with proper signature.
+     * Note: In 1.21+, the SavedData subclass MUST implement save() with proper signature.
      *
-     * @param stateManager The PersistentStateManager from the world
+     * @param stateManager The DimensionDataStorage from the world
      * @param name         The data file name (without .dat extension)
      * @param constructor  Supplier that creates a new empty state
      * @param deserializer Function that deserializes state from NBT
-     * @param <T>          The PersistentState subtype
+     * @param <T>          The SavedData subtype
      * @return The loaded or newly created state
      */
     public static <T extends SavedData> T getOrCreate(
@@ -49,9 +49,9 @@ public final class PersistentStateCompat {
             Function<CompoundTag, T> deserializer
     ) {
         //? if >=1.21 {
-        /*// 1.21.x uses PersistentStateType with Codec
+        /*// 1.21.x uses SavedDataType with Codec
         // Create a codec that wraps the NBT serialization
-        // Subclasses must implement save(NbtCompound, WrapperLookup) for serialization
+        // Subclasses must implement save(CompoundTag, HolderLookup.Provider) for serialization
         Codec<T> codec = CompoundTag.CODEC.xmap(
             deserializer::apply,
             state -> {
@@ -65,7 +65,7 @@ public final class PersistentStateCompat {
                     method.setAccessible(true);
                     return (CompoundTag) method.invoke(state, nbt);
                 } catch (Exception e) {
-                    // Fallback: return empty NBT (will trigger save on next markDirty)
+                    // Fallback: return empty NBT (will trigger save on next setDirty)
                     return nbt;
                 }
             }

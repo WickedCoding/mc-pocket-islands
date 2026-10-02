@@ -78,7 +78,7 @@ public class DimensionRegistry extends SavedData {
     // --- Serialization ---
 
     //? if >=1.21.5 {
-    /*// In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    /*// In 1.21.5+, SavedData uses Codec-based serialization - no override needed
     // The Codec in PersistentStateCompat calls writeNbtData() via reflection
     public CompoundTag writeNbtData(CompoundTag nbt) {
         ListTag dimensionList = new ListTag();

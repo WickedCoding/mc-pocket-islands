@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Compatibility layer for Entity/Player method access.
  * <p>
- * MC 1.20.x uses: player.getServer(), player.getServerWorld(), player.getPos()
- * MC 1.21.x uses: player.getEntityWorld().getServer(), player.getEntityWorld(), player.getPos()
+ * MC 1.20.x uses: player.getServer(), player.serverLevel(), player.position()
+ * MC 1.21.x uses: player.level().getServer(), player.level(), player.position()
  * <p>
  * Spawn point access:
- * MC 1.20.x: player.getSpawnPointPosition(), player.getSpawnPointDimension()
+ * MC 1.20.x: player.getRespawnPosition(), player.getRespawnDimension()
  * MC 1.21.x: player.getRespawn().respawnData().getPos(), Respawn.getDimension()
  * <p>
  * This class centralizes all entity-related method access to simplify version migration.
@@ -42,10 +42,10 @@ public final class EntityCompat {
     }
 
     /**
-     * Get the ServerWorld the player is currently in.
+     * Get the ServerLevel the player is currently in.
      *
      * @param player The server player
-     * @return The ServerWorld the player is in
+     * @return The ServerLevel the player is in
      */
     public static ServerLevel getServerWorld(ServerPlayer player) {
         //? if >=1.21 {
@@ -56,7 +56,7 @@ public final class EntityCompat {
     }
 
     /**
-     * Get the player's position as Vec3d.
+     * Get the player's position as Vec3.
      *
      * @param player The server player
      * @return The player's position

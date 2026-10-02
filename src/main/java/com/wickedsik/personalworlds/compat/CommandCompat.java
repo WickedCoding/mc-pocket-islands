@@ -11,7 +11,7 @@ import net.minecraft.server.permissions.PermissionLevel;
 /**
  * Compatibility layer for command permission checking.
  * <p>
- * MC 1.20.x uses: source.hasPermissionLevel(level), player.hasPermissionLevel(level)
+ * MC 1.20.x uses: source.hasPermission(level), player.hasPermissions(level)
  * MC 1.21.x uses: getPermissions().hasPermission(new Permission.Level(PermissionLevel))
  * <p>
  * This class centralizes all permission checks to simplify version migration.

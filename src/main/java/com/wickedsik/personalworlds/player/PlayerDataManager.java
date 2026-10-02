@@ -46,7 +46,7 @@ public class PlayerDataManager extends SavedData {
     private final Map<UUID, Set<UUID>> sentInvitations = new HashMap<>();
 
     /**
-     * Current pocket dimensions: Player UUID -> Dimension RegistryKey
+     * Current pocket dimensions: Player UUID -> Dimension ResourceKey
      * Tracks which pocket dimension a player is currently in (null if not in one).
      * Used for recovery when player logs out on island and dimension unloads.
      */
@@ -398,7 +398,7 @@ public class PlayerDataManager extends SavedData {
     }
 
     // --- Serialization ---
-    // Note: For 1.21.5+, PersistentState uses Codec-based serialization via PersistentStateCompat
+    // Note: For 1.21.5+, SavedData uses Codec-based serialization via PersistentStateCompat
 
     //? if >=1.21.5 {
     //?} else {

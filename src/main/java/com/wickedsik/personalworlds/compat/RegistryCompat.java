@@ -18,7 +18,7 @@ public final class RegistryCompat {
     /**
      * Look up a registry entry by ResourceLocation, returning the registry's default entry if absent.
      *
-     * @param registry The registry (e.g. Registries.BLOCK)
+     * @param registry The registry (e.g. BuiltInRegistries.BLOCK)
      * @param id       The entry ResourceLocation
      * @return The registered entry
      */

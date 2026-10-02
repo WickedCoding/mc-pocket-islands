@@ -70,7 +70,7 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
         int startZ = chunk.getPos().getMinBlockZ();
 
         // Interior-only mode skips the chunk's outer border (localX or
-        // localZ in {0, 15}). Vanilla canPlaceAt implementations look at
+        // localZ in {0, 15}). Vanilla canSurvive implementations look at
         // direct horizontal neighbours; on a border block that neighbour
         // lives in an adjacent chunk, which would force a synchronous chunk
         // load and can deadlock the caller when invoked from a chunk-load

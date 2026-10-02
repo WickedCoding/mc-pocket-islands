@@ -897,7 +897,7 @@ public class PortalHelper {
 
     /**
      * Check if the frame is still valid for an existing portal block.
-     * Used by PersonalPortalBlock.neighborUpdate() to determine if portal should break.
+     * Used by PersonalPortalBlock.neighborChanged() to determine if portal should break.
      *
      * Checks all portal types - if ANY portal type has a valid frame, the portal is valid.
      *

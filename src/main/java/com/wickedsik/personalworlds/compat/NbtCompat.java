@@ -8,16 +8,16 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Compatibility layer for NbtCompound API differences.
+ * Compatibility layer for CompoundTag API differences.
  * <p>
  * MC 1.20.x uses:
  * - getInt(key) returns int
- * - putUuid(key, uuid) / getUuid(key) for UUID storage
+ * - putUUID(key, uuid) / getUUID(key) for UUID storage
  * - contains(key, type) for type-checked containment
  * <p>
  * MC 1.21.x uses:
  * - getInt(key) returns Optional, getInt(key, fallback) returns int
- * - No putUuid/getUuid - must use string conversion
+ * - No putUUID/getUUID - must use string conversion
  * - contains(key) without type check
  * <p>
  * This class centralizes NBT access to simplify version migration.
@@ -78,7 +78,7 @@ public final class NbtCompat {
 
     /**
      * Store a UUID in NBT.
-     * In 1.20.x uses putUuid, in 1.21.x stores as string.
+     * In 1.20.x uses putUUID, in 1.21.x stores as string.
      */
     public static void putUuid(CompoundTag nbt, String key, UUID uuid) {
         //? if >=1.21 {
@@ -90,7 +90,7 @@ public final class NbtCompat {
 
     /**
      * Get a UUID from NBT.
-     * In 1.20.x uses getUuid, in 1.21.x parses from string.
+     * In 1.20.x uses getUUID, in 1.21.x parses from string.
      *
      * @return The UUID, or null if not found or invalid
      */
@@ -186,7 +186,7 @@ public final class NbtCompat {
     }
 
     /**
-     * Get a compound from an NbtList by index.
+     * Get a compound from a ListTag by index.
      */
     public static CompoundTag getCompound(net.minecraft.nbt.ListTag list, int index) {
         //? if >=1.21 {

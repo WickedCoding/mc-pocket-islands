@@ -31,7 +31,7 @@ import java.util.List;
  *
  * The pure sanitization logic operates on a {@link Target} interface so it can
  * be tested without a Minecraft runtime. {@link #onChunkLoad} adapts a live
- * {@code ServerWorld}/{@code WorldChunk} pair to that interface and enforces
+ * {@code ServerLevel}/{@code LevelChunk} pair to that interface and enforces
  * pocket-dimension scoping via {@link PortalHelper#isInPersonalDimension}.
  */
 public final class ChunkSanitizer {
@@ -144,7 +144,7 @@ public final class ChunkSanitizer {
      *
      * Nothing may touch the world from here. The callback runs on the server
      * thread inside the chunk-load task pump, before the chunk's load future
-     * completes. Looking the chunk up (or a neighbour, via {@code canPlaceAt})
+     * completes. Looking the chunk up (or a neighbour, via {@code canSurvive})
      * makes the thread wait for a load that can only finish after this
      * callback returns, and the watchdog kills the server.
      *
@@ -196,9 +196,9 @@ public final class ChunkSanitizer {
      * @param fullChunk          when true, sweeps the entire 16×16 chunk
      *                           footprint. Only pass true if all four
      *                           horizontally adjacent chunks are loaded —
-     *                           otherwise a border block's {@code canPlaceAt}
+     *                           otherwise a border block's {@code canSurvive}
      *                           may force a synchronous neighbour-chunk load
-     * @param removeOrphanBlocks whether to run the canPlaceAt sweep
+     * @param removeOrphanBlocks whether to run the canSurvive sweep
      * @return counts of what was removed
      */
     public static Result sanitizeLoadedChunk(
@@ -212,7 +212,7 @@ public final class ChunkSanitizer {
 
     private static void runDeferredSanitize(ServerLevel world, ChunkPos pos, boolean removeOrphans) {
         // The chunk may have unloaded since the load event (player left,
-        // server flushed the ticket). getWorldChunk never waits on a load:
+        // server flushed the ticket). getChunkNow never waits on a load:
         // it returns null unless the chunk is fully loaded right now.
         LevelChunk worldChunk = world.getChunkSource().getChunkNow(pos.x, pos.z);
         if (worldChunk == null) {

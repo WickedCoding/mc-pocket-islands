@@ -80,7 +80,7 @@ public final class PermissionHelper {
 
     /**
      * Create a predicate for command registration.
-     * Used with CommandManager.literal().requires()
+     * Used with Commands.literal().requires()
      *
      * @param permission The permission node to check
      * @param fallbackLevel The OP level required if no permissions plugin

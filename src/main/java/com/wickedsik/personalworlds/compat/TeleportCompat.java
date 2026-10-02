@@ -12,11 +12,11 @@ import net.minecraft.world.level.portal.PortalInfo;
 /**
  * Compatibility layer for cross-dimension teleportation.
  * <p>
- * MC 1.20.x uses: FabricDimensions.teleport(entity, world, TeleportTarget)
- * MC 1.21.x uses: Entity#teleportTo(TeleportTarget) - FabricDimensions was removed
+ * MC 1.20.x uses: FabricDimensions.teleport(entity, world, PortalInfo)
+ * MC 1.21.x uses: Entity#teleport(PortalInfo) - FabricDimensions was removed
  * <p>
  * This class centralizes all cross-dimension teleportation to simplify version migration.
- * Works alongside TeleportHelper which constructs TeleportTarget instances.
+ * Works alongside TeleportHelper which constructs PortalInfo instances.
  */
 public final class TeleportCompat {
 
@@ -41,8 +41,8 @@ public final class TeleportCompat {
             float pitch
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
-        // TeleportTarget now contains the destination world
+        /*// MC 1.21+ uses Entity#teleport() - FabricDimensions.teleport() was removed
+        // PortalInfo now contains the destination world
         PortalInfo target = new PortalInfo(
             targetWorld,
             position,
@@ -59,12 +59,12 @@ public final class TeleportCompat {
     }
 
     /**
-     * Teleport a player using a pre-constructed TeleportTarget.
+     * Teleport a player using a pre-constructed PortalInfo.
      * This method bridges TeleportHelper (which creates TeleportTargets) with the actual teleport call.
      *
      * @param player      The player to teleport
      * @param targetWorld The destination world
-     * @param target      The TeleportTarget with position, velocity, and rotation
+     * @param target      The PortalInfo with position, velocity, and rotation
      */
     public static void teleport(
             ServerPlayer player,
@@ -72,8 +72,8 @@ public final class TeleportCompat {
             PortalInfo target
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
-        // TeleportTarget is now a record with method accessors instead of field access
+        /*// MC 1.21+ uses Entity#teleport() - FabricDimensions.teleport() was removed
+        // PortalInfo is now a record with method accessors instead of field access
         PortalInfo newTarget = new PortalInfo(
             targetWorld,
             target.position(),

@@ -19,11 +19,11 @@ import java.util.Map;
 /**
  * Compatibility layer for GameRules access.
  * <p>
- * MC 1.20.x uses: net.minecraft.world.GameRules with inner Key/BooleanRule/IntRule/Visitor
- * MC 1.21.x uses: net.minecraft.world.rule.GameRules with standalone GameRule/GameRuleVisitor
+ * MC 1.20.x uses: net.minecraft.world.level.GameRules with inner Key/BooleanValue/IntegerValue/GameRuleTypeVisitor
+ * MC 1.21.x uses: net.minecraft.world.level.gamerules.GameRules with standalone GameRule/GameRuleTypeVisitor
  * <p>
  * Fantasy API also differs:
- * 1.20.x: setGameRule(GameRules.Key&lt;BooleanRule&gt;, boolean) / setGameRule(GameRules.Key&lt;IntRule&gt;, int)
+ * 1.20.x: setGameRule(GameRules.Key&lt;BooleanValue&gt;, boolean) / setGameRule(GameRules.Key&lt;IntegerValue&gt;, int)
  * 1.21.x: setGameRule(GameRule&lt;T&gt;, T) (generic)
  * <p>
  * Provides two-phase game rule application: baseline from overworld, then config overrides.
