@@ -70,14 +70,19 @@ tasks.processResources {
     }
 }
 
+// Per-version Java (17 for 1.20.x, 21 for 1.21.x). The toolchain also drives
+// runClient/runServer, so they no longer depend on the system default JDK.
+val javaVersion = (property("java_version") as String).toInt()
+
 tasks.withType<JavaCompile>().configureEach {
-    options.release.set(17)
+    options.release.set(javaVersion)
 }
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    }
 }
 
 tasks.test {
