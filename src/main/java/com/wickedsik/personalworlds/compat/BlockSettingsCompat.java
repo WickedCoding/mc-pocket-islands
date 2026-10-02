@@ -7,8 +7,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.block.Block;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-*///?} else if >=1.21 {
-/*import net.minecraft.block.AbstractBlock;
 *///?} else {
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 //?}
@@ -39,11 +37,7 @@ public final class BlockSettingsCompat {
         RegistryKey<Block> key = RegistryKey.of(RegistryKeys.BLOCK, id);
         return AbstractBlock.Settings.create().registryKey(key);
     }
-    *///?} else if >=1.21 {
-    /*public static AbstractBlock.Settings create(Identifier id) {
-        return AbstractBlock.Settings.create();
-    }*/
-    //?} else {
+    *///?} else {
     public static FabricBlockSettings create(Identifier id) {
         return FabricBlockSettings.create();
     }

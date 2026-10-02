@@ -86,17 +86,7 @@ public class PersonalPortalBlock extends Block {
     protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, net.minecraft.entity.EntityCollisionHandler handler, boolean bl) {
         handleEntityCollision(state, world, pos, entity);
     }
-    *///?} else if >=1.21.5 {
-    /*@Override
-    protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, net.minecraft.entity.EntityCollisionHandler handler) {
-        handleEntityCollision(state, world, pos, entity);
-    }*/
-    //?} else if >=1.21 {
-    /*@Override
-    protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-        handleEntityCollision(state, world, pos, entity);
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         handleEntityCollision(state, world, pos, entity);
@@ -142,12 +132,7 @@ public class PersonalPortalBlock extends Block {
     protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @org.jetbrains.annotations.Nullable net.minecraft.world.block.WireOrientation wireOrientation, boolean notify) {
         handleNeighborUpdate(state, world, pos);
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
-        handleNeighborUpdate(state, world, pos);
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
         handleNeighborUpdate(state, world, pos);
@@ -182,19 +167,7 @@ public class PersonalPortalBlock extends Block {
         ownershipManager.removePortal(world, pos);
         super.onStateReplaced(state, world, pos, moved);
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-        // Only clean up if the block is actually being removed (not just state change)
-        if (!state.isOf(newState.getBlock())) {
-            if (world instanceof ServerWorld serverWorld) {
-                PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(serverWorld.getServer());
-                ownershipManager.removePortal(world, pos);
-            }
-        }
-        super.onStateReplaced(state, world, pos, newState, moved);
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         // Only clean up if the block is actually being removed (not just state change)
@@ -216,12 +189,7 @@ public class PersonalPortalBlock extends Block {
     protected boolean isTransparent(BlockState state) {
         return true;
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    protected boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
-        return true;
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
         return true;

@@ -210,20 +210,7 @@ public class PortalOwnershipManager extends PersistentState {
         nbt.put("PortalOwners", portalsNbt);
         return nbt;
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
-        NbtCompound portalsNbt = new NbtCompound();
-        for (Map.Entry<String, PortalOwnershipData> entry : portalOwners.entrySet()) {
-            NbtCompound portalData = new NbtCompound();
-            com.wickedsik.personalworlds.compat.NbtCompat.putUuid(portalData, "OwnerUuid", entry.getValue().ownerUuid);
-            portalData.putInt("PortalTypeIndex", entry.getValue().portalTypeIndex);
-            portalsNbt.put(entry.getKey(), portalData);
-        }
-        nbt.put("PortalOwners", portalsNbt);
-        return nbt;
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtCompound portalsNbt = new NbtCompound();

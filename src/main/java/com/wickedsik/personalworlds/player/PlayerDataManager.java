@@ -401,11 +401,6 @@ public class PlayerDataManager extends PersistentState {
     // Note: For 1.21.5+, PersistentState uses Codec-based serialization via PersistentStateCompat
 
     //? if >=1.21.5 {
-    //?} else if >=1.21 {
-    /*@Override
-    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
-        return writeNbtData(nbt);
-    }*/
     //?} else {
     @Override
     public NbtCompound writeNbt(NbtCompound nbt) {

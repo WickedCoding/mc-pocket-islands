@@ -88,17 +88,7 @@ public class DimensionRegistry extends PersistentState {
         nbt.put("Dimensions", dimensionList);
         return nbt;
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
-        NbtList dimensionList = new NbtList();
-        for (PlayerDimensionData data : dimensions.values()) {
-            dimensionList.add(data.toNbt());
-        }
-        nbt.put("Dimensions", dimensionList);
-        return nbt;
-    }*/
-    //?} else {
+    *///?} else {
     @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         NbtList dimensionList = new NbtList();
