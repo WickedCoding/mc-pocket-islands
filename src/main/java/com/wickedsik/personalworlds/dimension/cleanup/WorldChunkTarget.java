@@ -64,7 +64,7 @@ final class WorldChunkTarget implements ChunkSanitizer.Target {
 
     @Override
     public Iterable<BlockPos> nonAirPositions() {
-        int minY = world.getBottomY();
+        int minY = WorldCompat.getBottomY(world);
         int maxY = WorldCompat.getTopY(world);
         int startX = chunk.getPos().getStartX();
         int startZ = chunk.getPos().getStartZ();

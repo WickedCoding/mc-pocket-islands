@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.compat;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,5 +89,15 @@ public final class IdentifierCompat {
         *///?} else {
         return new Identifier(value);
         //?}
+    }
+
+    /**
+     * Get the Identifier of a registry key (e.g. a dimension key).
+     *
+     * @param key The registry key
+     * @return The key's Identifier
+     */
+    public static Identifier fromKey(RegistryKey<?> key) {
+        return key.getValue();
     }
 }

@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.player;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.CommandCompat;
 import com.wickedsik.personalworlds.compat.EntityCompat;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.compat.TextCompat;
 import com.wickedsik.personalworlds.compat.WorldCompat;
@@ -264,7 +265,7 @@ public class InvitationManager {
         }
 
         // Check if it's the owner's dimension
-        String dimPath = guestWorld.getRegistryKey().getValue().getPath();
+        String dimPath = IdentifierCompat.fromKey(guestWorld.getRegistryKey()).getPath();
         String ownerDimPath = "pw_" + owner.getUuid().toString();
 
         if (!dimPath.equals(ownerDimPath)) {

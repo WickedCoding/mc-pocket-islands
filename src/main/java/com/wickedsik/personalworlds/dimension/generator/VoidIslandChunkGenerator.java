@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.dimension.generator;
 
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.BlockState;
@@ -219,7 +220,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             // Height is one above the top layer (Y=64 -> height Y=65)
             return ISLAND_Y + 1;
         }
-        return world.getBottomY();
+        return WorldCompat.getBottomY(world);
     }
 
     /**
@@ -237,7 +238,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
         int chunkZ = z >> 4;
 
         int height = world.getHeight();
-        int bottomY = world.getBottomY();
+        int bottomY = WorldCompat.getBottomY(world);
         BlockState[] states = new BlockState[height];
 
         // Fill with air by default

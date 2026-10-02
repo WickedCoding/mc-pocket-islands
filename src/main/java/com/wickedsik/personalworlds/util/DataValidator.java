@@ -220,7 +220,7 @@ public final class DataValidator {
         // Check if dimension exists
         if (server.getWorld(data.dimension()) == null) {
             PersonalWorldsMod.LOGGER.debug("Return dimension {} no longer exists",
-                data.dimension().getValue());
+                IdentifierCompat.fromKey(data.dimension()));
             return false;
         }
 

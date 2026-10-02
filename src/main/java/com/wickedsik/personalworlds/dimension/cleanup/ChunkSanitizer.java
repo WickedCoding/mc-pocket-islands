@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.dimension.cleanup;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
@@ -175,7 +176,7 @@ public final class ChunkSanitizer {
                 runDeferredSanitize(world, new ChunkPos(chunkPos), removeOrphans);
             } catch (RuntimeException e) {
                 PersonalWorldsMod.LOGGER.warn("Failed to sanitize chunk {} in {}",
-                    new ChunkPos(chunkPos), world.getRegistryKey().getValue(), e);
+                    new ChunkPos(chunkPos), IdentifierCompat.fromKey(world.getRegistryKey()), e);
             }
         });
     }
@@ -223,7 +224,7 @@ public final class ChunkSanitizer {
         if (result.anyRemoved()) {
             PersonalWorldsMod.LOGGER.info(
                 "Sanitized chunk {} in {}: removed {} orphan block entities, {} unsupported blocks, {} malformed items",
-                pos, world.getRegistryKey().getValue(),
+                pos, IdentifierCompat.fromKey(world.getRegistryKey()),
                 result.orphanBlockEntities(), result.orphanBlocks(), result.orphanItems()
             );
         }

@@ -31,7 +31,7 @@ public record ReturnData(
      */
     public NbtCompound toNbt() {
         NbtCompound nbt = new NbtCompound();
-        nbt.putString("Dimension", dimension.getValue().toString());
+        nbt.putString("Dimension", IdentifierCompat.fromKey(dimension).toString());
         nbt.putInt("X", position.getX());
         nbt.putInt("Y", position.getY());
         nbt.putInt("Z", position.getZ());

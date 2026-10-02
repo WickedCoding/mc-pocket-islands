@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.dimension;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.GameRulesCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
 import net.minecraft.block.Block;
@@ -329,7 +330,7 @@ public class DimensionManager {
         for (int i = 0; i < layerCount; i++) {
             String blockId = layerIds[i];
             Identifier id = IdentifierCompat.tryParse(blockId);
-            Block block = id != null ? Registries.BLOCK.get(id) : Blocks.AIR;
+            Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.AIR;
 
             if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {
                 PersonalWorldsMod.LOGGER.warn("Invalid island layer block '{}' for portal type {}, using grass_block",

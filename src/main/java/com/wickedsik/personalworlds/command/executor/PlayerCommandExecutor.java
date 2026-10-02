@@ -4,6 +4,7 @@ import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
 import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -230,7 +231,7 @@ public class PlayerCommandExecutor {
 
             Identifier id = IdentifierCompat.tryParse(layers[i]);
             if (id != null) {
-                Block block = Registries.BLOCK.get(id);
+                Block block = RegistryCompat.get(Registries.BLOCK, id);
                 if (block != Blocks.AIR || "minecraft:air".equals(layers[i])) {
                     result.append(Text.translatable(block.getTranslationKey()));
                 } else {

@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
@@ -189,7 +190,7 @@ public class PortalOwnershipManager extends PersistentState {
      * @return A string key in format "namespace:path:x,y,z"
      */
     private String makeKey(World world, BlockPos pos) {
-        return world.getRegistryKey().getValue().toString() +
+        return IdentifierCompat.fromKey(world.getRegistryKey()).toString() +
             ":" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
     }
 
@@ -242,7 +243,7 @@ public class PortalOwnershipManager extends PersistentState {
 
         if (com.wickedsik.personalworlds.compat.NbtCompat.contains(nbt, "PortalOwners", NbtElement.COMPOUND_TYPE)) {
             NbtCompound portalsNbt = com.wickedsik.personalworlds.compat.NbtCompat.getCompound(nbt, "PortalOwners");
-            for (String key : portalsNbt.getKeys()) {
+            for (String key : com.wickedsik.personalworlds.compat.NbtCompat.getKeys(portalsNbt)) {
                 try {
                     NbtElement element = portalsNbt.get(key);
 

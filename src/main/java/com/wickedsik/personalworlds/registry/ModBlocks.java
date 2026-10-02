@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.registry;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.BlockSettingsCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
 import com.wickedsik.personalworlds.portal.PortalColor;
@@ -76,7 +77,7 @@ public class ModBlocks {
             for (int i = 0; i < configs.size(); i++) {
                 String blockId = configs.get(i).frameBlock;
                 Identifier id = IdentifierCompat.tryParse(blockId);
-                Block block = id != null ? Registries.BLOCK.get(id) : Blocks.AIR;
+                Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.AIR;
 
                 // Validate the block exists (get() returns AIR for unknown IDs)
                 if (block == Blocks.AIR && !blockId.equals("minecraft:air")) {

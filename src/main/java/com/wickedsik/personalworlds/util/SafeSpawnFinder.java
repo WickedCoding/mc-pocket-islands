@@ -105,7 +105,7 @@ public class SafeSpawnFinder {
         // Search downward
         for (int dy = 1; dy <= MAX_Y_SEARCH; dy++) {
             BlockPos check = target.down(dy);
-            if (check.getY() > world.getBottomY() && isSafeSpawn(world, check)) {
+            if (check.getY() > WorldCompat.getBottomY(world) && isSafeSpawn(world, check)) {
                 return check;
             }
         }

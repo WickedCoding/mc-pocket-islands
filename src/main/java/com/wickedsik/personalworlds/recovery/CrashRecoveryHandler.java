@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.recovery;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.EntityCompat;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.dimension.DimensionManager;
@@ -146,7 +147,7 @@ public class CrashRecoveryHandler {
         if (ownerOpt.isEmpty()) {
             // Invalid dimension key - clear tracking and use fallback
             PersonalWorldsMod.LOGGER.warn("Invalid pocket dimension key for player {}: {}",
-                player.getName().getString(), expectedDimension.getValue());
+                player.getName().getString(), IdentifierCompat.fromKey(expectedDimension));
             dataManager.clearCurrentPocketDimension(playerUuid);
             teleportToFallbackPosition(player, server, dataManager);
             return;

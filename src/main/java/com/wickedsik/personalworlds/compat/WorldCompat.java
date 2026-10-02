@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.compat;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.World;
 
 /**
@@ -47,5 +48,15 @@ public final class WorldCompat {
         *///?} else {
         return world.getTopY();
         //?}
+    }
+
+    /**
+     * Get the minimum Y coordinate for a world (inclusive).
+     *
+     * @param world The world or other height-limited view (e.g. a chunk generator's HeightLimitView)
+     * @return The minimum Y coordinate
+     */
+    public static int getBottomY(HeightLimitView world) {
+        return world.getBottomY();
     }
 }

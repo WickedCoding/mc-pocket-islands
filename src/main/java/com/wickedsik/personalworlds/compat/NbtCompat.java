@@ -4,6 +4,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -193,5 +194,12 @@ public final class NbtCompat {
         *///?} else {
         return list.getCompound(index);
         //?}
+    }
+
+    /**
+     * Get all keys of an NBT compound.
+     */
+    public static Set<String> getKeys(NbtCompound nbt) {
+        return nbt.getKeys();
     }
 }

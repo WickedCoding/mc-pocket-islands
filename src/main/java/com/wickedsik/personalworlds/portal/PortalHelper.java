@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.portal;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.compat.TeleportCompat;
 import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
@@ -451,7 +452,7 @@ public class PortalHelper {
         // Check if player is already in the target dimension
         ServerWorld currentWorld = EntityCompat.getServerWorld(player);
         if (isInPersonalDimension(currentWorld)) {
-            String dimPath = currentWorld.getRegistryKey().getValue().getPath();
+            String dimPath = IdentifierCompat.fromKey(currentWorld.getRegistryKey()).getPath();
             String targetPath = "pw_" + ownerUuid.toString();
             if (dimPath.equals(targetPath)) {
                 player.sendMessage(Text.literal("You are already in this dimension!").formatted(Formatting.RED), false);
@@ -478,8 +479,8 @@ public class PortalHelper {
      * @return true if this is a personal dimension
      */
     public static boolean isInPersonalDimension(ServerWorld world) {
-        String namespace = world.getRegistryKey().getValue().getNamespace();
-        String path = world.getRegistryKey().getValue().getPath();
+        String namespace = IdentifierCompat.fromKey(world.getRegistryKey()).getNamespace();
+        String path = IdentifierCompat.fromKey(world.getRegistryKey()).getPath();
         return PersonalWorldsMod.MOD_ID.equals(namespace) && path.startsWith("pw_");
     }
 
@@ -494,7 +495,7 @@ public class PortalHelper {
             return Optional.empty();
         }
 
-        String path = world.getRegistryKey().getValue().getPath();
+        String path = IdentifierCompat.fromKey(world.getRegistryKey()).getPath();
         String uuidStr = path.substring(3); // Remove "pw_" prefix
 
         // Dimension IDs store UUIDs without dashes (e.g., "e8823481a39c3659a564a28f5ed6f193")
@@ -524,11 +525,11 @@ public class PortalHelper {
      */
     public static Optional<UUID> getDimensionOwner(RegistryKey<World> dimensionKey) {
         // Check namespace
-        if (!dimensionKey.getValue().getNamespace().equals(PersonalWorldsMod.MOD_ID)) {
+        if (!IdentifierCompat.fromKey(dimensionKey).getNamespace().equals(PersonalWorldsMod.MOD_ID)) {
             return Optional.empty();
         }
 
-        String path = dimensionKey.getValue().getPath();
+        String path = IdentifierCompat.fromKey(dimensionKey).getPath();
         if (!path.startsWith("pw_")) {
             return Optional.empty();
         }
@@ -577,7 +578,7 @@ public class PortalHelper {
                     BlockPos checkPos = center.add(x, y, z);
 
                     // Ensure Y is within valid range
-                    if (checkPos.getY() < world.getBottomY() || checkPos.getY() >= WorldCompat.getTopY(world)) {
+                    if (checkPos.getY() < WorldCompat.getBottomY(world) || checkPos.getY() >= WorldCompat.getTopY(world)) {
                         continue;
                     }
 
@@ -589,7 +590,7 @@ public class PortalHelper {
             }
         }
 
-        PersonalWorldsMod.LOGGER.debug("No existing portal found in {}", world.getRegistryKey().getValue());
+        PersonalWorldsMod.LOGGER.debug("No existing portal found in {}", IdentifierCompat.fromKey(world.getRegistryKey()));
         return Optional.empty();
     }
 
@@ -691,7 +692,7 @@ public class PortalHelper {
         if (config.islandLayers.length > 0) {
             String blockId = config.islandLayers[0];
             Identifier id = IdentifierCompat.tryParse(blockId);
-            Block block = id != null ? Registries.BLOCK.get(id) : Blocks.GRASS_BLOCK;
+            Block block = id != null ? RegistryCompat.get(Registries.BLOCK, id) : Blocks.GRASS_BLOCK;
 
             if (block != Blocks.AIR || blockId.equals("minecraft:air")) {
                 platformMaterial = block.getDefaultState();

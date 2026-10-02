@@ -148,8 +148,8 @@ class ReturnDataTest {
             ReturnData data = ReturnData.fromNbt(nbt);
 
             assertNotNull(data);
-            assertEquals("minecraft", data.dimension().getValue().getNamespace());
-            assertEquals("overworld", data.dimension().getValue().getPath());
+            assertEquals("minecraft", IdentifierCompat.fromKey(data.dimension()).getNamespace());
+            assertEquals("overworld", IdentifierCompat.fromKey(data.dimension()).getPath());
             assertEquals(new BlockPos(100, 65, -200), data.position());
             assertEquals(90.0f, data.yaw(), 0.001f);
             assertEquals(-15.0f, data.pitch(), 0.001f);
@@ -163,7 +163,7 @@ class ReturnDataTest {
             NbtCompound nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
-            assertEquals(original.dimension().getValue(), restored.dimension().getValue());
+            assertEquals(IdentifierCompat.fromKey(original.dimension()), IdentifierCompat.fromKey(restored.dimension()));
             assertEquals(original.position(), restored.position());
             assertEquals(original.yaw(), restored.yaw(), 0.001f);
             assertEquals(original.pitch(), restored.pitch(), 0.001f);
@@ -240,8 +240,8 @@ class ReturnDataTest {
             NbtCompound nbt = data.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
-            assertEquals("personalworlds", restored.dimension().getValue().getNamespace());
-            assertEquals("pw_test", restored.dimension().getValue().getPath());
+            assertEquals("personalworlds", IdentifierCompat.fromKey(restored.dimension()).getNamespace());
+            assertEquals("pw_test", IdentifierCompat.fromKey(restored.dimension()).getPath());
         }
 
         @Test
@@ -255,8 +255,8 @@ class ReturnDataTest {
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals("my_mod:my_cool_dimension", NbtCompat.getString(nbt, "Dimension", ""));
-            assertEquals("my_mod", restored.dimension().getValue().getNamespace());
-            assertEquals("my_cool_dimension", restored.dimension().getValue().getPath());
+            assertEquals("my_mod", IdentifierCompat.fromKey(restored.dimension()).getNamespace());
+            assertEquals("my_cool_dimension", IdentifierCompat.fromKey(restored.dimension()).getPath());
         }
     }
 
