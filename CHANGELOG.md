@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Chunk sanitizer is now opt-in: `sanitizeChunksOnLoad` and `sanitizeRemoveOrphanBlocks` default to `false`. Earlier versions wrote `true` for both into every new config file, so existing configs are migrated once on startup: both flags are set to `false`, all other settings are kept, and the original file is saved as `pocketislands.json.v0.bak`. A warning in the log says what changed. To keep the sanitizer, set the flags back to `true` after upgrading. `/pi admin sanitize` is unaffected.
+- Config files now carry a `configVersion` field. Do not edit it by hand.
+
+### Fixed
+- Chunk sanitizer no longer crashes the server on chunk load. The 0.7.3 fix deferred the sweep with `MinecraftServer#execute`, but that runs the task immediately when called on the server thread, so the sanitizer still waited on the chunk that was loading and the watchdog killed the server. Loaded chunks are now queued and sanitized at the end of the server tick.
+
 ## [0.7.3] - 2026-08-16
 
 ### Added

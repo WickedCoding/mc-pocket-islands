@@ -411,7 +411,7 @@ git push origin main --tags
 
 | Platform        | URL                                                     |
 |-----------------|---------------------------------------------------------|
-| GitHub Releases | https://github.com/WickedSik/mc-pocket-islands/releases |
+| GitHub Releases | https://github.com/WickedCoding/mc-pocket-islands/releases |
 | Modrinth        | https://modrinth.com/mod/pocket-islands                 |
 
 ## Key External Dependencies

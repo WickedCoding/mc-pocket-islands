@@ -82,12 +82,17 @@ public class ModEventHandlers {
 
     private static void onServerStopping(MinecraftServer server) {
         PersonalWorldsMod.LOGGER.info("Server stopping - unloading all dimensions");
+        ChunkSanitizer.clearPending();
         DimensionManager.unloadAll();
     }
 
     private static void onServerTick(MinecraftServer server) {
         // Check void falling every tick (safety critical)
         checkVoidFalling(server);
+
+        // Sanitize chunks queued by the chunk-load callback, now that no
+        // chunk-loading code is on the stack
+        ChunkSanitizer.processPending();
 
         tickCounter++;
         if (tickCounter >= UNLOAD_CHECK_INTERVAL) {

@@ -9,6 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,11 +61,27 @@ public class ModConfig {
     }
 
     private static ModConfig INSTANCE;
-    private static final Path CONFIG_PATH = FabricLoader.getInstance()
-            .getConfigDir().resolve("pocketislands.json");
-    private static final Path LEGACY_CONFIG_PATH = FabricLoader.getInstance()
-            .getConfigDir().resolve("personalworlds.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    /** Config schema version written by this build. See {@link #migrate}. */
+    static final int CURRENT_CONFIG_VERSION = 1;
+
+    // Paths live in a holder so ModConfig itself can be instantiated in unit
+    // tests without a running FabricLoader.
+    private static final class ConfigPaths {
+        static final Path CONFIG = FabricLoader.getInstance()
+                .getConfigDir().resolve("pocketislands.json");
+        static final Path LEGACY = FabricLoader.getInstance()
+                .getConfigDir().resolve("personalworlds.json");
+    }
+
+    // ==================== Config Version ====================
+
+    /**
+     * Schema version of this config file. Files written before versioning
+     * have no such key and load as 0. Do not edit by hand.
+     */
+    public int configVersion = 0;
 
     // ==================== Portal Configuration ====================
 
@@ -120,9 +137,10 @@ public class ModConfig {
      * own canPlaceAt check are replaced with air.
      * Fixes visual corruption after removing mods from the modpack that added
      * blocks or items previously stored in the dimension.
-     * Default: true
+     * Off by default: it rewrites chunk contents, so server owners must opt in.
+     * Default: false
      */
-    public boolean sanitizeChunksOnLoad = true;
+    public boolean sanitizeChunksOnLoad = false;
 
     /**
      * When the chunk sanitizer runs, also sweep for support-dependent blocks
@@ -131,9 +149,9 @@ public class ModConfig {
      * natural block update anyway; removing them at load time prevents ghost
      * geometry from lingering.
      * Only used when {@link #sanitizeChunksOnLoad} is true.
-     * Default: true
+     * Default: false
      */
-    public boolean sanitizeRemoveOrphanBlocks = true;
+    public boolean sanitizeRemoveOrphanBlocks = false;
 
     // ==================== Dimension Game Rules ====================
 
@@ -180,20 +198,90 @@ public class ModConfig {
         return INSTANCE;
     }
 
+    /** A fresh config at the current schema version (needs no migration). */
+    static ModConfig createDefault() {
+        ModConfig config = new ModConfig();
+        config.configVersion = CURRENT_CONFIG_VERSION;
+        return config;
+    }
+
+    /**
+     * Bring an older config up to {@link #CURRENT_CONFIG_VERSION}. Only the
+     * fields named per step change; everything else is left as loaded.
+     *
+     * v0 → v1: the chunk sanitizer became opt-in. Pre-versioning builds wrote
+     * {@code true} for both sanitizer flags into every new config file, so an
+     * explicit {@code true} there was not an admin's choice. Reset both once;
+     * a later manual {@code true} is kept.
+     *
+     * @return true if the config changed and should be saved
+     */
+    static boolean migrate(ModConfig config) {
+        if (config.configVersion >= CURRENT_CONFIG_VERSION) {
+            return false;
+        }
+        if (config.configVersion < 1) {
+            config.sanitizeChunksOnLoad = false;
+            config.sanitizeRemoveOrphanBlocks = false;
+        }
+        config.configVersion = CURRENT_CONFIG_VERSION;
+        return true;
+    }
+
+    /**
+     * Back up the config file, migrate it and save. If the backup fails the
+     * file is left untouched; the migrated values still apply in memory for
+     * this run.
+     */
+    private static void migrateOnDisk(ModConfig config) {
+        int fromVersion = config.configVersion;
+        Path backup = ConfigPaths.CONFIG.resolveSibling(
+                ConfigPaths.CONFIG.getFileName() + ".v" + fromVersion + ".bak");
+        boolean backedUp;
+        try {
+            Files.copy(ConfigPaths.CONFIG, backup, StandardCopyOption.REPLACE_EXISTING);
+            backedUp = true;
+        } catch (IOException e) {
+            PersonalWorldsMod.LOGGER.error("Failed to back up config to {}; not rewriting {}",
+                    backup, ConfigPaths.CONFIG, e);
+            backedUp = false;
+        }
+
+        if (!migrate(config)) {
+            return;
+        }
+        if (fromVersion < 1) {
+            PersonalWorldsMod.LOGGER.warn(
+                    "Config migrated from version {} to {}: the chunk sanitizer is now opt-in, so "
+                    + "sanitizeChunksOnLoad and sanitizeRemoveOrphanBlocks were set to false. "
+                    + "Set them to true to re-enable. Original file: {}",
+                    fromVersion, CURRENT_CONFIG_VERSION, backedUp ? backup : "(backup failed)");
+        }
+        if (backedUp) {
+            save();
+        }
+    }
+
     /**
      * Load configuration from disk.
      * Creates default config if file doesn't exist.
      */
     public static void load() {
-        if (Files.exists(CONFIG_PATH)) {
+        if (Files.exists(ConfigPaths.CONFIG)) {
             try {
-                String json = Files.readString(CONFIG_PATH);
+                String json = Files.readString(ConfigPaths.CONFIG);
                 INSTANCE = GSON.fromJson(json, ModConfig.class);
 
                 if (INSTANCE == null) {
                     PersonalWorldsMod.LOGGER.warn("Config file was empty, using defaults");
-                    INSTANCE = new ModConfig();
+                    INSTANCE = createDefault();
                     save();
+                }
+
+                // Must run before validate(): saving after validation would
+                // persist its in-memory repairs into the admin's file.
+                if (INSTANCE.configVersion < CURRENT_CONFIG_VERSION) {
+                    migrateOnDisk(INSTANCE);
                 }
 
                 // Ensure at least one portal type exists
@@ -203,32 +291,32 @@ public class ModConfig {
                     save();
                 }
 
-                PersonalWorldsMod.LOGGER.info("Configuration loaded from {}", CONFIG_PATH);
+                PersonalWorldsMod.LOGGER.info("Configuration loaded from {}", ConfigPaths.CONFIG);
             } catch (IOException e) {
                 PersonalWorldsMod.LOGGER.error("Failed to load configuration, using defaults", e);
-                INSTANCE = new ModConfig();
+                INSTANCE = createDefault();
             } catch (Exception e) {
                 PersonalWorldsMod.LOGGER.error("Configuration file malformed, using defaults", e);
-                INSTANCE = new ModConfig();
+                INSTANCE = createDefault();
             }
-        } else if (Files.exists(LEGACY_CONFIG_PATH)) {
+        } else if (Files.exists(ConfigPaths.LEGACY)) {
             // Migrate from legacy config path (personalworlds.json → pocketislands.json)
             try {
-                PersonalWorldsMod.LOGGER.info("Found legacy config at {}, migrating to {}", LEGACY_CONFIG_PATH, CONFIG_PATH);
-                Files.copy(LEGACY_CONFIG_PATH, CONFIG_PATH);
-                Files.delete(LEGACY_CONFIG_PATH);
+                PersonalWorldsMod.LOGGER.info("Found legacy config at {}, migrating to {}", ConfigPaths.LEGACY, ConfigPaths.CONFIG);
+                Files.copy(ConfigPaths.LEGACY, ConfigPaths.CONFIG);
+                Files.delete(ConfigPaths.LEGACY);
                 PersonalWorldsMod.LOGGER.info("Config migrated (old file removed)");
                 load(); // Recurse to load from new path
                 return;
             } catch (IOException e) {
                 PersonalWorldsMod.LOGGER.error("Failed to migrate legacy config, using defaults", e);
-                INSTANCE = new ModConfig();
+                INSTANCE = createDefault();
                 INSTANCE.portalTypes.add(new PortalConfig());
                 save();
             }
         } else {
-            PersonalWorldsMod.LOGGER.info("No configuration file found, creating default at {}", CONFIG_PATH);
-            INSTANCE = new ModConfig();
+            PersonalWorldsMod.LOGGER.info("No configuration file found, creating default at {}", ConfigPaths.CONFIG);
+            INSTANCE = createDefault();
             // Add default portal type
             INSTANCE.portalTypes.add(new PortalConfig());
             save();
@@ -243,10 +331,10 @@ public class ModConfig {
      */
     public static void save() {
         try {
-            Files.createDirectories(CONFIG_PATH.getParent());
+            Files.createDirectories(ConfigPaths.CONFIG.getParent());
             String json = GSON.toJson(INSTANCE);
-            Files.writeString(CONFIG_PATH, json);
-            PersonalWorldsMod.LOGGER.debug("Configuration saved to {}", CONFIG_PATH);
+            Files.writeString(ConfigPaths.CONFIG, json);
+            PersonalWorldsMod.LOGGER.debug("Configuration saved to {}", ConfigPaths.CONFIG);
         } catch (IOException e) {
             PersonalWorldsMod.LOGGER.error("Failed to save configuration", e);
         }
@@ -390,6 +478,6 @@ public class ModConfig {
      * Get the configuration file path (for admin commands).
      */
     public static Path getConfigPath() {
-        return CONFIG_PATH;
+        return ConfigPaths.CONFIG;
     }
 }

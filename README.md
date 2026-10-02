@@ -134,8 +134,8 @@ different materials and properties.
     "enableAlwaysWelcome": false,
     "unloadEmptyDimensionDelayTicks": 600,
     "cleanupIntervalTicks": 600,
-    "sanitizeChunksOnLoad": true,
-    "sanitizeRemoveOrphanBlocks": true,
+    "sanitizeChunksOnLoad": false,
+    "sanitizeRemoveOrphanBlocks": false,
     "enableTeleportParticles": true,
     "enableTeleportSounds": true,
     "enablePortalActivationEffects": true,
@@ -241,8 +241,8 @@ Click the star to toggle the status directly from the chat.
 
 #### Chunk Sanitizer
 
-- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `true`)
-- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `true`)
+- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `false`; opt-in)
+- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `false`; only used when `sanitizeChunksOnLoad` is enabled)
 
 #### Visual Effects
 
@@ -465,7 +465,7 @@ main registry is corrupted. This file contains:
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
 - **Invitation revoked while offline**: Player evacuated on next login with fallback chain (return data → bed → spawn)
 - **Player falls off island**: Automatically teleported back before taking void damage
-- **Unknown blocks or container items**: Chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared.
+- **Unknown blocks or container items**: With `sanitizeChunksOnLoad` enabled, chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared. Alternatively, run `/pi admin sanitize` on demand.
 
 ## Performance
 

@@ -133,7 +133,7 @@ modrinth {
     val changelogContent = System.getenv("RELEASE_CHANGELOG")
     changelog.set(
         if (changelogContent.isNullOrBlank())
-            "See [GitHub release](https://github.com/WickedSik/pocket-islands/releases) for full changelog."
+            "See [GitHub release](https://github.com/WickedCoding/mc-pocket-islands/releases) for full changelog."
         else
             changelogContent
     )

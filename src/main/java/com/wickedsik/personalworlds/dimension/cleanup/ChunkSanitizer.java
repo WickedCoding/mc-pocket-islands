@@ -7,8 +7,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
@@ -36,6 +34,8 @@ import java.util.List;
  * pocket-dimension scoping via {@link PortalHelper#isInPersonalDimension}.
  */
 public final class ChunkSanitizer {
+
+    private static final PendingChunkQueue<ServerWorld> PENDING = new PendingChunkQueue<>();
 
     private ChunkSanitizer() {
     }
@@ -138,35 +138,51 @@ public final class ChunkSanitizer {
 
     /**
      * Fabric {@code ServerChunkEvents.CHUNK_LOAD} handler. Enforces
-     * pocket-dimension scoping and config flags, then defers the actual
-     * sanitize pass to the next server tick.
+     * pocket-dimension scoping and config flags, then queues the chunk for
+     * {@link #processPending}, which the server-tick handler calls.
      *
-     * The deferral is required to avoid a server-thread deadlock: running
-     * inline during the chunk-load callback is unsafe because if any block's
-     * {@code canPlaceAt}
-     * walks into an unloaded neighbour chunk, {@code getBlockState} recurses
-     * into {@code getChunkBlocking} while still inside the outer chunk-load
-     * task pump, and the watchdog eventually kills the thread. Posting the
-     * work with {@link MinecraftServer#execute} guarantees it runs outside
-     * that pump on a subsequent tick.
+     * Nothing may touch the world from here. The callback runs on the server
+     * thread inside the chunk-load task pump, before the chunk's load future
+     * completes. Looking the chunk up (or a neighbour, via {@code canPlaceAt})
+     * makes the thread wait for a load that can only finish after this
+     * callback returns, and the watchdog kills the server.
+     *
+     * {@link MinecraftServer#execute} does not help: on the server thread it
+     * runs the task immediately instead of queueing it.
      */
     public static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
-        ModConfig config = ModConfig.get();
-        if (!config.sanitizeChunksOnLoad) {
+        if (!ModConfig.get().sanitizeChunksOnLoad) {
             return;
         }
         if (!PortalHelper.isInPersonalDimension(world)) {
             return;
         }
 
-        MinecraftServer server = world.getServer();
-        if (server == null) {
+        PENDING.enqueue(world, chunk.getPos().toLong());
+    }
+
+    /**
+     * Sanitizes every chunk queued by {@link #onChunkLoad}. Call from the end
+     * of the server tick, outside any chunk-loading code.
+     */
+    public static void processPending() {
+        if (PENDING.isEmpty()) {
             return;
         }
+        boolean removeOrphans = ModConfig.get().sanitizeRemoveOrphanBlocks;
+        PENDING.drain((world, chunkPos) -> {
+            try {
+                runDeferredSanitize(world, new ChunkPos(chunkPos), removeOrphans);
+            } catch (RuntimeException e) {
+                PersonalWorldsMod.LOGGER.warn("Failed to sanitize chunk {} in {}",
+                    new ChunkPos(chunkPos), world.getRegistryKey().getValue(), e);
+            }
+        });
+    }
 
-        ChunkPos pos = chunk.getPos();
-        boolean removeOrphans = config.sanitizeRemoveOrphanBlocks;
-        server.execute(() -> runDeferredSanitize(world, pos, removeOrphans));
+    /** Drops queued work, e.g. on server stop. */
+    public static void clearPending() {
+        PENDING.clear();
     }
 
     /**
@@ -194,11 +210,11 @@ public final class ChunkSanitizer {
     }
 
     private static void runDeferredSanitize(ServerWorld world, ChunkPos pos, boolean removeOrphans) {
-        // The chunk may have unloaded between the load event and this tick
-        // (player left, server flushed the ticket). Fetch without forcing a
-        // reload and bail if it's gone.
-        Chunk current = world.getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
-        if (!(current instanceof WorldChunk worldChunk)) {
+        // The chunk may have unloaded since the load event (player left,
+        // server flushed the ticket). getWorldChunk never waits on a load:
+        // it returns null unless the chunk is fully loaded right now.
+        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.x, pos.z);
+        if (worldChunk == null) {
             return;
         }
 
