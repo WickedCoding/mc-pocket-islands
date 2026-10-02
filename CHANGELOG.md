@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Chunk sanitizer no longer crashes the server on chunk load. The 0.7.3 fix deferred the sweep with `MinecraftServer#execute`, but that runs the task immediately when called on the server thread, so the sanitizer still waited on the chunk that was loading and the watchdog killed the server. Loaded chunks are now queued and sanitized at the end of the server tick.
+- 1.21.11: entering a portal no longer disconnects the player with "Internal server error". The `/pi` permission check cast the player's permissions to `LeveledPermissionPredicate`, which fails for other `PermissionPredicate` implementations when the command tree is resent after a teleport.
 
 ## [0.7.3] - 2026-08-16
 
