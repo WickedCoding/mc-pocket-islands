@@ -117,8 +117,8 @@ management from a single codebase.
 | 1.20.4     | Supported |             |
 | 1.21.11    | Supported |             |
 
-Always switch back to 1.20.1 before committing. Don't use the "Reset active project"
-task: it switches to `vcsVersion` (1.20.4).
+Always switch back to 1.20.1 before committing; `./gradlew "Reset active project"`
+does this (it switches to `vcsVersion` = 1.20.1 in `settings.gradle.kts`).
 
 ### Versioned Comment Syntax
 

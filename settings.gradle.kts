@@ -18,6 +18,6 @@ stonecutter {
 
     create(rootProject) {
         versions("1.20.1", "1.20.4", "1.21.11")
-        vcsVersion = "1.20.4" // Active version for VCS (main development target)
+        vcsVersion = "1.20.1" // Active version for VCS (commit with this active)
     }
 }
