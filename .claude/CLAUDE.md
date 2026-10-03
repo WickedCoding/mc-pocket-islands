@@ -75,20 +75,39 @@ This is a standard Fabric mod project with split environment source sets:
 - **`build.gradle.kts`** — Dependencies, build configuration, uses Fabric Loom
 - **`gradle.properties`** — Shared properties (mod version, loom version)
 - **`versions/<mc-version>/gradle.properties`** — Version-specific dependencies
-- **`src/main/resources/fabric.mod.json`** — Mod metadata, entrypoints, dependencies
+- **`src/main/resources/fabric.mod.json`** — Mod metadata, entrypoint (`platform.fabric.FabricEntrypoint`), dependencies
+- **`src/main/resources/pocketislands.mixins.json`** — Mixin config (per-dimension game rules)
 
 ### Package Structure
 
 Under `src/main/java/com/wickedsik/personalworlds/`:
 
 - **`compat/`** — Version-specific API abstraction layer (ResourceLocation, Nbt, PortalInfo, Registry, etc.)
-- **`dimension/`** — Dimension creation, registry, lifecycle management (uses Fantasy)
+- **`platform/`** — Loader-neutral interfaces (`Platform`, events, registration, runtime dimensions, teleport, permissions)
+- **`platform/fabric/`** — Fabric implementations and entrypoint (Fabric API, Fantasy, fabric-permissions-api)
+- **`mixin/`** — Vanilla mixins shared by all loaders (per-dimension game rules)
+- **`dimension/`** — Dimension creation, registry, lifecycle management (through `RuntimeDimensions`)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
 - **`player/`** — Player data, invitations, return positions (SavedData)
 - **`config/`** — Configuration options
 - **`registry/`** — Block/item registration
 - **`event/`** — Server lifecycle, player events
 - **`command/`** — Admin and player commands (`/pi`)
+
+### Platform Layer
+
+Only `platform/<loader>/` may import loader classes (`net.fabricmc.*`, `xyz.nucleoid.fantasy.*`,
+`me.lucko.*`). Everything else calls `Platform.get()`. The loader entrypoint installs its
+implementation with `Platform.install(...)` and then calls `PersonalWorldsMod.init()`.
+Each loader's buildscript excludes the other loaders' `platform/` packages.
+
+Check with:
+```bash
+grep -rlE "net\.fabricmc|xyz\.nucleoid|me\.lucko" src/main/java | grep -v /platform/   # must print nothing
+```
+
+Registered objects (e.g. `ModBlocks.PERSONAL_PORTAL`) are `Supplier`s: Forge/NeoForge register
+after mod construction, so never build or read them in static initializers.
 
 ### Dependencies
 
@@ -163,7 +182,7 @@ in `src/main/java/com/wickedsik/personalworlds/compat/`:
 - **WorldCompat.java** — `getMaxBuildHeight()`/`getMinBuildHeight()` → `getMinY()` + `getHeight()`
 - **EntityCompat.java** — Entity-related API updates
 - **CommandCompat.java** — Command registration and feedback changes
-- **GameRulesCompat.java** — Game rules API adjustments
+- **GameRulesCompat.java** — Builds a pocket dimension's rule set (overworld copy + config overrides)
 - **BlockSettingsCompat.java** — Block settings and registration updates
 - **RegistryCompat.java** — `Registry.get(id)` → `Registry.getValue(id)`
 
@@ -233,15 +252,28 @@ and survive world resets because they are separate from the main world folders
 A `DimensionRegistry` (SavedData saved to `world/data/personalworlds/registry.dat`)
 tracks all player dimensions for restoration on server start.
 
-### Fantasy Integration
+### Runtime Dimensions (Fantasy on Fabric)
 
-Fantasy (`xyz.nucleoid:fantasy`) is critical for this mod:
+`DimensionManager` opens dimensions through `Platform.get().dimensions()` (`RuntimeDimensions`),
+which returns a `RuntimeDimension` handle (`level()`, `unload()`, `delete()`). On Fabric,
+`platform/fabric/FantasyDimensions` implements it with Fantasy (`xyz.nucleoid:fantasy`)
+persistent worlds. Without Fantasy, Fabric API alone cannot create dimensions at runtime.
 
-- **`RuntimeWorldConfig`** — Configure dimension type, chunk generator, seed, game rules
-- **`fantasy.getOrOpenPersistentWorld()`** — Create or load dimensions that survive restarts
-- **`RuntimeWorldHandle`** — Manage dimension lifecycle (unload when empty, delete if needed)
+### Per-Dimension Game Rules
 
-Without Fantasy, Fabric API alone cannot create dimensions at runtime.
+Vanilla gives every level the overworld's game rules. `DimensionManager` registers a rule set
+in `DimensionGameRules` (keyed by dimension) **before** opening the level; mixins return it:
+
+- 1.20.x: `LevelMixin` on `Level#getGameRules`, plus `ServerLevelMixin` wrapping the direct
+  `levelData.getGameRules()` read in `ServerLevel#tickTime` (daylight cycle)
+- 1.21.x: `ServerLevelMixin` on `ServerLevel#getGameRules`
+- All: `ServerPlayerMixin` makes `restoreFrom` read `keepInventory` in the level the player
+  died in, matching the death-drop decision (otherwise items vanish)
+
+Fantasy's own `setGameRule` is not used. Known limits: on 1.20.x `/gamerule` always reads and
+writes the overworld; on 1.21.x it acts on the pocket, but edits are lost when the pocket
+reloads (rules are rebuilt from config). Client-side rules sent at login
+(`doImmediateRespawn`, `reducedDebugInfo`) follow the overworld.
 
 ### Component Dependencies
 
@@ -252,7 +284,9 @@ PortalHelper.handlePortalEntry()
     ↓
 DimensionManager.getOrCreatePlayerDimension()
     ↓
-Fantasy.getOrOpenPersistentWorld()
+DimensionGameRules.register()
+    ↓
+Platform.get().dimensions().open()   (Fantasy on Fabric)
     ↓
 DimensionRegistry.registerDimension() (if new)
 ```
@@ -293,7 +327,7 @@ Players can invite others to visit their island via commands
 ### Void World Generation
 
 The `VoidChunkGenerator` extends `ChunkGenerator` and returns empty chunks. It's
-registered with Fantasy for use in pocket dimensions.
+registered through `PlatformRegistration` (`ModChunkGenerators`) for use in pocket dimensions.
 
 ### Starter Platform
 
@@ -341,7 +375,7 @@ multi-version support.
 
 **Mapping Preferences:**
 - All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11; NeoForge uses Mojang names)
-- 1.20.x uses `FabricDimensions.teleport()` for cross-dimension teleportation; 1.21.x uses `Entity#teleport(TeleportTransition)`
+- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x
 
 ### API Differences Between Supported Versions
 
@@ -363,7 +397,7 @@ The 1.21.x series introduced major API changes. All differences are abstracted i
 - **Block methods**: `entityInside` added InsideBlockEffectApplier param, signature changes
 - **Level methods**: `getMaxBuildHeight()`/`getMinBuildHeight()` replaced by `getMinY()` + `getHeight()`
 - **Entity methods**: Various API adjustments for entity interaction
-- **GameRules**: Complete API overhaul — `GameRules.Key`/`BooleanValue`/`IntegerValue`/`GameRuleTypeVisitor` (1.20.x) → standalone `GameRule<T>`/`GameRuleTypeVisitor` (1.21.x); Fantasy API changed from typed overloads to generic `setGameRule(GameRule<T>, T)`; game rule names changed from camelCase to snake_case with many renames (e.g., `doMobSpawning` → `spawn_mobs`)
+- **GameRules**: Complete API overhaul — `GameRules.Key`/`BooleanValue`/`IntegerValue`/`GameRuleTypeVisitor` (1.20.x) → standalone `GameRule<T>`/`GameRuleTypeVisitor` (1.21.x); `GameRules#copy()` takes a `FeatureFlagSet` and values are set with `set(GameRule<T>, T, server)`; game rule names changed from camelCase to snake_case with many renames (e.g., `doMobSpawning` → `spawn_mobs`)
 
 ### Future Version Support
 
