@@ -35,6 +35,20 @@ loom {
             sourceSet(sourceSets["client"])
         }
     }
+
+    // Fixed dev names: offline UUIDs derive from the name, so a random name per launch
+    // would be a new player (and a new island) every time. Dev2 is the invite-test player.
+    runs {
+        create("client2") {
+            inherit(getByName("client"))
+            configName = "Minecraft Client 2"
+            runDir("run/client2")
+            programArgs("--username", "Dev2")
+        }
+        named("client") {
+            programArgs("--username", "Dev")
+        }
+    }
 }
 
 dependencies {
