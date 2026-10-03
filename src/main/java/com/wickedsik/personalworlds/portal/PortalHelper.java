@@ -100,7 +100,7 @@ public class PortalHelper {
 
         // Fill interior with portal blocks with the correct color
         PortalColor color = ModBlocks.getPortalColor(portalTypeIndex);
-        BlockState portalState = ModBlocks.PERSONAL_PORTAL.defaultBlockState()
+        BlockState portalState = ModBlocks.PERSONAL_PORTAL.get().defaultBlockState()
             .setValue(PersonalPortalBlock.AXIS, portalFrame.axis())
             .setValue(PersonalPortalBlock.COLOR, color);
 
@@ -582,7 +582,7 @@ public class PortalHelper {
                         continue;
                     }
 
-                    if (world.getBlockState(checkPos).getBlock() == ModBlocks.PERSONAL_PORTAL) {
+                    if (world.getBlockState(checkPos).getBlock() == ModBlocks.PERSONAL_PORTAL.get()) {
                         PersonalWorldsMod.LOGGER.debug("Found existing portal at {}", checkPos);
                         return Optional.of(checkPos);
                     }
@@ -619,7 +619,7 @@ public class PortalHelper {
 
         // Find the bottom of the portal (search down)
         BlockPos bottomPortal = portalPos;
-        while (world.getBlockState(bottomPortal.below()).getBlock() == ModBlocks.PERSONAL_PORTAL) {
+        while (world.getBlockState(bottomPortal.below()).getBlock() == ModBlocks.PERSONAL_PORTAL.get()) {
             bottomPortal = bottomPortal.below();
         }
 
@@ -887,7 +887,7 @@ public class PortalHelper {
         // Check interior is empty (air or already portal blocks)
         for (BlockPos pos : frame.getInteriorPositions()) {
             BlockState state = world.getBlockState(pos);
-            if (!state.isAir() && state.getBlock() != ModBlocks.PERSONAL_PORTAL) {
+            if (!state.isAir() && state.getBlock() != ModBlocks.PERSONAL_PORTAL.get()) {
                 return false;
             }
         }

@@ -2,8 +2,8 @@ package com.wickedsik.personalworlds.dimension.generator;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.platform.Platform;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
 public class ModChunkGenerators {
@@ -17,16 +17,16 @@ public class ModChunkGenerators {
     public static void register() {
         //? if >=1.21 {
         /*// 1.21.x uses MapCodec for chunk generator registry
-        Registry.register(
+        Platform.get().registration().register(
             BuiltInRegistries.CHUNK_GENERATOR,
             VOID_ISLAND_ID,
-            VoidIslandChunkGenerator.CODEC.fieldOf("void_island")
+            () -> VoidIslandChunkGenerator.CODEC.fieldOf("void_island")
         );
         *///?} else {
-        Registry.register(
+        Platform.get().registration().register(
             BuiltInRegistries.CHUNK_GENERATOR,
             VOID_ISLAND_ID,
-            VoidIslandChunkGenerator.CODEC
+            () -> VoidIslandChunkGenerator.CODEC
         );
         //?}
 

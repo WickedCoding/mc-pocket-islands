@@ -1,21 +1,17 @@
 package com.wickedsik.personalworlds.compat;
 
 import net.minecraft.resources.ResourceLocation;
-
+import net.minecraft.world.level.block.state.BlockBehaviour;
 //? if >=1.21.2 {
-/*import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.Block;
+/*import net.minecraft.world.level.block.Block;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
-*///?} else {
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-//?}
+*///?}
 
 /**
  * Compatibility layer for Block settings creation.
  * <p>
- * MC 1.20.x uses: FabricBlockSettings.create()
- * MC 1.21.0-1.21.1 uses: BlockBehaviour.Properties.of()
+ * MC 1.20.x uses: BlockBehaviour.Properties.of()
  * MC 1.21.2+ uses: BlockBehaviour.Properties.of().setId(key) - REQUIRED
  * <p>
  * This class centralizes block settings creation to simplify version migration.
@@ -38,24 +34,8 @@ public final class BlockSettingsCompat {
         return BlockBehaviour.Properties.of().setId(key);
     }
     *///?} else {
-    public static FabricBlockSettings create(ResourceLocation id) {
-        return FabricBlockSettings.create();
-    }
-    //?}
-
-    /**
-     * Create a new block settings instance without registry key.
-     * @deprecated Use create(ResourceLocation) instead for 1.21.2+ compatibility.
-     */
-    //? if >=1.21 {
-    /*@Deprecated
-    public static BlockBehaviour.Properties create() {
+    public static BlockBehaviour.Properties create(ResourceLocation id) {
         return BlockBehaviour.Properties.of();
-    }
-    *///?} else {
-    @Deprecated
-    public static FabricBlockSettings create() {
-        return FabricBlockSettings.create();
     }
     //?}
 }

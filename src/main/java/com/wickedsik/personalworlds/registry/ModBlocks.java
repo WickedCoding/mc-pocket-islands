@@ -5,15 +5,17 @@ import com.wickedsik.personalworlds.compat.BlockSettingsCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
+import com.wickedsik.personalworlds.platform.Platform;
 import com.wickedsik.personalworlds.portal.PersonalPortalBlock;
 import com.wickedsik.personalworlds.portal.PortalColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.Registry;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.function.Supplier;
 
 /**
  * Registers all blocks for the PersonalWorlds mod.
@@ -25,20 +27,11 @@ public class ModBlocks {
     /**
      * The personal portal block - similar to nether portal properties.
      * Non-collidable, emits light, unbreakable by hand.
+     * <p>
+     * Set by {@link #register()}. The block is built inside the registration callback
+     * because Forge/NeoForge register after mod construction.
      */
-    public static final Block PERSONAL_PORTAL = new PersonalPortalBlock(
-        BlockSettingsCompat.create(PERSONAL_PORTAL_ID)
-            .mapColor(MapColor.COLOR_CYAN)
-            //? if >=1.21 {
-            /*.noCollision()
-            *///?} else {
-            .noCollission()
-            //?}
-            .strength(-1.0F)
-            .sound(SoundType.GLASS)
-            .lightLevel(state -> 11)
-            .noLootTable()
-    );
+    public static Supplier<Block> PERSONAL_PORTAL;
 
     /**
      * Cached frame blocks for all portal types.
@@ -57,13 +50,29 @@ public class ModBlocks {
      * Must be called during mod initialization BEFORE chunk generators.
      */
     public static void register() {
-        Registry.register(
+        PERSONAL_PORTAL = Platform.get().registration().register(
             BuiltInRegistries.BLOCK,
             PERSONAL_PORTAL_ID,
-            PERSONAL_PORTAL
+            ModBlocks::createPersonalPortal
         );
 
         PersonalWorldsMod.LOGGER.info("Registered blocks");
+    }
+
+    private static Block createPersonalPortal() {
+        return new PersonalPortalBlock(
+            BlockSettingsCompat.create(PERSONAL_PORTAL_ID)
+                .mapColor(MapColor.COLOR_CYAN)
+                //? if >=1.21 {
+                /*.noCollision()
+                *///?} else {
+                .noCollission()
+                //?}
+                .strength(-1.0F)
+                .sound(SoundType.GLASS)
+                .lightLevel(state -> 11)
+                .noLootTable()
+        );
     }
 
     /**
