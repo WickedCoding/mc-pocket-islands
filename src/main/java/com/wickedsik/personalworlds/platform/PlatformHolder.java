@@ -26,7 +26,7 @@ final class PlatformHolder {
     }
 
     /** Test hook: forget the installed platform. */
-    static void reset() {
+    static void resetForTesting() {
         instance = null;
     }
 }
