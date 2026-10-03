@@ -1,7 +1,6 @@
 package com.wickedsik.personalworlds.util;
 
-import com.wickedsik.personalworlds.PersonalWorldsMod;
-import com.wickedsik.personalworlds.compat.CommandCompat;
+import com.wickedsik.personalworlds.platform.Platform;
 import net.minecraft.commands.CommandSourceStack;
 
 import java.util.function.Predicate;
@@ -9,12 +8,9 @@ import java.util.function.Predicate;
 /**
  * Centralized permission checking utility.
  *
- * Provides soft integration with fabric-permissions-api:
- * - If fabric-permissions-api is available, uses permission nodes
- * - Falls back to vanilla OP levels otherwise
- *
- * This allows the mod to work standalone while supporting
- * LuckPerms and other permission plugins when installed.
+ * Defines the permission nodes and their OP-level fallbacks. The check itself goes
+ * through the loader's permission API (see {@link Platform#permissions()}), which
+ * falls back to vanilla OP levels when no permission plugin is installed.
  */
 public final class PermissionHelper {
 
@@ -52,14 +48,11 @@ public final class PermissionHelper {
     public static final int DEFAULT_PLAYER_INVITE_LEVEL = 0;
     public static final int DEFAULT_PLAYER_VISIT_LEVEL = 0;
 
-    // Track whether permissions API is available
-    private static Boolean permissionsApiAvailable = null;
-
     // ==================== Permission Checking ====================
 
     /**
      * Check if the command source has the specified permission.
-     * Falls back to OP level check if fabric-permissions-api is unavailable.
+     * Falls back to OP level check if no permission plugin is installed.
      *
      * @param source The command source to check
      * @param permission The permission node to check
@@ -67,15 +60,7 @@ public final class PermissionHelper {
      * @return true if the source has permission
      */
     public static boolean check(CommandSourceStack source, String permission, int fallbackLevel) {
-        if (isPermissionsApiAvailable()) {
-            try {
-                return me.lucko.fabric.api.permissions.v0.Permissions.check(source, permission, fallbackLevel);
-            } catch (Exception e) {
-                PersonalWorldsMod.LOGGER.debug("Permissions API check failed, falling back to OP level", e);
-                return CommandCompat.hasPermissionLevel(source, fallbackLevel);
-            }
-        }
-        return CommandCompat.hasPermissionLevel(source, fallbackLevel);
+        return Platform.get().permissions().check(source, permission, fallbackLevel);
     }
 
     /**
@@ -125,34 +110,6 @@ public final class PermissionHelper {
      */
     public static boolean canAdminReload(CommandSourceStack source) {
         return check(source, ADMIN_RELOAD, DEFAULT_ADMIN_RELOAD_LEVEL);
-    }
-
-    // ==================== API Availability Check ====================
-
-    /**
-     * Check if fabric-permissions-api is available at runtime.
-     * Result is cached for performance.
-     */
-    private static boolean isPermissionsApiAvailable() {
-        if (permissionsApiAvailable == null) {
-            try {
-                Class.forName("me.lucko.fabric.api.permissions.v0.Permissions");
-                permissionsApiAvailable = true;
-                PersonalWorldsMod.LOGGER.info("fabric-permissions-api detected, using permission nodes");
-            } catch (ClassNotFoundException e) {
-                permissionsApiAvailable = false;
-                PersonalWorldsMod.LOGGER.info("fabric-permissions-api not found, using vanilla OP levels");
-            }
-        }
-        return permissionsApiAvailable;
-    }
-
-    /**
-     * Reset the availability cache.
-     * Useful for testing or if the API becomes available at runtime.
-     */
-    public static void resetCache() {
-        permissionsApiAvailable = null;
     }
 
     // Prevent instantiation

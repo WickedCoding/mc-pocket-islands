@@ -10,8 +10,8 @@ import com.wickedsik.personalworlds.command.executor.PlayerCommandExecutor;
 import com.wickedsik.personalworlds.command.service.PlayerLookupService;
 import com.wickedsik.personalworlds.compat.CommandCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
+import com.wickedsik.personalworlds.platform.Platform;
 import com.wickedsik.personalworlds.util.PermissionHelper;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.CommandSourceStack;
@@ -36,7 +36,7 @@ public class ModCommands {
     private static DebugCommandExecutor debugExecutor;
 
     public static void register() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+        Platform.get().events().onRegisterCommands(dispatcher -> {
             initializeExecutors();
             registerCommands(dispatcher);
         });

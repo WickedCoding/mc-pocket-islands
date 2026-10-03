@@ -21,6 +21,11 @@ repositories {
     mavenCentral()
 }
 
+// Loader implementations live in platform/<loader>/; this build compiles only the Fabric one
+sourceSets.main {
+    java.exclude("**/platform/forge/**", "**/platform/neoforge/**")
+}
+
 loom {
     splitEnvironmentSourceSets()
 

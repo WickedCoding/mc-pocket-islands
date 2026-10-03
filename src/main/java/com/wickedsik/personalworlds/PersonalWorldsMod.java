@@ -6,16 +6,21 @@ import com.wickedsik.personalworlds.dimension.generator.ModChunkGenerators;
 import com.wickedsik.personalworlds.event.ModEventHandlers;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
-import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PersonalWorldsMod implements ModInitializer {
+/**
+ * Loader-neutral mod initialization. Each loader's entrypoint in {@code platform/<loader>/}
+ * installs its {@link com.wickedsik.personalworlds.platform.Platform} and then calls {@link #init()}.
+ */
+public final class PersonalWorldsMod {
     public static final String MOD_ID = "personalworlds";
     public static final Logger LOGGER = LoggerFactory.getLogger("PocketIslands");
 
-    @Override
-    public void onInitialize() {
+    private PersonalWorldsMod() {
+    }
+
+    public static void init() {
         LOGGER.info("Pocket Islands initializing...");
 
         // Load configuration FIRST (other components may depend on it)

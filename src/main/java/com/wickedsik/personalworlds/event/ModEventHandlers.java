@@ -7,17 +7,14 @@ import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.cleanup.ChunkSanitizer;
+import com.wickedsik.personalworlds.platform.Platform;
+import com.wickedsik.personalworlds.platform.PlatformEvents;
 import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.PerformanceMonitor;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -42,28 +39,28 @@ public class ModEventHandlers {
     private static final int VOID_EJECTION_THRESHOLD = 0; // Y level for ejection
 
     public static void register() {
+        PlatformEvents events = Platform.get().events();
+
         // Server started - restore all dimensions
-        ServerLifecycleEvents.SERVER_STARTED.register(ModEventHandlers::onServerStarted);
+        events.onServerStarted(ModEventHandlers::onServerStarted);
 
         // Server stopping - cleanup
-        ServerLifecycleEvents.SERVER_STOPPING.register(ModEventHandlers::onServerStopping);
+        events.onServerStopping(ModEventHandlers::onServerStopping);
 
         // Periodic tick for unloading empty dimensions
-        ServerTickEvents.END_SERVER_TICK.register(ModEventHandlers::onServerTick);
+        events.onServerTickEnd(ModEventHandlers::onServerTick);
 
         // Portal activation via block interaction
-        UseBlockCallback.EVENT.register(ModEventHandlers::onUseBlock);
+        events.onUseBlock(ModEventHandlers::onUseBlock);
 
         // Player join - crash recovery
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-            CrashRecoveryHandler.onPlayerJoin(handler.getPlayer()));
+        events.onPlayerJoin(CrashRecoveryHandler::onPlayerJoin);
 
         // Player disconnect - release portal locks
-        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-            ConcurrentPortalGuard.forceRelease(handler.getPlayer().getUUID()));
+        events.onPlayerDisconnect(player -> ConcurrentPortalGuard.forceRelease(player.getUUID()));
 
         // Chunk sanitizer - purge orphaned state in pocket dimensions on load
-        ServerChunkEvents.CHUNK_LOAD.register(ChunkSanitizer::onChunkLoad);
+        events.onChunkLoad(ChunkSanitizer::onChunkLoad);
 
         PersonalWorldsMod.LOGGER.info("Event handlers registered");
     }

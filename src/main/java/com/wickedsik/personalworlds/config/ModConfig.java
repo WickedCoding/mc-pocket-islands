@@ -3,8 +3,8 @@ package com.wickedsik.personalworlds.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.platform.Platform;
 import com.wickedsik.personalworlds.portal.PortalColor;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,12 +67,10 @@ public class ModConfig {
     static final int CURRENT_CONFIG_VERSION = 1;
 
     // Paths live in a holder so ModConfig itself can be instantiated in unit
-    // tests without a running FabricLoader.
+    // tests without an installed Platform.
     private static final class ConfigPaths {
-        static final Path CONFIG = FabricLoader.getInstance()
-                .getConfigDir().resolve("pocketislands.json");
-        static final Path LEGACY = FabricLoader.getInstance()
-                .getConfigDir().resolve("personalworlds.json");
+        static final Path CONFIG = Platform.get().configDir().resolve("pocketislands.json");
+        static final Path LEGACY = Platform.get().configDir().resolve("personalworlds.json");
     }
 
     // ==================== Config Version ====================

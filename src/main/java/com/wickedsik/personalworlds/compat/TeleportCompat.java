@@ -1,8 +1,6 @@
 package com.wickedsik.personalworlds.compat;
 
-//? if <1.21 {
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
-//?}
+import com.wickedsik.personalworlds.platform.Platform;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
@@ -12,8 +10,10 @@ import net.minecraft.world.level.portal.PortalInfo;
 /**
  * Compatibility layer for cross-dimension teleportation.
  * <p>
- * MC 1.20.x uses: FabricDimensions.teleport(entity, world, PortalInfo)
- * MC 1.21.x uses: Entity#teleport(PortalInfo) - FabricDimensions was removed
+ * MC 1.20.x: PortalInfo holds position, velocity and rotation; the destination level is separate
+ * MC 1.21.x: PortalInfo also holds the destination level and a post-teleport callback
+ * <p>
+ * The teleport itself goes through {@link Platform#teleport()} (loader-specific on 1.20.x).
  * <p>
  * This class centralizes all cross-dimension teleportation to simplify version migration.
  * Works alongside TeleportHelper which constructs PortalInfo instances.
@@ -41,8 +41,7 @@ public final class TeleportCompat {
             float pitch
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleport() - FabricDimensions.teleport() was removed
-        // PortalInfo now contains the destination world
+        /*// MC 1.21+: PortalInfo contains the destination world
         PortalInfo target = new PortalInfo(
             targetWorld,
             position,
@@ -51,7 +50,7 @@ public final class TeleportCompat {
             pitch,
             PortalInfo.DO_NOTHING
         );
-        player.teleport(target);
+        Platform.get().teleport().teleport(player, targetWorld, target);
         *///?} else {
         PortalInfo target = new PortalInfo(position, Vec3.ZERO, yaw, pitch);
         teleport(player, targetWorld, target);
@@ -72,7 +71,7 @@ public final class TeleportCompat {
             PortalInfo target
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleport() - FabricDimensions.teleport() was removed
+        /*// MC 1.21+: rebuild the target with the destination world.
         // PortalInfo is now a record with method accessors instead of field access
         PortalInfo newTarget = new PortalInfo(
             targetWorld,
@@ -82,9 +81,9 @@ public final class TeleportCompat {
             target.xRot(),
             PortalInfo.DO_NOTHING
         );
-        player.teleport(newTarget);
+        Platform.get().teleport().teleport(player, targetWorld, newTarget);
         *///?} else {
-        FabricDimensions.teleport(player, targetWorld, target);
+        Platform.get().teleport().teleport(player, targetWorld, target);
         //?}
     }
 
