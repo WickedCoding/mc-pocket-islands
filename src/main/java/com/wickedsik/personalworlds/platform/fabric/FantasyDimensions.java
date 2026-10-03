@@ -1,6 +1,5 @@
 package com.wickedsik.personalworlds.platform.fabric;
 
-import com.wickedsik.personalworlds.compat.GameRulesCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.platform.RuntimeDimension;
 import com.wickedsik.personalworlds.platform.RuntimeDimensions;
@@ -25,8 +24,7 @@ final class FantasyDimensions implements RuntimeDimensions {
             .setTimeOfDay(server.overworld().getDayTime())
             .setGenerator(spec.generator());
 
-        // Apply game rules: baseline from overworld, then config overrides
-        GameRulesCompat.applyGameRules(config, server);
+        // Game rules are not set here: DimensionGameRules + mixins supply them on every loader
 
         RuntimeWorldHandle handle = Fantasy.get(server).getOrOpenPersistentWorld(IdentifierCompat.fromKey(key), config);
         return new FantasyDimension(handle);

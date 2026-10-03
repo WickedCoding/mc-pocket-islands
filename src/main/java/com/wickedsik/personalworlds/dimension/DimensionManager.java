@@ -1,9 +1,11 @@
 package com.wickedsik.personalworlds.dimension;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.GameRulesCompat;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
+import com.wickedsik.personalworlds.dimension.gamerules.DimensionGameRules;
 import com.wickedsik.personalworlds.dimension.generator.VoidIslandChunkGenerator;
 import com.wickedsik.personalworlds.platform.Platform;
 import com.wickedsik.personalworlds.platform.RuntimeDimension;
@@ -208,6 +210,7 @@ public class DimensionManager {
             handle.unload();
         }
         activeHandles.clear();
+        DimensionGameRules.clear();
         PersonalWorldsMod.LOGGER.info("Unloaded all player dimensions");
     }
 
@@ -248,6 +251,10 @@ public class DimensionManager {
             int portalTypeIndex
     ) {
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, dimId);
+
+        // Rules must be in place before the level exists, so its first tick uses them
+        DimensionGameRules.register(key, GameRulesCompat.createDimensionRules(server));
+
         RuntimeDimensions.DimensionSpec spec = new RuntimeDimensions.DimensionSpec(
             BuiltinDimensionTypes.OVERWORLD,
             createChunkGenerator(server, genType, portalTypeIndex),
