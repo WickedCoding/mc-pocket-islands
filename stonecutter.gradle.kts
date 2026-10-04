@@ -32,5 +32,6 @@ tasks.register("chiseledTest") {
 
 tasks.register("chiseledPublishModrinth") {
     group = "publishing"
-    dependsOn(stonecutter.tasks.named("modrinth"))
+    // Forge nodes have no Modrinth setup yet (Phase 2, step 7)
+    dependsOn(stonecutter.tasks.named("modrinth") { metadata.project.endsWith("-fabric") })
 }

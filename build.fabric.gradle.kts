@@ -93,6 +93,8 @@ tasks.processResources {
             "minecraft_version" to minecraft_version
         )
     }
+
+    exclude("META-INF/mods.toml", "META-INF/neoforge.mods.toml", "pack.mcmeta")
 }
 
 // Per-version Java (17 for 1.20.x, 21 for 1.21.x). The toolchain also drives

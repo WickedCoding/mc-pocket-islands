@@ -1,6 +1,7 @@
 pluginManagement {
     repositories {
         maven("https://maven.fabricmc.net/")
+        maven("https://maven.neoforged.net/releases/")
         mavenCentral()
         gradlePluginPortal()
     }
@@ -23,7 +24,7 @@ stonecutter {
             version("$version-$it", version).buildscript("build.$it.gradle.kts")
         }
 
-        match("1.20.1", "fabric")
+        match("1.20.1", "fabric", "forge")
         match("1.20.4", "fabric")
         match("1.21.11", "fabric")
 
