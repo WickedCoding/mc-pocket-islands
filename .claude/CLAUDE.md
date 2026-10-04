@@ -91,7 +91,7 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 - **`platform/`** — Loader-neutral interfaces (`Platform`, events, registration, runtime dimensions, teleport, permissions)
 - **`platform/fabric/`** — Fabric implementations and entrypoint (Fabric API, Fantasy, fabric-permissions-api)
 - **`platform/forge/`** — Forge implementations and entrypoint (Forge events, `DeferredRegister`, Infiniverse, PermissionAPI)
-- **`platform/neoforge/`** — NeoForge implementations and entrypoint (same shape as `platform/forge/`; 1.21.11 APIs only until 1.20.4-neoforge exists)
+- **`platform/neoforge/`** — NeoForge implementations and entrypoint (same shape as `platform/forge/`; 1.21.11 APIs only, the only NeoForge node)
 - **`mixin/`** — Vanilla mixins shared by all loaders (per-dimension game rules)
 - **`dimension/`** — Dimension creation, registry, lifecycle management (through `RuntimeDimensions`)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
