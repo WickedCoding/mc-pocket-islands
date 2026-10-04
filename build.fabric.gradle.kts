@@ -81,17 +81,6 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
 }
 
-// Mojang renamed these classes in 1.21.11 where Yarn kept one name. Sources use the
-// pre-1.21.11 names; Stonecutter rewrites them when switching versions. Word boundaries
-// keep mod names such as IdentifierCompat and validateIdentifier untouched.
-stonecutter {
-    replacements.regex(current.parsed >= "1.21.11") {
-        replace("\\bResourceLocationException\\b" to "IdentifierException", "\\bIdentifierException\\b" to "ResourceLocationException")
-        replace("\\bResourceLocation\\b" to "Identifier", "\\bIdentifier\\b" to "ResourceLocation")
-        replace("\\bPortalInfo\\b" to "TeleportTransition", "\\bTeleportTransition\\b" to "PortalInfo")
-    }
-}
-
 val minecraft_version: String by project
 
 tasks.processResources {
@@ -134,7 +123,7 @@ tasks.test {
 tasks.jar {
     inputs.property("archivesName", base.archivesName)
 
-    from("LICENSE") {
+    from(rootProject.file("LICENSE")) {
         rename { "${it}_${base.archivesName.get()}" }
     }
 }
