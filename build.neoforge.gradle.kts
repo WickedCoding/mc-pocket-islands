@@ -96,7 +96,7 @@ neoForge {
             sourceSet = gametest
             gameDirectory = file("build/gametest")
             systemProperty("pocketislands.gametest.report-file", layout.buildDirectory.file("gametest/junit.xml").get().asFile.absolutePath)
-            // Capped so five nodes can run in parallel (CI runners)
+            // Capped so all nodes can run in parallel on CI runners
             jvmArgument("-Xmx1G")
         }
     }

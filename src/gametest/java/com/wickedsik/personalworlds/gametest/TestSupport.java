@@ -46,9 +46,8 @@ public final class TestSupport {
     private static final BlockPos IN_FRONT_OF_PORTAL = PORTAL_INTERIOR.south();
     private static final float FACING_NORTH = 180.0F;
 
-    // Islands get no pre-built return frame (the void generator's island layers make
-    // PortalHelper skip its starter platform), so players build one; this one sits next to
-    // the arrival point (0, 65, 0), floating is fine for frame detection
+    // Islands have no pre-built return frame, so tests build one next to the arrival point
+    // (0, 65, 0); frame detection accepts a floating frame
     private static final BlockPos ISLAND_RETURN_FRAME_BOTTOM_LEFT = new BlockPos(3, 65, 2);
 
     private static boolean configured;

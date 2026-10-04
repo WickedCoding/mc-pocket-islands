@@ -5,7 +5,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-/** 2.5.3.6: falling below Y=0 on an island sends the player back. */
+/** Falling below Y=0 on an island sends the player back. */
 public final class VoidScenarios {
 
     private VoidScenarios() {

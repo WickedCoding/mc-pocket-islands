@@ -6,7 +6,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-/** 2.5.3.3: an uninvited player is denied, an invited one gets in. */
+/** An uninvited player is denied, an invited one gets in. */
 public final class InvitationScenarios {
 
     private static final int PORTAL_COOLDOWN_TICKS = 30;

@@ -83,7 +83,7 @@ loom {
             runDir("build/gametest")
             vmArg("-Dfabric-api.gametest")
             vmArg("-Dfabric-api.gametest.report-file=${layout.buildDirectory.file("gametest/junit.xml").get().asFile}")
-            // Capped so four nodes can run in parallel (CI runners)
+            // Capped so all nodes can run in parallel on CI runners
             vmArg("-Xmx1G")
         }
     }
@@ -142,8 +142,7 @@ tasks.processResources {
     exclude("META-INF/mods.toml", "META-INF/neoforge.mods.toml", "pack.mcmeta")
 }
 
-// Per-version Java (17 for 1.20.x, 21 for 1.21.x). The toolchain also drives
-// runClient/runServer, so they no longer depend on the system default JDK.
+// Per-version Java (17 for 1.20.x, 21 for 1.21.x), also used by runClient/runServer
 val javaVersion = (property("java_version") as String).toInt()
 
 tasks.withType<JavaCompile>().configureEach {

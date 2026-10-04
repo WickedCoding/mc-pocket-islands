@@ -49,9 +49,8 @@ sourceSets.test {
 legacyForge {
     enable {
         forgeVersion = "$minecraft_version-$forge_version"
-        // MDG skips recompiling Minecraft when CI=true and uses the binary-patched jar, which
-        // keeps Forge's signature manifest. Unit tests run on a plain JVM, which rejects the
-        // patched classes (SHA-384 digest error), so CI must recompile like local builds do.
+        // With CI=true MDG would use the binary-patched jar, whose stale signatures make
+        // unit tests fail on a plain JVM (SHA-384 digest error)
         isDisableRecompilation = false
     }
 
@@ -103,7 +102,7 @@ legacyForge {
             gameDirectory = file("build/gametest")
             systemProperty("forge.enabledGameTestNamespaces", "personalworlds")
             systemProperty("pocketislands.gametest.report-file", layout.buildDirectory.file("gametest/junit.xml").get().asFile.absolutePath)
-            // Capped so four nodes can run in parallel (CI runners)
+            // Capped so all nodes can run in parallel on CI runners
             jvmArgument("-Xmx1G")
         }
     }

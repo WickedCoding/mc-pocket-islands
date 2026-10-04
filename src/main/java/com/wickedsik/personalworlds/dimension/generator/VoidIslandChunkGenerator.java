@@ -42,8 +42,8 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     );
 
     //? if >=1.21 {
-    /*// One instance for both the registry and codec(): the registry finds codecs by identity,
-    // and level.dat (where Infiniverse levels live) can't be written without that lookup
+    /*// One instance for the registry and codec(): the registry finds codecs by identity,
+    // and saving a level stem to level.dat (Infiniverse levels) needs that lookup
     public static final com.mojang.serialization.MapCodec<VoidIslandChunkGenerator> MAP_CODEC = CODEC.fieldOf("void_island");
     *///?}
 

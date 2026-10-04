@@ -20,9 +20,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
- * Survival players without a network connection, joined through the real player list
- * so join events fire on every loader. Like vanilla's makeMockServerPlayerInLevel,
- * which is forced to creative and always uses the same name.
+ * Survival players without a network client, joined through the real player list so join
+ * events fire on every loader. Vanilla's makeMockServerPlayerInLevel is creative-only and
+ * always uses the same name.
  */
 public final class MockPlayers {
 

@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** 2.5.3.4 and 2.5.3.5: per-dimension game rules, and keepInventory across dimensions. */
+/** Per-dimension game rules, and keepInventory across dimensions. */
 public final class GameRuleScenarios {
 
     private static final int CLOCK_TICKS = 40;

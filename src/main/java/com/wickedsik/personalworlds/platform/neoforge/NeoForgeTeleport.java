@@ -6,9 +6,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.portal.PortalInfo;
 
 /**
- * The target carries the destination level; vanilla handles the dimension change, as
- * on Fabric 1.21. Portal blocks fire in the player tick on 1.21.x, not inside the
- * movement packet, so the Forge 1.20.1 "moved wrongly" problem does not arise.
+ * The target carries the destination level, so vanilla handles the dimension change. On
+ * 1.21.x portals fire in the player tick, outside the movement packet, so the Forge 1.20.1
+ * {@code changeDimension} workaround is not needed.
  */
 final class NeoForgeTeleport implements PlatformTeleport {
 

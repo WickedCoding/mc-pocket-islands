@@ -12,11 +12,10 @@ import net.minecraft.world.phys.Vec3;
 import java.lang.reflect.Field;
 
 /**
- * Feeds a mock player's connection the packets a real client sends, so movement runs
- * through {@code ServerGamePacketListenerImpl#handleMovePlayer}. Portal entry happens
- * inside that handler (move -> entityInside -> teleport), and bugs that only show there
- * (Forge's "moved wrongly" teleport) stay invisible when the test calls the portal code
- * directly. 1.21.x applies block effects in the player tick instead, which is run too.
+ * Feeds a mock player's connection the packets a real client sends. Portal entry only
+ * behaves like the real game this way: it runs inside
+ * {@code ServerGamePacketListenerImpl#handleMovePlayer} on 1.20.x and in the player tick
+ * on 1.21.x, which is run here too.
  * <p>
  * The pending teleport id is private; tests only run in dev environments, where these
  * Mojang names are the runtime names on every loader.

@@ -30,7 +30,7 @@ public final class PermissionHelper {
     public static final String PLAYER_INVITE = "pocketislands.player.invite";
     public static final String PLAYER_VISIT = "pocketislands.player.visit";
 
-    /** Every node above; loaders that need nodes declared up front (Forge) register these. */
+    /** Every node above; loaders that need nodes declared up front (Forge, NeoForge) register these. */
     public static final List<String> ALL_NODES = List.of(
         ADMIN_LIST, ADMIN_INFO, ADMIN_DELETE, ADMIN_TELEPORT, ADMIN_RELOAD, ADMIN_SANITIZE,
         PLAYER_CREATE, PLAYER_INVITE, PLAYER_VISIT

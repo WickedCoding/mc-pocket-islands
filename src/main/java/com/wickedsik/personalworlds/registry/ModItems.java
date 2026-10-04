@@ -29,7 +29,6 @@ public class ModItems {
      * players cannot obtain or place it directly.
      */
     public static void register() {
-        // No custom items needed for Phase 2
         // Portal block has no BlockItem (can't be placed by player)
 
         PersonalWorldsMod.LOGGER.info("Registered items");

@@ -7,7 +7,7 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.DimensionType;
 
 /**
- * Creates and opens persistent dimensions at runtime (Fantasy on Fabric).
+ * Creates and opens persistent dimensions at runtime (Fantasy on Fabric, Infiniverse on Forge/NeoForge).
  */
 public interface RuntimeDimensions {
 

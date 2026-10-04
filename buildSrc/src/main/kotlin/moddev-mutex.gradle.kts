@@ -1,9 +1,8 @@
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 
-// ModDevGradle decompiles and recompiles Minecraft per node. Running that for several
-// nodes in parallel filled the disk (Phase 0.2), so allow one at a time. Covers both
-// the NeoForge and the legacyforge plugin, which use the same task name.
+// ModDevGradle recompiles Minecraft per node; doing that in parallel fills the disk, so
+// allow one at a time. Covers both the NeoForge and legacyforge plugins (same task name).
 interface ModDevMutex : BuildService<BuildServiceParameters.None>
 
 val mutex = gradle.sharedServices.registerIfAbsent("createMinecraftArtifactsMutex", ModDevMutex::class.java) {

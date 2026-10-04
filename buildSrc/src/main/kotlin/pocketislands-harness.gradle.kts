@@ -1,7 +1,6 @@
-// Restart harness (Phase 2.5, see RestartHarness in src/gametest): three dedicated server runs
-// in one directory. The buildscript defines the runs harnessSetup, harnessVerify and
-// harnessVerifyReset; this plugin chains them, resets the world in between and checks each
-// phase's report.
+// Restart harness (see RestartHarness in src/gametest): chains the buildscript's runs
+// harnessSetup, harnessVerify and harnessVerifyReset in one directory, resets the world
+// in between and checks each phase's report.
 
 val harnessDir = layout.buildDirectory.dir("harness")
 

@@ -1,6 +1,5 @@
-# Build the project and run every test suite for pull requests and for pushes to main.
-# Uses Stonecutter to build all supported MC versions. Pushes to other branches run
-# through their pull request only; triggering on both started two identical runs.
+# Build every Stonecutter node and run all test suites, for pull requests and pushes to main.
+# Other branches are covered by their pull request (triggering on both runs everything twice).
 
 name: build
 on:

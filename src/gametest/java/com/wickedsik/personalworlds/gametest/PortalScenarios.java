@@ -22,7 +22,7 @@ public final class PortalScenarios {
     private PortalScenarios() {
     }
 
-    /** 2.5.3.1: frame + activation item lights the portal; the first entry creates the island. */
+    /** Frame + activation item lights the portal; the first entry creates the island. */
     public static void activationAndFirstEntry(GameTestHelper helper) {
         TestSupport.ensureConfigured();
         MinecraftServer server = helper.getLevel().getServer();
@@ -43,8 +43,8 @@ public final class PortalScenarios {
             .thenWaitUntil(() -> helper.assertTrue(TestSupport.arrivedOnIslandOf(owner, owner), "owner did not arrive on their island"))
             .thenExecute(() -> {
                 helper.assertTrue(DimensionRegistry.get(server).getDimensionData(owner.getUUID()).isPresent(), "island not registered");
-                // New islands receive players at (0, 65, 0); arriving anywhere else means the
-                // teleport target was lost on the way (Forge "moved wrongly" bug)
+                // New islands receive players at (0, 65, 0); anywhere else means the teleport
+                // target was lost on the way
                 helper.assertTrue(owner.blockPosition().closerThan(ISLAND_ARRIVAL, 3),
                     "arrived at " + owner.blockPosition() + ", expected near " + ISLAND_ARRIVAL);
             })
@@ -52,7 +52,7 @@ public final class PortalScenarios {
             .thenSucceed();
     }
 
-    /** 2.5.3.2: the island's return portal puts the player back at the stored position and dimension. */
+    /** The island's return portal puts the player back at the stored position and dimension. */
     public static void returnToStoredPosition(GameTestHelper helper) {
         TestSupport.ensureConfigured();
         MinecraftServer server = helper.getLevel().getServer();

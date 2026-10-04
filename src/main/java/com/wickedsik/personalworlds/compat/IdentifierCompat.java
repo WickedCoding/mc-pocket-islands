@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Compatibility layer for ResourceLocation/ResourceLocation construction.
+ * Compatibility layer for ResourceLocation construction.
  * <p>
  * MC 1.20.x uses: new ResourceLocation(namespace, path)
  * MC 1.21.x uses: ResourceLocation.of(namespace, path) or ResourceLocation.fromNamespaceAndPath()
@@ -22,7 +22,7 @@ public final class IdentifierCompat {
     }
 
     /**
-     * Create an ResourceLocation from namespace and path.
+     * Create a ResourceLocation from namespace and path.
      *
      * @param namespace The namespace (e.g., "minecraft", "personalworlds")
      * @param path      The path (e.g., "overworld", "personal_portal")
@@ -37,7 +37,7 @@ public final class IdentifierCompat {
     }
 
     /**
-     * Create an ResourceLocation for a mod resource.
+     * Create a ResourceLocation for a mod resource.
      * Shorthand for create(MOD_ID, path).
      *
      * @param path The resource path
@@ -58,7 +58,7 @@ public final class IdentifierCompat {
     }
 
     /**
-     * Try to parse an ResourceLocation from a string.
+     * Try to parse a ResourceLocation from a string.
      * Returns null if the string is not a valid ResourceLocation.
      *
      * @param id The string to parse (e.g., "minecraft:stone")
@@ -76,7 +76,7 @@ public final class IdentifierCompat {
     }
 
     /**
-     * Parse an ResourceLocation from an NBT/config string.
+     * Parse a ResourceLocation from an NBT/config string.
      * This is used when reading dimension IDs or block IDs from saved data.
      *
      * @param value The string value (e.g., "minecraft:overworld")

@@ -21,7 +21,7 @@ import java.util.Map;
  * MC 1.20.x uses: net.minecraft.world.level.GameRules with inner Key/BooleanValue/IntegerValue/GameRuleTypeVisitor
  * MC 1.21.x uses: net.minecraft.world.level.gamerules.GameRules with standalone GameRule/GameRuleTypeVisitor
  * <p>
- * Builds a pocket dimension's rule set in two phases: a copy of the overworld rules,
+ * Builds a pocket dimension's rule set in two steps: a copy of the overworld rules,
  * then the config overrides. Changes are applied without a server, so vanilla's
  * server-wide change callbacks (which would act on the overworld) don't fire.
  */
