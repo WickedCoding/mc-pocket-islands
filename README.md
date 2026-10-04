@@ -17,7 +17,7 @@ pocket dimension island.
 - **Persistence**: Islands survive main world resets
 - **Portal-Based Access**: Build a portal frame, activate with emerald
 - **Invitation System**: Invite friends to visit your island
-- **Void Generation**: Clean slate void worlds with starter platforms
+- **Void Generation**: Clean slate void worlds with a starter island
 
 ## Requirements
 
@@ -95,14 +95,18 @@ Right-click the inside of the frame with an Emerald to activate.
 
 ### Entering Your Island
 
-Walk into the activated portal to enter your pocket island. On first entry, a
-starter platform with grass blocks and a return portal frame will be created.
+Walk into the activated portal to enter your pocket island. On first entry, your
+island is generated from your portal type's island layers. There is no return portal
+on a new island.
 
 ### Returning
 
-Enter the portal on your pocket island to return to your original location.
+The quickest way back is to jump off your island: below Y=0 you're teleported back to
+where you entered, before taking any void damage.
 
-**Important:** Bring enough materials to build a return portal!
+To return by portal instead, build a frame on your island and activate it like the
+first one (bring the frame blocks and activation item). Entering it takes you back to
+your original location.
 
 ### Commands
 
@@ -541,8 +545,9 @@ enter their portal to visit their island.
 
 ### How do I get back from my island?
 
-Enter the return portal on your island. It teleports you back to the exact
-location you entered from.
+Jump off the island: below Y=0 you're teleported back to the exact location you
+entered from. Or build and activate a portal frame on your island and walk into it,
+which takes you to the same place.
 
 ### What happens if I fall off my island?
 
