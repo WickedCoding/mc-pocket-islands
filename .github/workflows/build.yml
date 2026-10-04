@@ -1,8 +1,12 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. Uses Stonecutter to build all supported MC versions.
+# Build the project and run every test suite for pull requests and for pushes to main.
+# Uses Stonecutter to build all supported MC versions. Pushes to other branches run
+# through their pull request only; triggering on both started two identical runs.
 
 name: build
-on: [pull_request, push]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
