@@ -30,6 +30,12 @@ tasks.register("chiseledTest") {
     dependsOn(stonecutter.tasks.named("test"))
 }
 
+// In-game tests: a headless GameTest server per node (exits non-zero on a failed test)
+tasks.register("chiseledGameTest") {
+    group = "verification"
+    dependsOn(stonecutter.tasks.named("runGametest"))
+}
+
 tasks.register("chiseledPublishModrinth") {
     group = "publishing"
     dependsOn(stonecutter.tasks.named("modrinth"))

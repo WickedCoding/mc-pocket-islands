@@ -26,6 +26,13 @@ sourceSets.main {
     java.exclude("**/platform/forge/**", "**/platform/neoforge/**")
 }
 
+// In-game tests (GameTest server), kept out of the release jar. Compiled against main.
+val gametest: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+    java.exclude("**/platform/forge/**", "**/platform/neoforge/**")
+}
+
 loom {
     splitEnvironmentSourceSets()
 
@@ -33,6 +40,12 @@ loom {
         create("personalworlds") {
             sourceSet(sourceSets.main.get())
             sourceSet(sourceSets["client"])
+        }
+    }
+
+    mods {
+        create("personalworlds-gametest") {
+            sourceSet(gametest)
         }
     }
 
@@ -47,6 +60,16 @@ loom {
         }
         named("client") {
             programArgs("--username", "Dev")
+        }
+
+        // Headless GameTest server: runs every test, writes JUnit XML, exits with the failure count
+        create("gametest") {
+            server()
+            configName = "Game Test"
+            source(gametest)
+            runDir("build/gametest")
+            vmArg("-Dfabric-api.gametest")
+            vmArg("-Dfabric-api.gametest.report-file=${layout.buildDirectory.file("gametest/junit.xml").get().asFile}")
         }
     }
 }
@@ -82,6 +105,13 @@ dependencies {
 }
 
 val minecraft_version: String by project
+
+tasks.named<ProcessResources>("processGametestResources") {
+    inputs.property("version", project.version)
+    filesMatching("fabric.mod.json") {
+        expand("version" to project.version)
+    }
+}
 
 tasks.processResources {
     inputs.property("version", project.version)
@@ -171,4 +201,12 @@ modrinth {
 
 tasks.modrinth {
     dependsOn(tasks.remapJar)
+}
+
+// Each GameTest run starts from an empty world: islands from a previous run would be
+// restored from the registry and change what the tests see
+tasks.named("runGametest") {
+    doFirst {
+        delete(layout.buildDirectory.dir("gametest/world"))
+    }
 }

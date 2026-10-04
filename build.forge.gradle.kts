@@ -31,6 +31,13 @@ sourceSets.main {
     java.exclude("**/platform/fabric/**", "**/platform/neoforge/**")
 }
 
+// In-game tests (GameTest server), kept out of the release jar. Compiled against main.
+val gametest: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+    java.exclude("**/platform/fabric/**", "**/platform/neoforge/**")
+}
+
 // Tests are loader-neutral and need only Minecraft classes, not a running FML.
 // legacyforge has no unitTest support, so reuse the main classpaths.
 sourceSets.test {
@@ -46,9 +53,11 @@ legacyForge {
         mappingsVersion = property("parchment_version") as String
     }
 
+    // The gametest source set joins the mod in dev runs so FML scans its @GameTestHolder classes
     mods {
         register("personalworlds") {
             sourceSet(sourceSets.main.get())
+            sourceSet(gametest)
         }
     }
 
@@ -67,6 +76,14 @@ legacyForge {
         register("server") {
             server()
             programArgument("--nogui")
+        }
+        // Headless GameTest server: runs every test, exits with the failure count
+        register("gametest") {
+            type = "gameTestServer"
+            sourceSet = gametest
+            gameDirectory = file("build/gametest")
+            systemProperty("forge.enabledGameTestNamespaces", "personalworlds")
+            systemProperty("pocketislands.gametest.report-file", layout.buildDirectory.file("gametest/junit.xml").get().asFile.absolutePath)
         }
     }
 }
@@ -104,6 +121,10 @@ dependencies {
 mixin {
     add(sourceSets.main.get(), "pocketislands.refmap.json")
     config("pocketislands.mixins.json")
+}
+
+tasks.named<ProcessResources>("processGametestResources") {
+    exclude("fabric.mod.json")
 }
 
 tasks.processResources {
@@ -206,4 +227,12 @@ modrinth {
 
 tasks.modrinth {
     dependsOn(tasks.named("reobfJar"))
+}
+
+// Each GameTest run starts from an empty world: islands from a previous run would be
+// restored from the registry and change what the tests see
+tasks.named("runGametest") {
+    doFirst {
+        delete(layout.buildDirectory.dir("gametest/world"))
+    }
 }
