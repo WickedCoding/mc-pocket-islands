@@ -277,7 +277,7 @@ public class DimensionMetadataFile {
      * @param directory The directory to delete
      * @throws IOException If deletion fails
      */
-    private static void deleteDirectoryRecursively(Path directory) throws IOException {
+    public static void deleteDirectoryRecursively(Path directory) throws IOException {
         if (!Files.exists(directory)) {
             return;
         }

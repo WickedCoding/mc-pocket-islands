@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.util;
 import com.wickedsik.personalworlds.platform.Platform;
 import net.minecraft.commands.CommandSourceStack;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -28,6 +29,12 @@ public final class PermissionHelper {
     public static final String PLAYER_CREATE = "pocketislands.player.create";
     public static final String PLAYER_INVITE = "pocketislands.player.invite";
     public static final String PLAYER_VISIT = "pocketislands.player.visit";
+
+    /** Every node above; loaders that need nodes declared up front (Forge) register these. */
+    public static final List<String> ALL_NODES = List.of(
+        ADMIN_LIST, ADMIN_INFO, ADMIN_DELETE, ADMIN_TELEPORT, ADMIN_RELOAD, ADMIN_SANITIZE,
+        PLAYER_CREATE, PLAYER_INVITE, PLAYER_VISIT
+    );
 
     // ==================== Default OP Levels ====================
 

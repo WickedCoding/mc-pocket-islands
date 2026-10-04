@@ -18,6 +18,10 @@ repositories {
     maven("https://maven.parchmentmc.org") {
         name = "ParchmentMC"
     }
+    exclusiveContent {
+        forRepository { maven("https://maven.commoble.net/") { name = "Commoble" } }
+        filter { includeGroup("commoble.infiniverse") }
+    }
     mavenCentral()
 }
 
@@ -61,6 +65,14 @@ legacyForge {
 }
 
 dependencies {
+    // Infiniverse — runtime dimension creation. modImplementation remaps the SRG jar for
+    // dev; jarJar bundles the original jar (as Fantasy is bundled on Fabric)
+    val infiniverse = "commoble.infiniverse:infiniverse-1.20.1:${property("infiniverse_version")}"
+    modImplementation(infiniverse)
+    jarJar(infiniverse) {
+        version { strictly("[${property("infiniverse_version")},)"); prefer(property("infiniverse_version") as String) }
+    }
+
     // MixinExtras (@WrapOperation, @Local) — Fabric Loader ships it, Forge 47 does not,
     // so it is bundled with jarJar
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.5")!!)
