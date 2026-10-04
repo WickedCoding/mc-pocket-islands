@@ -36,6 +36,12 @@ tasks.register("chiseledGameTest") {
     dependsOn(stonecutter.tasks.named("runGametest"))
 }
 
+// Restart harness: islands, return positions and invitations survive restart and world reset
+tasks.register("chiseledHarnessTest") {
+    group = "verification"
+    dependsOn(stonecutter.tasks.named("harnessTest"))
+}
+
 tasks.register("chiseledPublishModrinth") {
     group = "publishing"
     dependsOn(stonecutter.tasks.named("modrinth"))

@@ -2,6 +2,7 @@ plugins {
     id("fabric-loom") version "1.15.3"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
+    id("pocketislands-harness")
 }
 
 version = property("mod_version") as String
@@ -60,6 +61,17 @@ loom {
         }
         named("client") {
             programArgs("--username", "Dev")
+        }
+
+        // Restart harness (pocketislands-harness plugin): one dedicated server run per phase
+        for ((run, phase) in listOf("harnessSetup" to "setup", "harnessVerify" to "verify", "harnessVerifyReset" to "verify-reset")) {
+            create(run) {
+                server()
+                configName = "Harness ($phase)"
+                source(gametest)
+                runDir("build/harness")
+                vmArg("-Dpocketislands.harness=$phase")
+            }
         }
 
         // Headless GameTest server: runs every test, writes JUnit XML, exits with the failure count

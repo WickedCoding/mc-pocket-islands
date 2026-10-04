@@ -3,6 +3,7 @@ plugins {
     id("moddev-mutex")
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
+    id("pocketislands-harness")
 }
 
 version = property("mod_version") as String
@@ -77,6 +78,17 @@ legacyForge {
             server()
             programArgument("--nogui")
         }
+        // Restart harness (pocketislands-harness plugin): one dedicated server run per phase
+        for ((run, phase) in listOf("harnessSetup" to "setup", "harnessVerify" to "verify", "harnessVerifyReset" to "verify-reset")) {
+            register(run) {
+                server()
+                sourceSet = gametest
+                gameDirectory = file("build/harness")
+                programArgument("--nogui")
+                systemProperty("pocketislands.harness", phase)
+            }
+        }
+
         // Headless GameTest server: runs every test, exits with the failure count
         register("gametest") {
             type = "gameTestServer"
