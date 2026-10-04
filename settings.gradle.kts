@@ -26,7 +26,7 @@ stonecutter {
 
         match("1.20.1", "fabric", "forge")
         match("1.20.4", "fabric")
-        match("1.21.11", "fabric")
+        match("1.21.11", "fabric", "neoforge")
 
         vcsVersion = "1.20.1-fabric" // Active node for VCS (commit with this active)
     }
