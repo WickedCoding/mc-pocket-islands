@@ -403,7 +403,7 @@ multi-version support.
 
 **Mapping Preferences:**
 - All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11; NeoForge uses Mojang names)
-- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x; Forge uses vanilla `ServerPlayer#teleportTo(ServerLevel, ...)`
+- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x; Forge uses `changeDimension` with an `ITeleporter` returning the target (not `teleportTo`: portal entry runs inside the movement packet, and without `isChangingDimension` the handler sends the player back to their old coordinates)
 
 ### API Differences Between Supported Versions
 
