@@ -266,7 +266,7 @@ Player dimensions are stored under `world/dimensions/personalworlds/pw_<uuid>/`
 and survive world resets because they are separate from the main world folders
 (`world/region/`, `world/DIM-1/`, `world/DIM1/`).
 
-A `DimensionRegistry` (SavedData saved to `world/data/personalworlds/registry.dat`)
+A `DimensionRegistry` (SavedData saved to `world/data/personalworlds_registry.dat`)
 tracks all player dimensions for restoration on server start.
 
 ### Runtime Dimensions (Fantasy on Fabric, Infiniverse on Forge)
@@ -354,14 +354,19 @@ Players can invite others to visit their island via commands
 
 ### Void World Generation
 
-The `VoidChunkGenerator` extends `ChunkGenerator` and returns empty chunks. It's
-registered through `PlatformRegistration` (`ModChunkGenerators`) for use in pocket dimensions.
+`VoidIslandChunkGenerator` extends `ChunkGenerator` and generates the island from the portal
+type's `islandLayers`. It's registered through `PlatformRegistration` (`ModChunkGenerators`)
+for use in pocket dimensions.
 
 ### Starter Platform
 
-For void worlds, a configurable starter platform is created at spawn (0, 64, 0)
-when the dimension is first created. A pre-built return portal frame is
-included.
+Players arrive at (0, 65, 0). `PortalHelper.getOrCreateSpawnPlatform` builds a 5x5 starter
+platform plus an unlit return portal frame only when (0, 64, 0) is air. With island layers the
+generator already fills that block, so islands normally have **no** pre-built return frame and
+players build their own (verified by the in-game tests, 2026-10-04).
+
+Player data lives in `world/data/personalworlds_player_data.dat` (return positions, invitations,
+pocket tracking) and `world/data/personalworlds_portal_ownership.dat`.
 
 ## Testing Strategy
 
@@ -378,9 +383,47 @@ Run the Minecraft server with `./gradlew runServer` and multiple clients with
 ### World Reset Testing
 
 1. Stop server
-2. Delete `world/region/`, `world/DIM-1/`, `world/DIM1/`
+2. Delete `world/region/`, `world/entities/`, `world/poi/`, `world/DIM-1/`, `world/DIM1/`
+   (`entities/` and `poi/` hold overworld mobs and points of interest since 1.17)
 3. Start server
 4. Verify personal dimensions still exist and are accessible
+
+`./gradlew chiseledHarnessTest` automates this (see In-Game Tests).
+
+### In-Game Tests
+
+```bash
+./gradlew chiseledGameTest      # GameTest server per node; fails on any failed test
+./gradlew chiseledHarnessTest   # restart + world reset harness per node
+./gradlew :1.20.1-forge:runGametest   # one node
+```
+
+Code lives in the `gametest` source set (`src/gametest/`), compiled against main and never in
+release jars. Scenario bodies are common code; only registration is per loader:
+
+- `gametest/*Scenarios` — portal activation and first entry, return to the stored position,
+  invitations, per-dimension rules (pocket clock: Fabric frozen, Forge follows the overworld),
+  `keepInventory` across dimensions, void ejection
+- `gametest/platform/fabric/FabricGameTests` — `fabric-gametest` entrypoint of the
+  `personalworlds-gametest` test mod (`src/gametest/resources/fabric.mod.json`); vanilla
+  `@GameTest` on 1.20.x, Fabric's `@GameTest` on 1.21.11
+- `gametest/platform/forge/ForgeGameTests` — `@GameTestHolder`, enabled with
+  `-Dforge.enabledGameTestNamespaces=personalworlds`; JUnit XML via vanilla `JUnitLikeTestReporter`
+- `gametest/harness/RestartHarness` + `buildSrc/pocketislands-harness.gradle.kts` — dedicated
+  server runs `setup` → `verify` → world reset → `verify-reset` in `build/harness/`
+
+Reports: `versions/<node>/build/gametest/junit.xml`, `versions/<node>/build/harness/harness-report.properties`.
+
+Mock players (`MockPlayers`) join through the real player list on an embedded Netty channel.
+`ClientInput` feeds their connection the packets a client sends, because portal entry only
+behaves like the real game through that path:
+- Portal blocks fire inside `handleMovePlayer` on 1.20.x and in the player tick on 1.21.x;
+  mock connections are not ticked by the server, so `ClientInput` runs `doTick()` itself
+- 1.21.4+ ignores movement until `ServerboundPlayerLoadedPacket`
+- Pending teleports must be confirmed with the current id (read by reflection; dev only)
+
+Each GameTest run deletes `build/gametest/world` first. All tests in a batch share one server:
+scenarios use their own player names and `TestSupport.ensureConfigured()` pins config values.
 
 ### Unit Tests
 

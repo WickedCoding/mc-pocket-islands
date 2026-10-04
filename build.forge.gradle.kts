@@ -86,6 +86,7 @@ legacyForge {
                 gameDirectory = file("build/harness")
                 programArgument("--nogui")
                 systemProperty("pocketislands.harness", phase)
+                jvmArgument("-Xmx1G")
             }
         }
 
@@ -96,6 +97,8 @@ legacyForge {
             gameDirectory = file("build/gametest")
             systemProperty("forge.enabledGameTestNamespaces", "personalworlds")
             systemProperty("pocketislands.gametest.report-file", layout.buildDirectory.file("gametest/junit.xml").get().asFile.absolutePath)
+            // Capped so four nodes can run in parallel (CI runners)
+            jvmArgument("-Xmx1G")
         }
     }
 }

@@ -71,6 +71,7 @@ loom {
                 source(gametest)
                 runDir("build/harness")
                 vmArg("-Dpocketislands.harness=$phase")
+                vmArg("-Xmx1G")
             }
         }
 
@@ -82,6 +83,8 @@ loom {
             runDir("build/gametest")
             vmArg("-Dfabric-api.gametest")
             vmArg("-Dfabric-api.gametest.report-file=${layout.buildDirectory.file("gametest/junit.xml").get().asFile}")
+            // Capped so four nodes can run in parallel (CI runners)
+            vmArg("-Xmx1G")
         }
     }
 }

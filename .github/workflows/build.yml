@@ -32,6 +32,23 @@ jobs:
       - name: Run tests for all versions
         run: ./gradlew chiseledTest
 
+      - name: Run in-game tests for all versions
+        run: ./gradlew chiseledGameTest
+
+      - name: Run restart and world-reset harness for all versions
+        run: ./gradlew chiseledHarnessTest
+
+      - name: Capture in-game test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: In-Game-Test-Reports
+          path: |
+            versions/*/build/gametest/junit.xml
+            versions/*/build/gametest/logs/latest.log
+            versions/*/build/harness/harness-report.properties
+            versions/*/build/harness/logs/latest.log
+
       - name: Capture build artifacts
         uses: actions/upload-artifact@v4
         with:
