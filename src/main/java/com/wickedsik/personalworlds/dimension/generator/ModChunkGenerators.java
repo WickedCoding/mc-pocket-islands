@@ -20,7 +20,7 @@ public class ModChunkGenerators {
         Platform.get().registration().register(
             BuiltInRegistries.CHUNK_GENERATOR,
             VOID_ISLAND_ID,
-            () -> VoidIslandChunkGenerator.CODEC.fieldOf("void_island")
+            () -> VoidIslandChunkGenerator.MAP_CODEC
         );
         *///?} else {
         Platform.get().registration().register(

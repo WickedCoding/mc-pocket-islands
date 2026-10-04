@@ -41,6 +41,12 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
         ).apply(instance, VoidIslandChunkGenerator::new)
     );
 
+    //? if >=1.21 {
+    /*// One instance for both the registry and codec(): the registry finds codecs by identity,
+    // and level.dat (where Infiniverse levels live) can't be written without that lookup
+    public static final com.mojang.serialization.MapCodec<VoidIslandChunkGenerator> MAP_CODEC = CODEC.fieldOf("void_island");
+    *///?}
+
     // ==================== ISLAND CONSTANTS ====================
 
     // Island dimensions: 8x8 chunks = 128x128 blocks
@@ -66,7 +72,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     //? if >=1.21 {
     /*@Override
     public com.mojang.serialization.MapCodec<? extends ChunkGenerator> codec() {
-        return CODEC.fieldOf("void_island");
+        return MAP_CODEC;
     }
     *///?} else {
     @Override
