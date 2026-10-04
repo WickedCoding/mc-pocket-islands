@@ -5,7 +5,7 @@ code in this repository.
 
 ## Project Overview
 
-**Pocket Islands** — A Fabric and Forge mod for Minecraft (Fabric 1.20.1, 1.20.4, 1.21.11; Forge 1.20.1) that provides each player
+**Pocket Islands** — A Fabric, Forge and NeoForge mod for Minecraft (Fabric 1.20.1, 1.20.4, 1.21.11; Forge 1.20.1; NeoForge 1.21.11) that provides each player
 with their own isolated, persistent pocket dimension island. The primary use
 case is dimension survival through world resets: when the overworld/nether/end
 are deleted and regenerated, each player's pocket island remains intact.
@@ -27,7 +27,7 @@ multi-loader support from a single codebase. Each Stonecutter node is `<mc>-<loa
 ./gradlew :1.20.1-forge:build
 ./gradlew :1.20.1-forge:runServer
 
-# Switch active node (nodes: 1.20.1-fabric, 1.20.1-forge, 1.20.4-fabric, 1.21.11-fabric)
+# Switch active node (nodes: 1.20.1-fabric, 1.20.1-forge, 1.20.4-fabric, 1.21.11-fabric, 1.21.11-neoforge)
 ./gradlew "Set active project to 1.21.11-fabric"
 
 # Switch back to the committed node (1.20.1-fabric)
@@ -74,11 +74,13 @@ One source tree serves every loader. Fabric nodes use split environment source s
 - **`stonecutter.gradle.kts`** — Chiseled tasks, active node, loader constants (`//? if forge`) and the 1.21.11 class renames
 - **`build.fabric.gradle.kts`** — Fabric nodes: Fabric Loom, Fantasy, Modrinth
 - **`build.forge.gradle.kts`** — Forge nodes: ModDevGradle `legacyforge`, Infiniverse + MixinExtras (jarJar), mixin refmap, Modrinth
+- **`build.neoforge.gradle.kts`** — NeoForge nodes: ModDevGradle `moddev`, Infiniverse (jarJar), Modrinth. NeoForge ships MixinExtras and runs with Mojang names, so no refmap
 - **`buildSrc/`** — `moddev-mutex` plugin: one ModDevGradle `createMinecraftArtifacts` at a time (parallel runs filled the disk)
 - **`gradle.properties`** — Shared properties (mod version, loom version)
 - **`versions/<node>/gradle.properties`** — Node-specific dependencies
 - **`src/main/resources/fabric.mod.json`** — Fabric metadata, entrypoint (`platform.fabric.FabricEntrypoint`)
 - **`src/main/resources/META-INF/mods.toml`** — Forge metadata (expanded by `build.forge.gradle.kts`); entrypoint is the `@Mod` class `platform.forge.ForgeEntrypoint`
+- **`src/main/resources/META-INF/neoforge.mods.toml`** — NeoForge 1.21.11 metadata (expanded by `build.neoforge.gradle.kts`), including the `[[mixins]]` entry; entrypoint `platform.neoforge.NeoForgeEntrypoint`
 - **`src/main/resources/pocketislands.mixins.json`** — Mixin config (per-dimension game rules). Forge's copy gets a `refmap` key at build time; Forge loads it through the `MixinConfigs` manifest attribute
 
 ### Package Structure
@@ -89,6 +91,7 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 - **`platform/`** — Loader-neutral interfaces (`Platform`, events, registration, runtime dimensions, teleport, permissions)
 - **`platform/fabric/`** — Fabric implementations and entrypoint (Fabric API, Fantasy, fabric-permissions-api)
 - **`platform/forge/`** — Forge implementations and entrypoint (Forge events, `DeferredRegister`, Infiniverse, PermissionAPI)
+- **`platform/neoforge/`** — NeoForge implementations and entrypoint (same shape as `platform/forge/`; 1.21.11 APIs only until 1.20.4-neoforge exists)
 - **`mixin/`** — Vanilla mixins shared by all loaders (per-dimension game rules)
 - **`dimension/`** — Dimension creation, registry, lifecycle management (through `RuntimeDimensions`)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
@@ -101,13 +104,13 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 ### Platform Layer
 
 Only `platform/<loader>/` may import loader classes (`net.fabricmc.*`, `xyz.nucleoid.fantasy.*`,
-`me.lucko.*`, `net.minecraftforge.*`, `commoble.*`). Everything else calls `Platform.get()`. The loader entrypoint installs its
+`me.lucko.*`, `net.minecraftforge.*`, `net.neoforged.*`, `commoble.*`, `net.commoble.*`). Everything else calls `Platform.get()`. The loader entrypoint installs its
 implementation with `Platform.install(...)` and then calls `PersonalWorldsMod.init()`.
 Each loader's buildscript excludes the other loaders' `platform/` packages.
 
 Check with:
 ```bash
-grep -rlE "net\.fabricmc|xyz\.nucleoid|me\.lucko|net\.minecraftforge|commoble" src/main/java | grep -v /platform/   # must print nothing
+grep -rlE "net\.fabricmc|xyz\.nucleoid|me\.lucko|net\.minecraftforge|net\.neoforged|commoble" src/main/java | grep -v /platform/   # must print nothing
 ```
 
 Registered objects (e.g. `ModBlocks.PERSONAL_PORTAL`) are `Supplier`s: Forge/NeoForge register
@@ -125,15 +128,19 @@ after mod construction, so never build or read them in static initializers.
 |--------------|------|------------|--------|----------------------|-------------|-------------|
 | 1.20.1-forge | 17   | 2023.09.03 | 47.4.10 | 2.0.148 (`legacyforge`) | 1.0.0.5     | 0.5.5       |
 
+| Node             | Java | Parchment  | NeoForge | ModDevGradle       | Infiniverse | MixinExtras          |
+|------------------|------|------------|----------|--------------------|-------------|----------------------|
+| 1.21.11-neoforge | 21   | 2025.12.20 | 21.11.45 | 2.0.148 (`moddev`) | 21.11.1     | 0.5.3 (in NeoForge)  |
+
 ModDevGradle applies Parchment only when it recompiles Minecraft; with `CI=true` it skips
 recompilation, so CI builds compile without Parchment names (the build still works).
 
 Mappings are Mojang's official mappings layered with Parchment (parameter names
 and Javadoc). The `parchment_version` property lives in `versions/<mc>/gradle.properties`.
 
-- **Fantasy** (Fabric) / **Infiniverse** (Forge) — Runtime dimension creation, bundled in the jar
-- **MixinExtras** — Ships with Fabric Loader; bundled with jarJar on Forge 47
-- **Fabric Permissions API** / **Forge PermissionAPI** — LuckPerms integration, OP-level fallback
+- **Fantasy** (Fabric) / **Infiniverse** (Forge, NeoForge) — Runtime dimension creation, bundled in the jar
+- **MixinExtras** — Ships with Fabric Loader and NeoForge; bundled with jarJar on Forge 47
+- **Fabric Permissions API** / **Forge and NeoForge PermissionAPI** — LuckPerms integration, OP-level fallback
 
 ## Multi-Version Support (Stonecutter)
 
@@ -148,6 +155,7 @@ management from a single codebase.
 | 1.20.1-forge   | Supported |             |
 | 1.20.4-fabric  | Supported |             |
 | 1.21.11-fabric | Supported |             |
+| 1.21.11-neoforge | Supported |           |
 
 Always switch back to 1.20.1-fabric before committing; `./gradlew "Reset active project"`
 does this (it switches to `vcsVersion` = 1.20.1-fabric in `settings.gradle.kts`).
@@ -269,14 +277,14 @@ and survive world resets because they are separate from the main world folders
 A `DimensionRegistry` (SavedData saved to `world/data/personalworlds_registry.dat`)
 tracks all player dimensions for restoration on server start.
 
-### Runtime Dimensions (Fantasy on Fabric, Infiniverse on Forge)
+### Runtime Dimensions (Fantasy on Fabric, Infiniverse on Forge and NeoForge)
 
 `DimensionManager` opens dimensions through `Platform.get().dimensions()` (`RuntimeDimensions`),
 which returns a `RuntimeDimension` handle (`level()`, `unload()`, `delete()`). On Fabric,
 `platform/fabric/FantasyDimensions` implements it with Fantasy (`xyz.nucleoid:fantasy`)
 persistent worlds. Without Fantasy, Fabric API alone cannot create dimensions at runtime.
 
-On Forge, `platform/forge/InfiniverseDimensions` uses Infiniverse. `unload()` and `delete()` call
+On Forge and NeoForge, `platform/<loader>/InfiniverseDimensions` uses Infiniverse (same behaviour in 1.0.0.5 and 21.11.1). `unload()` and `delete()` call
 `markDimensionForUnregistration`; Infiniverse unregisters at the end of a later tick (players
 inside go to their respawn point, the level is saved and dropped from the `LevelStem` registry,
 so it is not recreated on the next start). It never closes the level, so `InfiniverseDimensions`
@@ -284,6 +292,12 @@ closes it once it is gone and then deletes the folder for `delete()`. Islands st
 shutdown stay in `level.dat` and vanilla recreates them at the next start. Infiniverse builds
 levels with vanilla `DerivedLevelData` and the overworld seed: island day time follows the
 overworld, and `DimensionSpec.seed` is ignored.
+
+Because Infiniverse levels are written to `level.dat`, the chunk generator's codec must be the
+exact instance registered in `CHUNK_GENERATOR` (`VoidIslandChunkGenerator.MAP_CODEC` on 1.21.x).
+A fresh `fieldOf(...)` per call fails the registry lookup, vanilla drops `WorldGenSettings` from
+`level.dat`, and the world no longer loads. Fantasy worlds never reach `level.dat`, so Fabric
+does not show this; the NeoForge restart harness does.
 
 ### Per-Dimension Game Rules
 
@@ -297,7 +311,8 @@ in `DimensionGameRules` (keyed by dimension) **before** opening the level; mixin
   died in, matching the death-drop decision (otherwise items vanish)
 
 Fantasy's own `setGameRule` is not used. The mixins are common code; Forge loads them through
-the `MixinConfigs` manifest attribute with an SRG refmap from the mixin annotation processor.
+the `MixinConfigs` manifest attribute with an SRG refmap from the mixin annotation processor;
+NeoForge loads them from `[[mixins]]` in `neoforge.mods.toml` (Mojang names, no refmap).
 Known limits: on 1.20.x `/gamerule` always reads and
 writes the overworld; on 1.21.x it acts on the pocket, but edits are lost when the pocket
 reloads (rules are rebuilt from config). Client-side rules sent at login
@@ -402,13 +417,17 @@ Code lives in the `gametest` source set (`src/gametest/`), compiled against main
 release jars. Scenario bodies are common code; only registration is per loader:
 
 - `gametest/*Scenarios` — portal activation and first entry, return to the stored position,
-  invitations, per-dimension rules (pocket clock: Fabric frozen, Forge follows the overworld),
+  invitations, per-dimension rules (pocket clock: Fabric frozen, Forge/NeoForge follow the overworld),
   `keepInventory` across dimensions, void ejection
 - `gametest/platform/fabric/FabricGameTests` — `fabric-gametest` entrypoint of the
   `personalworlds-gametest` test mod (`src/gametest/resources/fabric.mod.json`); vanilla
   `@GameTest` on 1.20.x, Fabric's `@GameTest` on 1.21.11
 - `gametest/platform/forge/ForgeGameTests` — `@GameTestHolder`, enabled with
   `-Dforge.enabledGameTestNamespaces=personalworlds`; JUnit XML via vanilla `JUnitLikeTestReporter`
+- `gametest/platform/neoforge/NeoForgeGameTests` — `@EventBusSubscriber`: each scenario is a
+  `Registries.TEST_FUNCTION` entry (`RegisterEvent`) plus a `FunctionGameTestInstance` from
+  `RegisterGameTestsEvent`. `GameTestServer` runs every registered test (no namespace filter,
+  so vanilla `minecraft:always_pass` runs too); JUnit XML as on Forge
 - `gametest/harness/RestartHarness` + `buildSrc/pocketislands-harness.gradle.kts` — dedicated
   server runs `setup` → `verify` → world reset → `verify-reset` in `build/harness/`
 
@@ -446,7 +465,7 @@ multi-version support.
 
 **Mapping Preferences:**
 - All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11; NeoForge uses Mojang names)
-- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x; Forge uses `changeDimension` with an `ITeleporter` returning the target (not `teleportTo`: portal entry runs inside the movement packet, and without `isChangingDimension` the handler sends the player back to their old coordinates)
+- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x, as does NeoForge 1.21.11 (portal blocks fire in the player tick there, not in the movement packet); Forge uses `changeDimension` with an `ITeleporter` returning the target (not `teleportTo`: portal entry runs inside the movement packet, and without `isChangingDimension` the handler sends the player back to their old coordinates)
 
 ### API Differences Between Supported Versions
 
@@ -525,7 +544,7 @@ git push origin main --tags
 ### Release Artifacts
 
 - **GitHub:** `pocketislands-<version>+<node>.jar` (e.g., `pocketislands-0.5.1+1.20.1-forge.jar`)
-- **Modrinth:** One version per node: Fabric as `<version>+<mc>` (`0.5.1+1.20.1`), Forge as `<version>+<mc>-forge` (`0.5.1+1.20.1-forge`)
+- **Modrinth:** One version per node: Fabric as `<version>+<mc>` (`0.5.1+1.20.1`), Forge as `<version>+<mc>-forge` (`0.5.1+1.20.1-forge`), NeoForge as `<version>+<mc>-neoforge` (`0.5.1+1.21.11-neoforge`)
 
 ### Distribution
 
@@ -537,5 +556,5 @@ git push origin main --tags
 ## Key External Dependencies
 
 - **Fantasy** (`xyz.nucleoid:fantasy`) — Runtime dimension creation on Fabric. Without this, Fabric API alone cannot create dimensions at runtime. See https://github.com/NucleoidMC/fantasy
-- **Infiniverse** (`commoble.infiniverse:infiniverse-1.20.1`, maven.commoble.net) — Runtime dimension creation on Forge. See https://github.com/Commoble/infiniverse
+- **Infiniverse** (`commoble.infiniverse:infiniverse-1.20.1` on Forge, `net.commoble.infiniverse:infiniverse` on NeoForge 1.21.11, maven.commoble.net) — Runtime dimension creation on Forge and NeoForge. See https://github.com/Commoble/infiniverse
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration; falls back to vanilla OP levels

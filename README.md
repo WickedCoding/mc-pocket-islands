@@ -1,15 +1,15 @@
 # Pocket Islands
 
-A Minecraft mod for Fabric and Forge that gives each player their own persistent
+A Minecraft mod for Fabric, Forge and NeoForge that gives each player their own persistent
 pocket dimension island.
 
 **Supported Versions:**
 
-| Minecraft | Fabric | Forge |
-|-----------|--------|-------|
-| 1.20.1    | ✓      | ✓     |
-| 1.20.4    | ✓      |       |
-| 1.21.11   | ✓      |       |
+| Minecraft | Fabric | Forge | NeoForge |
+|-----------|--------|-------|----------|
+| 1.20.1    | ✓      | ✓     |          |
+| 1.20.4    | ✓      |       |          |
+| 1.21.11   | ✓      |       | ✓        |
 
 ## Features
 
@@ -24,6 +24,7 @@ pocket dimension island.
 - Minecraft 1.20.1, 1.20.4, or 1.21.11
 - **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x) and Fabric API
 - **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
+- **NeoForge (1.21.11):** NeoForge 21.11.45 or newer. Nothing else: Infiniverse is bundled in the jar
 - **Both client and server must have the mod installed**
 
 ## Installation
@@ -35,10 +36,11 @@ Download the version matching your Minecraft version from
 - `pocketislands-X.X.X+1.20.1-forge.jar` for Minecraft 1.20.1 on Forge
 - `pocketislands-X.X.X+1.20.4-fabric.jar` for Minecraft 1.20.4 on Fabric
 - `pocketislands-X.X.X+1.21.11-fabric.jar` for Minecraft 1.21.11 on Fabric
+- `pocketislands-X.X.X+1.21.11-neoforge.jar` for Minecraft 1.21.11 on NeoForge
 
 ### Server
 
-1. Install Fabric Loader or Forge on your server
+1. Install Fabric Loader, Forge or NeoForge on your server
 2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in the server's `mods/` folder
     - On Fabric, make sure Fabric API is also installed here
@@ -46,7 +48,7 @@ Download the version matching your Minecraft version from
 
 ### Client
 
-1. Install Fabric Loader or Forge
+1. Install Fabric Loader, Forge or NeoForge
 2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in your `mods/` folder
     - On Fabric, make sure Fabric API is also installed here
@@ -59,16 +61,16 @@ Download the version matching your Minecraft version from
 
 Islands work the same on every loader, with these exceptions:
 
-| | Fabric | Forge 1.20.1 |
+| | Fabric | Forge 1.20.1 / NeoForge 1.21.11 |
 |---|---|---|
 | Runtime dimensions | Fantasy (bundled) | Infiniverse (bundled) |
-| Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through Forge's PermissionAPI, else OP levels |
+| Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through the loader's PermissionAPI, else OP levels |
 | Island clock | Own clock; `doDaylightCycle: false` freezes it | Follows the overworld; `doDaylightCycle` has no effect on the island |
 | World seed (`OVERWORLD`/`FLAT` islands) | Per island | The overworld's seed. Void islands are not affected |
 
 Console and command blocks always use OP levels for `/pi` permissions.
 
-Moving a whole world between Fabric and Forge is not supported: switching loaders replaces
+Moving a whole world between loaders is not supported: switching loaders replaces
 the entire modpack. Individual islands can move: copy `world/dimensions/personalworlds/` to
 the other server (same Minecraft version) and the islands open without conversion. The
 island registry, return positions and invitations stay with each server's own world. New
