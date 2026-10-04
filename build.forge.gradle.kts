@@ -52,11 +52,17 @@ legacyForge {
         }
     }
 
-    // Fixed dev name, as on Fabric: offline UUIDs derive from the name
+    // Fixed dev names, as on Fabric: offline UUIDs derive from the name.
+    // Dev2 is the invite-test player.
     runs {
         register("client") {
             client()
             programArguments.addAll("--username", "Dev")
+        }
+        register("client2") {
+            client()
+            gameDirectory = file("run/client2")
+            programArguments.addAll("--username", "Dev2")
         }
         register("server") {
             server()
