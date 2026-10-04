@@ -68,6 +68,13 @@ Islands work the same on every loader, with these exceptions:
 
 Console and command blocks always use OP levels for `/pi` permissions.
 
+Moving a whole world between Fabric and Forge is not supported: switching loaders replaces
+the entire modpack. Individual islands can move: copy `world/dimensions/personalworlds/` to
+the other server (same Minecraft version) and the islands open without conversion. The
+island registry, return positions and invitations stay with each server's own world. New
+chunks of `OVERWORLD`/`FLAT` islands then generate with the other loader's seed (see the
+table above).
+
 ## Usage
 
 ### Creating a Portal
