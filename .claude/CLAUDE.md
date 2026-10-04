@@ -133,7 +133,11 @@ after mod construction, so never build or read them in static initializers.
 | 1.21.11-neoforge | 21   | 2025.12.20 | 21.11.45 | 2.0.148 (`moddev`) | 21.11.1     | 0.5.3 (in NeoForge)  |
 
 ModDevGradle applies Parchment only when it recompiles Minecraft; with `CI=true` it skips
-recompilation, so CI builds compile without Parchment names (the build still works).
+recompilation by default. The Forge node forces recompilation (`isDisableRecompilation = false`):
+the binary-patched jar keeps Forge's signature manifest, and unit tests on a plain JVM fail
+with `SHA-384 digest error`. The NeoForge node keeps the default, so its CI build compiles
+without Parchment names (the build and tests still work). Run `CI=true ./gradlew ...` locally
+to reproduce CI.
 
 Mappings are Mojang's official mappings layered with Parchment (parameter names
 and Javadoc). The `parchment_version` property lives in `versions/<mc>/gradle.properties`.
@@ -513,11 +517,11 @@ git push origin main --tags
 
 This triggers `.github/workflows/release.yml` which:
 
-1. Builds **all nodes** using `chiseledBuild`
-2. Runs tests for all nodes
-3. Creates a GitHub Release with JARs for all nodes attached
-4. Auto-generates release notes from commits
-5. Publishes to **Modrinth** automatically (one version per node)
+1. Builds **all nodes** using `chiseledBuild` (tests are not rerun: `build.yml` runs unit tests,
+   in-game tests and the harness on every push, so tag a commit whose build passed)
+2. Creates a GitHub Release with JARs for all nodes attached
+3. Uses the version's `CHANGELOG.md` section as the release notes
+4. Publishes to **Modrinth** automatically (one version per node)
 
 ### Release Command
 
