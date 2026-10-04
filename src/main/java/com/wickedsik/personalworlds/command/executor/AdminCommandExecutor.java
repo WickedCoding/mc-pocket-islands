@@ -91,7 +91,9 @@ public class AdminCommandExecutor {
                 .append(Component.literal(") ")
                     .withStyle(ChatFormatting.DARK_GRAY));
 
+            // Brackets stay outside the translations: [LOADED, 2 players] / [unloaded]
             if (loaded) {
+                line.append(Component.literal("[").withStyle(ChatFormatting.GREEN));
                 line.append(Component.translatable("pocketislands.command.list.loaded")
                     .withStyle(ChatFormatting.GREEN));
                 if (playerCount > 0) {
@@ -100,7 +102,9 @@ public class AdminCommandExecutor {
                 }
                 line.append(Component.literal("]").withStyle(ChatFormatting.GREEN));
             } else {
-                line.append(Component.translatable("pocketislands.command.list.unloaded").withStyle(ChatFormatting.GRAY));
+                line.append(Component.literal("[").withStyle(ChatFormatting.GRAY))
+                    .append(Component.translatable("pocketislands.command.list.unloaded").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("]").withStyle(ChatFormatting.GRAY));
             }
 
             source.sendSuccess(() -> line, false);
