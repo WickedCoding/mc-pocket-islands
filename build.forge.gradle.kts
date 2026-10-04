@@ -80,6 +80,10 @@ dependencies {
         version { strictly("[0.5.5,)"); prefer("0.5.5") }
     })
 
+    // Mixin annotation processor: writes the refmap that maps the mixins' Mojang names
+    // to SRG names for production
+    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
+
     // Testing — JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
@@ -88,6 +92,11 @@ dependencies {
     // Testing — Mockito for mocking
     testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+}
+
+mixin {
+    add(sourceSets.main.get(), "pocketislands.refmap.json")
+    config("pocketislands.mixins.json")
 }
 
 tasks.processResources {
@@ -101,6 +110,12 @@ tasks.processResources {
 
     filesMatching("META-INF/mods.toml") {
         expand(props)
+    }
+
+    // Loom handles the refmap on Fabric; only the Forge copy points at one
+    inputs.property("refmap", "pocketislands.refmap.json")
+    filesMatching("pocketislands.mixins.json") {
+        filter { line -> line.replace("\"required\": true,", "\"required\": true,\n  \"refmap\": \"pocketislands.refmap.json\",") }
     }
 
     exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
@@ -136,6 +151,9 @@ tasks.test {
 
 tasks.jar {
     inputs.property("archivesName", base.archivesName)
+
+    // Forge 1.20.1 loads mixin configs from the manifest, not from mods.toml
+    manifest.attributes("MixinConfigs" to "pocketislands.mixins.json")
 
     from(rootProject.file("LICENSE")) {
         rename { "${it}_${base.archivesName.get()}" }
