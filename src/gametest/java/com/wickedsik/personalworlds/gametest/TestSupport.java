@@ -39,10 +39,12 @@ public final class TestSupport {
     public static final int POCKET_RANDOM_TICK_SPEED = 10;
 
     // Arena layout (personalworlds:arena, 8x8x8): stone floor at y=1, a portal frame along X
-    // at z=3 with interior x=2..3, y=2..4. Standing at (2,2,3) facing south puts the stored
-    // return position at (2,2,2), on the floor, so it counts as a safe spot.
+    // at z=3 with interior x=2..3, y=2..4. Players stand at (2,2,4) facing north and walk
+    // into the portal; the stored return position is then (2,2,4), on the floor (safe).
     public static final BlockPos FRAME_BOTTOM_LEFT = new BlockPos(1, 1, 3);
     public static final BlockPos PORTAL_INTERIOR = new BlockPos(2, 2, 3);
+    private static final BlockPos IN_FRONT_OF_PORTAL = PORTAL_INTERIOR.south();
+    private static final float FACING_NORTH = 180.0F;
 
     // Islands get no pre-built return frame (the void generator's island layers make
     // PortalHelper skip its starter platform), so players build one; this one sits next to
@@ -100,15 +102,31 @@ public final class TestSupport {
         }
     }
 
-    /** Stand the player inside the arena portal, facing south. */
-    public static void standInArenaPortal(GameTestHelper helper, ServerPlayer player) {
-        Vec3 pos = Vec3.atBottomCenterOf(helper.absolutePos(PORTAL_INTERIOR));
-        moveWithinLevel(player, pos.x, pos.y, pos.z);
+    /** Put the player one block in front of the arena portal, facing it. */
+    public static void standInFrontOfArenaPortal(GameTestHelper helper, ServerPlayer player) {
+        Vec3 pos = Vec3.atBottomCenterOf(helper.absolutePos(IN_FRONT_OF_PORTAL));
+        moveWithinLevel(player, pos.x, pos.y, pos.z, FACING_NORTH);
     }
 
-    /** Move within the player's current level, facing south (yaw 0). */
+    /** Step from in front of the arena portal into it, through the movement packet handler. */
+    public static void walkIntoArenaPortal(GameTestHelper helper, ServerPlayer player) {
+        player.setPortalCooldown(0);
+        ClientInput.moveTo(player, Vec3.atBottomCenterOf(helper.absolutePos(PORTAL_INTERIOR)));
+    }
+
+    /** True once the player is on the owner's island, after confirming any pending teleport. */
+    public static boolean arrivedOnIslandOf(ServerPlayer player, ServerPlayer owner) {
+        ClientInput.acceptPendingTeleport(player);
+        return inPocketOf(player, owner);
+    }
+
     public static void moveWithinLevel(ServerPlayer player, double x, double y, double z) {
-        player.setYRot(0.0F);
+        moveWithinLevel(player, x, y, z, 0.0F);
+    }
+
+    /** Server-side move within the player's current level (no portal checks). */
+    public static void moveWithinLevel(ServerPlayer player, double x, double y, double z, float yaw) {
+        player.setYRot(yaw);
         player.setXRot(0.0F);
         player.teleportTo(x, y, z);
     }
@@ -129,20 +147,29 @@ public final class TestSupport {
         activate(player, helper.getLevel(), helper.absolutePos(PORTAL_INTERIOR.below()));
     }
 
-    /** Build and light a return portal on the player's island. */
+    /** Build and light a return portal on the player's island, and stand in front of it. */
     public static void buildAndActivateIslandReturnPortal(ServerPlayer player) {
         ServerLevel island = EntityCompat.getServerWorld(player);
         buildFrame(island, ISLAND_RETURN_FRAME_BOTTOM_LEFT);
         activate(player, island, ISLAND_RETURN_FRAME_BOTTOM_LEFT.east());
+        BlockPos front = islandReturnPortal().south();
+        island.setBlockAndUpdate(front.below(), Blocks.STONE.defaultBlockState());
+        Vec3 pos = Vec3.atBottomCenterOf(front);
+        moveWithinLevel(player, pos.x, pos.y, pos.z, FACING_NORTH);
     }
 
     public static BlockPos islandReturnPortal() {
         return ISLAND_RETURN_FRAME_BOTTOM_LEFT.east().above();
     }
 
-    /** Walk into a portal block (what PersonalPortalBlock#entityInside does after its checks). */
-    public static void enterPortal(ServerPlayer player, BlockPos portalPos) {
-        PortalHelper.handlePortalEntry(player, portalPos);
+    /**
+     * Step into the island's return portal through the movement packet handler. The portal
+     * cooldown counts down in the connection tick, which mock connections never get, so it
+     * is cleared here as if the player had waited.
+     */
+    public static void walkIntoIslandReturnPortal(ServerPlayer player) {
+        player.setPortalCooldown(0);
+        ClientInput.moveTo(player, Vec3.atBottomCenterOf(islandReturnPortal()));
     }
 
     public static boolean isPortal(Level level, BlockPos pos) {

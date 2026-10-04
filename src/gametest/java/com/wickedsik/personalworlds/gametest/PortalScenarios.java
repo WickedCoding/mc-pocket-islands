@@ -17,6 +17,7 @@ public final class PortalScenarios {
 
     // ConcurrentPortalGuard keeps a player on cooldown for a second after each portal use
     private static final int PORTAL_COOLDOWN_TICKS = 30;
+    private static final BlockPos ISLAND_ARRIVAL = new BlockPos(0, 65, 0);
 
     private PortalScenarios() {
     }
@@ -31,16 +32,22 @@ public final class PortalScenarios {
 
         helper.startSequence()
             .thenExecute(() -> {
-                TestSupport.standInArenaPortal(helper, owner);
+                TestSupport.standInFrontOfArenaPortal(helper, owner);
                 TestSupport.activateArenaPortal(helper, owner);
                 helper.assertTrue(TestSupport.isPortal(helper.getLevel(), portal), "frame was not lit by the activation item");
                 Optional<java.util.UUID> claimedBy = PortalOwnershipManager.get(server).getOwner(helper.getLevel(), portal);
                 helper.assertTrue(claimedBy.map(owner.getUUID()::equals).orElse(false), "portal not owned by the activating player");
                 helper.assertTrue(DimensionRegistry.get(server).getDimensionData(owner.getUUID()).isEmpty(), "island exists before first entry");
-                TestSupport.enterPortal(owner, portal);
+                TestSupport.walkIntoArenaPortal(helper, owner);
             })
-            .thenWaitUntil(() -> helper.assertTrue(TestSupport.inPocketOf(owner, owner), "owner did not arrive on their island"))
-            .thenExecute(() -> helper.assertTrue(DimensionRegistry.get(server).getDimensionData(owner.getUUID()).isPresent(), "island not registered"))
+            .thenWaitUntil(() -> helper.assertTrue(TestSupport.arrivedOnIslandOf(owner, owner), "owner did not arrive on their island"))
+            .thenExecute(() -> {
+                helper.assertTrue(DimensionRegistry.get(server).getDimensionData(owner.getUUID()).isPresent(), "island not registered");
+                // New islands receive players at (0, 65, 0); arriving anywhere else means the
+                // teleport target was lost on the way (Forge "moved wrongly" bug)
+                helper.assertTrue(owner.blockPosition().closerThan(ISLAND_ARRIVAL, 3),
+                    "arrived at " + owner.blockPosition() + ", expected near " + ISLAND_ARRIVAL);
+            })
             .thenExecute(() -> MockPlayers.leave(owner))
             .thenSucceed();
     }
@@ -56,11 +63,11 @@ public final class PortalScenarios {
 
         helper.startSequence()
             .thenExecute(() -> {
-                TestSupport.standInArenaPortal(helper, owner);
+                TestSupport.standInFrontOfArenaPortal(helper, owner);
                 TestSupport.activateArenaPortal(helper, owner);
-                TestSupport.enterPortal(owner, portal);
+                TestSupport.walkIntoArenaPortal(helper, owner);
             })
-            .thenWaitUntil(() -> helper.assertTrue(TestSupport.inPocketOf(owner, owner), "owner did not arrive on their island"))
+            .thenWaitUntil(() -> helper.assertTrue(TestSupport.arrivedOnIslandOf(owner, owner), "owner did not arrive on their island"))
             .thenExecute(() -> {
                 Optional<ReturnData> data = PlayerDataManager.get(server).getReturnData(owner.getUUID());
                 helper.assertTrue(data.isPresent(), "no return position stored on entry");
@@ -69,8 +76,11 @@ public final class PortalScenarios {
                 helper.assertTrue(TestSupport.isPortal(TestSupport.level(owner), TestSupport.islandReturnPortal()), "return frame on the island was not lit");
             })
             .thenIdle(PORTAL_COOLDOWN_TICKS)
-            .thenExecute(() -> TestSupport.enterPortal(owner, TestSupport.islandReturnPortal()))
-            .thenWaitUntil(() -> helper.assertTrue(!TestSupport.inPocket(owner), "owner is still on the island"))
+            .thenExecute(() -> TestSupport.walkIntoIslandReturnPortal(owner))
+            .thenWaitUntil(() -> {
+                ClientInput.acceptPendingTeleport(owner);
+                helper.assertTrue(!TestSupport.inPocket(owner), "owner is still on the island");
+            })
             .thenExecute(() -> {
                 ReturnData expected = stored.get();
                 helper.assertTrue(TestSupport.level(owner).dimension().equals(expected.dimension()),
