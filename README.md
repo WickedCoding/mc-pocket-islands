@@ -1,9 +1,15 @@
 # Pocket Islands
 
-A Fabric mod for Minecraft that gives each player their own persistent
+A Minecraft mod for Fabric and Forge that gives each player their own persistent
 pocket dimension island.
 
-**Supported Versions:** Minecraft 1.20.1, 1.20.4, 1.21.11
+**Supported Versions:**
+
+| Minecraft | Fabric | Forge |
+|-----------|--------|-------|
+| 1.20.1    | ✓      | ✓     |
+| 1.20.4    | ✓      |       |
+| 1.21.11   | ✓      |       |
 
 ## Features
 
@@ -16,8 +22,8 @@ pocket dimension island.
 ## Requirements
 
 - Minecraft 1.20.1, 1.20.4, or 1.21.11
-- Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x)
-- Fabric API
+- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x) and Fabric API
+- **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
 - **Both client and server must have the mod installed**
 
 ## Installation
@@ -25,28 +31,42 @@ pocket dimension island.
 Download the version matching your Minecraft version from
 [Releases](https://github.com/wickedsik/pocket-islands/releases):
 
-- `pocketislands-X.X.X+1.20.1.jar` for Minecraft 1.20.1
-- `pocketislands-X.X.X+1.20.4.jar` for Minecraft 1.20.4
-- `pocketislands-X.X.X+1.21.11.jar` for Minecraft 1.21.11
+- `pocketislands-X.X.X+1.20.1-fabric.jar` for Minecraft 1.20.1 on Fabric
+- `pocketislands-X.X.X+1.20.1-forge.jar` for Minecraft 1.20.1 on Forge
+- `pocketislands-X.X.X+1.20.4-fabric.jar` for Minecraft 1.20.4 on Fabric
+- `pocketislands-X.X.X+1.21.11-fabric.jar` for Minecraft 1.21.11 on Fabric
 
 ### Server
 
-1. Install Fabric Loader on your server
-2. Download the correct Pocket Islands JAR for your MC version
+1. Install Fabric Loader or Forge on your server
+2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in the server's `mods/` folder
-    - Make sure Fabric API is also installed here
+    - On Fabric, make sure Fabric API is also installed here
 4. Start the server
 
 ### Client
 
-1. Install Fabric Loader
-2. Download the correct Pocket Islands JAR for your MC version
+1. Install Fabric Loader or Forge
+2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in your `mods/` folder
-    - Make sure Fabric API is also installed here
+    - On Fabric, make sure Fabric API is also installed here
 4. Launch Minecraft
 
 **Important:** The mod must be installed on both client and server. See
 [FAQ](#faq) for details.
+
+### Loader Differences
+
+Islands work the same on every loader, with these exceptions:
+
+| | Fabric | Forge 1.20.1 |
+|---|---|---|
+| Runtime dimensions | Fantasy (bundled) | Infiniverse (bundled) |
+| Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through Forge's PermissionAPI, else OP levels |
+| Island clock | Own clock; `doDaylightCycle: false` freezes it | Follows the overworld; `doDaylightCycle` has no effect on the island |
+| World seed (`OVERWORLD`/`FLAT` islands) | Per island | The overworld's seed. Void islands are not affected |
+
+Console and command blocks always use OP levels for `/pi` permissions.
 
 ## Usage
 

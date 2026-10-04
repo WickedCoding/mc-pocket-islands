@@ -5,43 +5,44 @@ code in this repository.
 
 ## Project Overview
 
-**Pocket Islands** — A Fabric mod for Minecraft (1.20.1, 1.20.4, 1.21.11) that provides each player
+**Pocket Islands** — A Fabric and Forge mod for Minecraft (Fabric 1.20.1, 1.20.4, 1.21.11; Forge 1.20.1) that provides each player
 with their own isolated, persistent pocket dimension island. The primary use
 case is dimension survival through world resets: when the overworld/nether/end
 are deleted and regenerated, each player's pocket island remains intact.
 
-This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version
-support from a single codebase.
+This project uses [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version and
+multi-loader support from a single codebase. Each Stonecutter node is `<mc>-<loader>`.
 
 ## Build Commands
 
 ```bash
-# Build ALL versions at once (RECOMMENDED)
+# Build ALL nodes at once (RECOMMENDED)
 ./gradlew chiseledBuild
 
 # IMPORTANT: Do NOT use `./gradlew build` directly - it fails with Stonecutter.
 # chiseledBuild/chiseledTest are aggregate tasks (stonecutter.gradle.kts) that run
-# build/test for every version; non-active versions compile from generated sources.
+# build/test for every node; non-active nodes compile from generated sources.
 
-# Switch active version to 1.20.1
-./gradlew "Set active project to 1.20.1"
+# Build or run one node
+./gradlew :1.20.1-forge:build
+./gradlew :1.20.1-forge:runServer
 
-# Switch active version to 1.20.4
-./gradlew "Set active project to 1.20.4"
+# Switch active node (nodes: 1.20.1-fabric, 1.20.1-forge, 1.20.4-fabric, 1.21.11-fabric)
+./gradlew "Set active project to 1.21.11-fabric"
 
-# Switch active version to 1.21.11
-./gradlew "Set active project to 1.21.11"
+# Switch back to the committed node (1.20.1-fabric)
+./gradlew "Reset active project"
 
 # Clean build artifacts
 ./gradlew clean
 
-# Run Minecraft client with the mod loaded (uses active version)
+# Run Minecraft client with the mod loaded (uses active node)
 ./gradlew runClient
 
 # Run Minecraft server with the mod loaded
 ./gradlew runServer
 
-# Run tests for all versions
+# Run tests for all nodes
 ./gradlew chiseledTest
 
 # Run a single test class
@@ -54,14 +55,13 @@ support from a single codebase.
 ./gradlew genSources
 ```
 
-**Output locations (after chiseledBuild):**
-- MC 1.20.1: `versions/1.20.1/build/libs/pocketislands-<version>.jar`
-- MC 1.20.4: `versions/1.20.4/build/libs/pocketislands-<version>.jar`
-- MC 1.21.11: `versions/1.21.11/build/libs/pocketislands-<version>.jar`
+**Output locations (after chiseledBuild):** `versions/<node>/build/libs/pocketislands-<version>.jar`
+for every node (e.g. `versions/1.20.1-forge/build/libs/`). On Forge this is the reobfuscated (SRG)
+jar; the dev jar is in `build/devlibs/` and only runs in a dev environment.
 
 ## Project Structure
 
-This is a standard Fabric mod project with split environment source sets:
+One source tree serves every loader. Fabric nodes use split environment source sets:
 
 - **`src/main/java/`** — Server-side and common code
 - **`src/client/java/`** — Client-side only code
@@ -70,13 +70,16 @@ This is a standard Fabric mod project with split environment source sets:
 
 ### Key Configuration Files
 
-- **`settings.gradle.kts`** — Stonecutter multi-version configuration
-- **`stonecutter.gradle.kts`** — Chiseled tasks and active version selection
-- **`build.gradle.kts`** — Dependencies, build configuration, uses Fabric Loom
+- **`settings.gradle.kts`** — Stonecutter nodes (`match(<mc>, <loaders>…)` → `<mc>-<loader>` with `build.<loader>.gradle.kts`)
+- **`stonecutter.gradle.kts`** — Chiseled tasks, active node, loader constants (`//? if forge`) and the 1.21.11 class renames
+- **`build.fabric.gradle.kts`** — Fabric nodes: Fabric Loom, Fantasy, Modrinth
+- **`build.forge.gradle.kts`** — Forge nodes: ModDevGradle `legacyforge`, Infiniverse + MixinExtras (jarJar), mixin refmap, Modrinth
+- **`buildSrc/`** — `moddev-mutex` plugin: one ModDevGradle `createMinecraftArtifacts` at a time (parallel runs filled the disk)
 - **`gradle.properties`** — Shared properties (mod version, loom version)
-- **`versions/<mc-version>/gradle.properties`** — Version-specific dependencies
-- **`src/main/resources/fabric.mod.json`** — Mod metadata, entrypoint (`platform.fabric.FabricEntrypoint`), dependencies
-- **`src/main/resources/pocketislands.mixins.json`** — Mixin config (per-dimension game rules)
+- **`versions/<node>/gradle.properties`** — Node-specific dependencies
+- **`src/main/resources/fabric.mod.json`** — Fabric metadata, entrypoint (`platform.fabric.FabricEntrypoint`)
+- **`src/main/resources/META-INF/mods.toml`** — Forge metadata (expanded by `build.forge.gradle.kts`); entrypoint is the `@Mod` class `platform.forge.ForgeEntrypoint`
+- **`src/main/resources/pocketislands.mixins.json`** — Mixin config (per-dimension game rules). Forge's copy gets a `refmap` key at build time; Forge loads it through the `MixinConfigs` manifest attribute
 
 ### Package Structure
 
@@ -85,6 +88,7 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 - **`compat/`** — Version-specific API abstraction layer (ResourceLocation, Nbt, PortalInfo, Registry, etc.)
 - **`platform/`** — Loader-neutral interfaces (`Platform`, events, registration, runtime dimensions, teleport, permissions)
 - **`platform/fabric/`** — Fabric implementations and entrypoint (Fabric API, Fantasy, fabric-permissions-api)
+- **`platform/forge/`** — Forge implementations and entrypoint (Forge events, `DeferredRegister`, Infiniverse, PermissionAPI)
 - **`mixin/`** — Vanilla mixins shared by all loaders (per-dimension game rules)
 - **`dimension/`** — Dimension creation, registry, lifecycle management (through `RuntimeDimensions`)
 - **`portal/`** — Portal block, frame detection, activation, teleportation
@@ -97,13 +101,13 @@ Under `src/main/java/com/wickedsik/personalworlds/`:
 ### Platform Layer
 
 Only `platform/<loader>/` may import loader classes (`net.fabricmc.*`, `xyz.nucleoid.fantasy.*`,
-`me.lucko.*`). Everything else calls `Platform.get()`. The loader entrypoint installs its
+`me.lucko.*`, `net.minecraftforge.*`, `commoble.*`). Everything else calls `Platform.get()`. The loader entrypoint installs its
 implementation with `Platform.install(...)` and then calls `PersonalWorldsMod.init()`.
 Each loader's buildscript excludes the other loaders' `platform/` packages.
 
 Check with:
 ```bash
-grep -rlE "net\.fabricmc|xyz\.nucleoid|me\.lucko" src/main/java | grep -v /platform/   # must print nothing
+grep -rlE "net\.fabricmc|xyz\.nucleoid|me\.lucko|net\.minecraftforge|commoble" src/main/java | grep -v /platform/   # must print nothing
 ```
 
 Registered objects (e.g. `ModBlocks.PERSONAL_PORTAL`) are `Supplier`s: Forge/NeoForge register
@@ -111,33 +115,46 @@ after mod construction, so never build or read them in static initializers.
 
 ### Dependencies
 
-| MC Version | Java | Parchment  | Fabric Loader | Fabric API      | Fantasy         |
-|------------|------|------------|---------------|-----------------|-----------------|
-| 1.20.1     | 17   | 2023.09.03 | 0.16.10       | 0.92.6+1.20.1   | 0.4.11+1.20-rc1 |
-| 1.20.4     | 17   | 2024.04.14 | 0.15.11       | 0.97.0+1.20.4   | 0.5.0+1.20.4    |
-| 1.21.11    | 21   | 2025.12.20 | 0.18.4        | 0.141.1+1.21.11 | 0.7.0+1.21.11   |
+| Node           | Java | Parchment  | Fabric Loader | Fabric API      | Fantasy         |
+|----------------|------|------------|---------------|-----------------|-----------------|
+| 1.20.1-fabric  | 17   | 2023.09.03 | 0.16.10       | 0.92.6+1.20.1   | 0.4.11+1.20-rc1 |
+| 1.20.4-fabric  | 17   | 2024.04.14 | 0.15.11       | 0.97.0+1.20.4   | 0.5.0+1.20.4    |
+| 1.21.11-fabric | 21   | 2025.12.20 | 0.18.4        | 0.141.1+1.21.11 | 0.7.0+1.21.11   |
+
+| Node         | Java | Parchment  | Forge  | ModDevGradle         | Infiniverse | MixinExtras |
+|--------------|------|------------|--------|----------------------|-------------|-------------|
+| 1.20.1-forge | 17   | 2023.09.03 | 47.4.10 | 2.0.148 (`legacyforge`) | 1.0.0.5     | 0.5.5       |
+
+ModDevGradle applies Parchment only when it recompiles Minecraft; with `CI=true` it skips
+recompilation, so CI builds compile without Parchment names (the build still works).
 
 Mappings are Mojang's official mappings layered with Parchment (parameter names
 and Javadoc). The `parchment_version` property lives in `versions/<mc>/gradle.properties`.
 
-- **Fantasy** — Required for runtime dimension creation (version varies by MC version)
-- **Fabric Permissions API** — Optional soft dependency for LuckPerms integration
+- **Fantasy** (Fabric) / **Infiniverse** (Forge) — Runtime dimension creation, bundled in the jar
+- **MixinExtras** — Ships with Fabric Loader; bundled with jarJar on Forge 47
+- **Fabric Permissions API** / **Forge PermissionAPI** — LuckPerms integration, OP-level fallback
 
 ## Multi-Version Support (Stonecutter)
 
 This project uses [Stonecutter](https://stonecutter.kikugie.dev/) 0.9.x for multi-version
 management from a single codebase.
 
-### Supported Versions
+### Nodes
 
-| MC Version | Status    | Active      |
-|------------|-----------|-------------|
-| 1.20.1     | Supported | ✓ (commit with this active) |
-| 1.20.4     | Supported |             |
-| 1.21.11    | Supported |             |
+| Node           | Status    | Active      |
+|----------------|-----------|-------------|
+| 1.20.1-fabric  | Supported | ✓ (commit with this active) |
+| 1.20.1-forge   | Supported |             |
+| 1.20.4-fabric  | Supported |             |
+| 1.21.11-fabric | Supported |             |
 
-Always switch back to 1.20.1 before committing; `./gradlew "Reset active project"`
-does this (it switches to `vcsVersion` = 1.20.1 in `settings.gradle.kts`).
+Always switch back to 1.20.1-fabric before committing; `./gradlew "Reset active project"`
+does this (it switches to `vcsVersion` = 1.20.1-fabric in `settings.gradle.kts`).
+
+Version predicates (`//? if >=1.21`) compare the node's MC version. Loader code lives in
+`platform/<loader>/` packages that each buildscript excludes for the other loaders, so
+`//? if forge` constants exist but common code should not need them.
 
 ### Versioned Comment Syntax
 
@@ -163,7 +180,7 @@ active version is >= 1.20.2.
 **1.20.1 vs 1.20.4** (handled by Stonecutter conditionals):
 - `DimensionDataStorage.computeIfAbsent()` signature changed in 1.20.2
 
-**Class renames in 1.21.11** (handled by Stonecutter replacements in `build.gradle.kts`):
+**Class renames in 1.21.11** (handled by Stonecutter replacements in `stonecutter.gradle.kts`, for every 1.21.11 node):
 Mojang renamed `ResourceLocation` → `Identifier`, `PortalInfo` → `TeleportTransition` and
 `ResourceLocationException` → `IdentifierException`. Sources always use the pre-1.21.11
 names, in code and comments; Stonecutter rewrites them (word-bounded regex) when
@@ -191,14 +208,14 @@ containing all version-specific implementation details.
 
 ### Adding a New Version
 
-1. Add version to `settings.gradle.kts`:
+1. Add the node to `settings.gradle.kts`:
    ```kotlin
-   versions("1.20.1", "1.20.4", "1.21.11")
+   match("1.20.1", "fabric", "forge")
    ```
-2. Create `versions/<new-version>/gradle.properties` with dependencies
-3. Run `./gradlew chiseledBuild` to generate the new version subproject
+2. Create `versions/<mc>-<loader>/gradle.properties` with dependencies
+3. Run `./gradlew chiseledBuild` to generate the new node subproject
 4. Check for API differences requiring new Stonecutter conditionals or Compat updates
-5. Test with `./gradlew "Set active project to <version>"` + `./gradlew runClient`
+5. Test with `./gradlew :<mc>-<loader>:runClient`
 
 ## Commit Format
 
@@ -252,12 +269,21 @@ and survive world resets because they are separate from the main world folders
 A `DimensionRegistry` (SavedData saved to `world/data/personalworlds/registry.dat`)
 tracks all player dimensions for restoration on server start.
 
-### Runtime Dimensions (Fantasy on Fabric)
+### Runtime Dimensions (Fantasy on Fabric, Infiniverse on Forge)
 
 `DimensionManager` opens dimensions through `Platform.get().dimensions()` (`RuntimeDimensions`),
 which returns a `RuntimeDimension` handle (`level()`, `unload()`, `delete()`). On Fabric,
 `platform/fabric/FantasyDimensions` implements it with Fantasy (`xyz.nucleoid:fantasy`)
 persistent worlds. Without Fantasy, Fabric API alone cannot create dimensions at runtime.
+
+On Forge, `platform/forge/InfiniverseDimensions` uses Infiniverse. `unload()` and `delete()` call
+`markDimensionForUnregistration`; Infiniverse unregisters at the end of a later tick (players
+inside go to their respawn point, the level is saved and dropped from the `LevelStem` registry,
+so it is not recreated on the next start). It never closes the level, so `InfiniverseDimensions`
+closes it once it is gone and then deletes the folder for `delete()`. Islands still loaded at
+shutdown stay in `level.dat` and vanilla recreates them at the next start. Infiniverse builds
+levels with vanilla `DerivedLevelData` and the overworld seed: island day time follows the
+overworld, and `DimensionSpec.seed` is ignored.
 
 ### Per-Dimension Game Rules
 
@@ -270,7 +296,9 @@ in `DimensionGameRules` (keyed by dimension) **before** opening the level; mixin
 - All: `ServerPlayerMixin` makes `restoreFrom` read `keepInventory` in the level the player
   died in, matching the death-drop decision (otherwise items vanish)
 
-Fantasy's own `setGameRule` is not used. Known limits: on 1.20.x `/gamerule` always reads and
+Fantasy's own `setGameRule` is not used. The mixins are common code; Forge loads them through
+the `MixinConfigs` manifest attribute with an SRG refmap from the mixin annotation processor.
+Known limits: on 1.20.x `/gamerule` always reads and
 writes the overworld; on 1.21.x it acts on the pocket, but edits are lost when the pocket
 reloads (rules are rebuilt from config). Client-side rules sent at login
 (`doImmediateRespawn`, `reducedDebugInfo`) follow the overworld.
@@ -375,7 +403,7 @@ multi-version support.
 
 **Mapping Preferences:**
 - All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11; NeoForge uses Mojang names)
-- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x
+- Cross-dimension teleports go through `Platform.get().teleport()`: Fabric uses `FabricDimensions.teleport()` on 1.20.x and `Entity#teleport(TeleportTransition)` on 1.21.x; Forge uses vanilla `ServerPlayer#teleportTo(ServerLevel, ...)`
 
 ### API Differences Between Supported Versions
 
@@ -423,11 +451,11 @@ git push origin main --tags
 
 This triggers `.github/workflows/release.yml` which:
 
-1. Builds **all versions** using `chiseledBuild`
-2. Runs tests for all versions
-3. Creates a GitHub Release with JARs for all MC versions attached
+1. Builds **all nodes** using `chiseledBuild`
+2. Runs tests for all nodes
+3. Creates a GitHub Release with JARs for all nodes attached
 4. Auto-generates release notes from commits
-5. Publishes to **Modrinth** automatically (one version per MC version)
+5. Publishes to **Modrinth** automatically (one version per node)
 
 ### Release Command
 
@@ -453,8 +481,8 @@ git push origin main --tags
 
 ### Release Artifacts
 
-- **GitHub:** `pocketislands-<version>+<mc-version>.jar` (e.g., `pocketislands-0.5.1+1.20.4.jar`)
-- **Modrinth:** Three versions published automatically (`0.5.1+1.20.1`, `0.5.1+1.20.4`, `0.5.1+1.21.11`)
+- **GitHub:** `pocketislands-<version>+<node>.jar` (e.g., `pocketislands-0.5.1+1.20.1-forge.jar`)
+- **Modrinth:** One version per node: Fabric as `<version>+<mc>` (`0.5.1+1.20.1`), Forge as `<version>+<mc>-forge` (`0.5.1+1.20.1-forge`)
 
 ### Distribution
 
@@ -465,5 +493,6 @@ git push origin main --tags
 
 ## Key External Dependencies
 
-- **Fantasy** (`xyz.nucleoid:fantasy`) — Runtime dimension creation. Without this, Fabric API alone cannot create dimensions at runtime. See https://github.com/NucleoidMC/fantasy
+- **Fantasy** (`xyz.nucleoid:fantasy`) — Runtime dimension creation on Fabric. Without this, Fabric API alone cannot create dimensions at runtime. See https://github.com/NucleoidMC/fantasy
+- **Infiniverse** (`commoble.infiniverse:infiniverse-1.20.1`, maven.commoble.net) — Runtime dimension creation on Forge. See https://github.com/Commoble/infiniverse
 - **Fabric Permissions API** — Optional soft dependency for LuckPerms integration; falls back to vanilla OP levels

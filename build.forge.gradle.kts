@@ -2,6 +2,7 @@ plugins {
     id("net.neoforged.moddev.legacyforge") version "2.0.148"
     id("moddev-mutex")
     id("maven-publish")
+    id("com.modrinth.minotaur") version "2.+"
 }
 
 version = property("mod_version") as String
@@ -167,4 +168,36 @@ publishing {
             from(components["java"])
         }
     }
+}
+
+// Modrinth publishing configuration
+modrinth {
+    token.set(System.getenv("MODRINTH_TOKEN"))
+    projectId.set("pocket-islands")
+    // Loader suffix: the Fabric build of the same MC version is "<mod>+<mc>"
+    versionNumber.set("${property("mod_version")}+$minecraft_version-forge")
+    versionType.set("release")
+    // The reobfuscated (SRG) jar; the dev jar in build/devlibs only runs in a dev environment
+    uploadFile.set(tasks.named("reobfJar"))
+
+    gameVersions.add(minecraft_version)
+    loaders.add("forge")
+
+    // Infiniverse and MixinExtras are bundled with jarJar - no external dependency needed
+
+    // Changelog from environment variable (extracted from CHANGELOG.md in CI)
+    val changelogContent = System.getenv("RELEASE_CHANGELOG")
+    changelog.set(
+        if (changelogContent.isNullOrBlank())
+            "See [GitHub release](https://github.com/WickedCoding/mc-pocket-islands/releases) for full changelog."
+        else
+            changelogContent
+    )
+
+    // Sync project description from README
+    syncBodyFrom.set(rootProject.file("README.md").readText())
+}
+
+tasks.modrinth {
+    dependsOn(tasks.named("reobfJar"))
 }

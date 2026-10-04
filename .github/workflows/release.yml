@@ -74,7 +74,9 @@ jobs:
           mkdir -p release-artifacts
           MOD_VERSION="${{ steps.mod_version.outputs.version }}"
 
-          # Dynamically find and rename all built JARs
+          # Dynamically find and rename all built JARs. Node directories are named
+          # <mc>-<loader>, so names come out as pocketislands-<ver>+<mc>-<loader>.jar.
+          # Forge's build/libs jar is the reobfuscated one.
           for version_dir in versions/*/; do
             mc_version=$(basename "$version_dir")
             jar_path="${version_dir}build/libs/pocketislands-${MOD_VERSION}.jar"
