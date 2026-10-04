@@ -47,7 +47,13 @@ sourceSets.test {
 }
 
 legacyForge {
-    version = "$minecraft_version-$forge_version"
+    enable {
+        forgeVersion = "$minecraft_version-$forge_version"
+        // MDG skips recompiling Minecraft when CI=true and uses the binary-patched jar, which
+        // keeps Forge's signature manifest. Unit tests run on a plain JVM, which rejects the
+        // patched classes (SHA-384 digest error), so CI must recompile like local builds do.
+        isDisableRecompilation = false
+    }
 
     parchment {
         minecraftVersion = minecraft_version
