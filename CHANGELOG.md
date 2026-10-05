@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-05
+
 ### Added
 - Forge 1.20.1 support. Runtime dimensions come from Infiniverse, which is bundled in the jar along with MixinExtras. Permissions go through Forge's PermissionAPI, so LuckPerms works. See "Loader Differences" in the README for what behaves differently on Forge.
 - NeoForge 1.21.11 support (NeoForge 21.11.45 or newer). Infiniverse is bundled in the jar, and permissions go through NeoForge's PermissionAPI, so LuckPerms works. Behaves like the Forge build: the island clock follows the overworld, and `OVERWORLD`/`FLAT` islands use the overworld's seed.
 - Modrinth versions per loader: Fabric builds keep `<version>+<mc>`, Forge and NeoForge builds are published as `<version>+<mc>-forge` and `<version>+<mc>-neoforge`.
 
 ### Changed
-- Release jars carry the loader in their name: `pocketislands-<version>+<mc>-<loader>.jar` (for example `pocketislands-0.8.0+1.20.1-fabric.jar`).
+- Release jars carry the loader in their name: `pocketislands-<version>+<mc>-<loader>.jar` (for example `pocketislands-1.0.0+1.20.1-fabric.jar`).
 - Chunk sanitizer is now opt-in: `sanitizeChunksOnLoad` and `sanitizeRemoveOrphanBlocks` default to `false`. Earlier versions wrote `true` for both into every new config file, so existing configs are migrated once on startup: both flags are set to `false`, all other settings are kept, and the original file is saved as `pocketislands.json.v0.bak`. A warning in the log says what changed. To keep the sanitizer, set the flags back to `true` after upgrading. `/pi admin sanitize` is unaffected.
 - Config files now carry a `configVersion` field. Do not edit it by hand.
 - Per-dimension game rules (`dimensionGameRules`) are applied by the mod itself on every loader instead of through Fantasy. Configured values behave as before.

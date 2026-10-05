@@ -96,7 +96,7 @@ Chore: Prepare release X.Y.Z
 
 ### 7. Create Git Tag
 
-Create an annotated tag:
+Create a lightweight tag:
 ```bash
 git tag vX.Y.Z
 ```
