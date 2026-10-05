@@ -1,9 +1,15 @@
 # Pocket Islands
 
-A Fabric mod for Minecraft that gives each player their own persistent
+A Minecraft mod for Fabric, Forge and NeoForge that gives each player their own persistent
 pocket dimension island.
 
-**Supported Versions:** Minecraft 1.20.1, 1.20.4, 1.21.11
+**Supported Versions:**
+
+| Minecraft | Fabric | Forge | NeoForge |
+|-----------|--------|-------|----------|
+| 1.20.1    | ✓      | ✓     |          |
+| 1.20.4    | ✓      |       |          |
+| 1.21.11   | ✓      |       | ✓        |
 
 ## Features
 
@@ -11,13 +17,14 @@ pocket dimension island.
 - **Persistence**: Islands survive main world resets
 - **Portal-Based Access**: Build a portal frame, activate with emerald
 - **Invitation System**: Invite friends to visit your island
-- **Void Generation**: Clean slate void worlds with starter platforms
+- **Void Generation**: Clean slate void worlds with a starter island
 
 ## Requirements
 
 - Minecraft 1.20.1, 1.20.4, or 1.21.11
-- Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x)
-- Fabric API
+- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x) and Fabric API
+- **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
+- **NeoForge (1.21.11):** NeoForge 21.11.45 or newer. Nothing else: Infiniverse is bundled in the jar
 - **Both client and server must have the mod installed**
 
 ## Installation
@@ -25,28 +32,50 @@ pocket dimension island.
 Download the version matching your Minecraft version from
 [Releases](https://github.com/wickedsik/pocket-islands/releases):
 
-- `pocketislands-X.X.X+1.20.1.jar` for Minecraft 1.20.1
-- `pocketislands-X.X.X+1.20.4.jar` for Minecraft 1.20.4
-- `pocketislands-X.X.X+1.21.11.jar` for Minecraft 1.21.11
+- `pocketislands-X.X.X+1.20.1-fabric.jar` for Minecraft 1.20.1 on Fabric
+- `pocketislands-X.X.X+1.20.1-forge.jar` for Minecraft 1.20.1 on Forge
+- `pocketislands-X.X.X+1.20.4-fabric.jar` for Minecraft 1.20.4 on Fabric
+- `pocketislands-X.X.X+1.21.11-fabric.jar` for Minecraft 1.21.11 on Fabric
+- `pocketislands-X.X.X+1.21.11-neoforge.jar` for Minecraft 1.21.11 on NeoForge
 
 ### Server
 
-1. Install Fabric Loader on your server
-2. Download the correct Pocket Islands JAR for your MC version
+1. Install Fabric Loader, Forge or NeoForge on your server
+2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in the server's `mods/` folder
-    - Make sure Fabric API is also installed here
+    - On Fabric, make sure Fabric API is also installed here
 4. Start the server
 
 ### Client
 
-1. Install Fabric Loader
-2. Download the correct Pocket Islands JAR for your MC version
+1. Install Fabric Loader, Forge or NeoForge
+2. Download the Pocket Islands JAR for your MC version and loader
 3. Place in your `mods/` folder
-    - Make sure Fabric API is also installed here
+    - On Fabric, make sure Fabric API is also installed here
 4. Launch Minecraft
 
 **Important:** The mod must be installed on both client and server. See
 [FAQ](#faq) for details.
+
+### Loader Differences
+
+Islands work the same on every loader, with these exceptions:
+
+| | Fabric | Forge 1.20.1 / NeoForge 1.21.11 |
+|---|---|---|
+| Runtime dimensions | Fantasy (bundled) | Infiniverse (bundled) |
+| Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through the loader's PermissionAPI, else OP levels |
+| Island clock | Own clock; `doDaylightCycle: false` freezes it | Follows the overworld; `doDaylightCycle` has no effect on the island |
+| World seed (`OVERWORLD`/`FLAT` islands) | Per island | The overworld's seed. Void islands are not affected |
+
+Console and command blocks always use OP levels for `/pi` permissions.
+
+Moving a whole world between loaders is not supported: switching loaders replaces
+the entire modpack. Individual islands can move: copy `world/dimensions/personalworlds/` to
+the other server (same Minecraft version) and the islands open without conversion. The
+island registry, return positions and invitations stay with each server's own world. New
+chunks of `OVERWORLD`/`FLAT` islands then generate with the other loader's seed (see the
+table above).
 
 ## Usage
 
@@ -68,14 +97,18 @@ Right-click the inside of the frame with an Emerald to activate.
 
 ### Entering Your Island
 
-Walk into the activated portal to enter your pocket island. On first entry, a
-starter platform with grass blocks and a return portal frame will be created.
+Walk into the activated portal to enter your pocket island. On first entry, your
+island is generated from your portal type's island layers. There is no return portal
+on a new island.
 
 ### Returning
 
-Enter the portal on your pocket island to return to your original location.
+The quickest way back is to jump off your island: below Y=0 you're teleported back to
+where you entered, before taking any void damage.
 
-**Important:** Bring enough materials to build a return portal!
+To return by portal instead, build a frame on your island and activate it like the
+first one (bring the frame blocks and activation item). Entering it takes you back to
+your original location.
 
 ### Commands
 
@@ -134,8 +167,8 @@ different materials and properties.
     "enableAlwaysWelcome": false,
     "unloadEmptyDimensionDelayTicks": 600,
     "cleanupIntervalTicks": 600,
-    "sanitizeChunksOnLoad": true,
-    "sanitizeRemoveOrphanBlocks": true,
+    "sanitizeChunksOnLoad": false,
+    "sanitizeRemoveOrphanBlocks": false,
     "enableTeleportParticles": true,
     "enableTeleportSounds": true,
     "enablePortalActivationEffects": true,
@@ -241,8 +274,8 @@ Click the star to toggle the status directly from the chat.
 
 #### Chunk Sanitizer
 
-- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `true`)
-- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `true`)
+- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `false`; opt-in)
+- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `false`; only used when `sanitizeChunksOnLoad` is enabled)
 
 #### Visual Effects
 
@@ -465,7 +498,7 @@ main registry is corrupted. This file contains:
 - **Return position is blocked**: Safe spawn finder locates nearby safe position
 - **Invitation revoked while offline**: Player evacuated on next login with fallback chain (return data → bed → spawn)
 - **Player falls off island**: Automatically teleported back before taking void damage
-- **Unknown blocks or container items**: Chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared.
+- **Unknown blocks or container items**: With `sanitizeChunksOnLoad` enabled, chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared. Alternatively, run `/pi admin sanitize` on demand.
 
 ## Performance
 
@@ -514,8 +547,9 @@ enter their portal to visit their island.
 
 ### How do I get back from my island?
 
-Enter the return portal on your island. It teleports you back to the exact
-location you entered from.
+Jump off the island: below Y=0 you're teleported back to the exact location you
+entered from. Or build and activate a portal frame on your island and walk into it,
+which takes you to the same place.
 
 ### What happens if I fall off my island?
 

@@ -2,10 +2,10 @@ package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.WorldCompat;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Heightmap;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 /**
  * Finds safe spawn locations with multiple fallback strategies.
@@ -28,7 +28,7 @@ public class SafeSpawnFinder {
      * @param target The desired position
      * @return A safe spawn position
      */
-    public static BlockPos findSafePosition(ServerWorld world, BlockPos target) {
+    public static BlockPos findSafePosition(ServerLevel world, BlockPos target) {
         // Strategy 1: Target position is already safe
         if (isSafeSpawn(world, target)) {
             return target;
@@ -67,23 +67,23 @@ public class SafeSpawnFinder {
      * @param pos The position to check
      * @return true if position is safe
      */
-    public static boolean isSafeSpawn(ServerWorld world, BlockPos pos) {
+    public static boolean isSafeSpawn(ServerLevel world, BlockPos pos) {
         // Must have solid ground below
-        BlockState ground = world.getBlockState(pos.down());
-        if (!ground.isSolidBlock(world, pos.down())) {
+        BlockState ground = world.getBlockState(pos.below());
+        if (!ground.isRedstoneConductor(world, pos.below())) {
             return false;
         }
 
         // Must have air at feet and head level
         BlockState feet = world.getBlockState(pos);
-        BlockState head = world.getBlockState(pos.up());
+        BlockState head = world.getBlockState(pos.above());
 
         if (!feet.isAir() || !head.isAir()) {
             return false;
         }
 
         // Not in lava, water, or other hazards
-        if (ground.getFluidState().isStill()) {
+        if (ground.getFluidState().isSource()) {
             return false;
         }
 
@@ -93,10 +93,10 @@ public class SafeSpawnFinder {
     /**
      * Search vertically for a safe position.
      */
-    private static BlockPos searchVertically(ServerWorld world, BlockPos target) {
+    private static BlockPos searchVertically(ServerLevel world, BlockPos target) {
         // Search upward first (safer)
         for (int dy = 0; dy <= MAX_Y_SEARCH; dy++) {
-            BlockPos check = target.up(dy);
+            BlockPos check = target.above(dy);
             if (check.getY() < WorldCompat.getTopY(world) && isSafeSpawn(world, check)) {
                 return check;
             }
@@ -104,8 +104,8 @@ public class SafeSpawnFinder {
 
         // Search downward
         for (int dy = 1; dy <= MAX_Y_SEARCH; dy++) {
-            BlockPos check = target.down(dy);
-            if (check.getY() > world.getBottomY() && isSafeSpawn(world, check)) {
+            BlockPos check = target.below(dy);
+            if (check.getY() > WorldCompat.getBottomY(world) && isSafeSpawn(world, check)) {
                 return check;
             }
         }
@@ -116,7 +116,7 @@ public class SafeSpawnFinder {
     /**
      * Search in an expanding spiral pattern.
      */
-    private static BlockPos searchSpiral(ServerWorld world, BlockPos target) {
+    private static BlockPos searchSpiral(ServerLevel world, BlockPos target) {
         for (int radius = 1; radius <= SEARCH_RADIUS; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
@@ -125,10 +125,10 @@ public class SafeSpawnFinder {
                         continue;
                     }
 
-                    BlockPos horizontal = target.add(dx, 0, dz);
+                    BlockPos horizontal = target.offset(dx, 0, dz);
 
                     // Try using heightmap for faster search
-                    int surfaceY = world.getTopY(Heightmap.Type.MOTION_BLOCKING,
+                    int surfaceY = world.getHeight(Heightmap.Types.MOTION_BLOCKING,
                         horizontal.getX(), horizontal.getZ());
                     BlockPos surface = new BlockPos(horizontal.getX(), surfaceY, horizontal.getZ());
 
@@ -151,7 +151,7 @@ public class SafeSpawnFinder {
     /**
      * Find a safe position near world spawn.
      */
-    private static BlockPos findSafeNearSpawn(ServerWorld world) {
+    private static BlockPos findSafeNearSpawn(ServerLevel world) {
         BlockPos spawn = WorldCompat.getSpawnPos(world);
 
         // Try spawn directly

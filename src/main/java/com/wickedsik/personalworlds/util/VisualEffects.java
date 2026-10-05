@@ -2,14 +2,14 @@ package com.wickedsik.personalworlds.util;
 
 import com.wickedsik.personalworlds.compat.EntityCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 /**
  * Centralized visual and audio effects for the PersonalWorlds mod.
@@ -27,14 +27,14 @@ public final class VisualEffects {
      *
      * @param player The player teleporting
      */
-    public static void playTeleportDepartureEffects(ServerPlayerEntity player) {
+    public static void playTeleportDepartureEffects(ServerPlayer player) {
         ModConfig config = ModConfig.get();
-        ServerWorld world = EntityCompat.getServerWorld(player);
-        Vec3d pos = EntityCompat.getPos(player);
+        ServerLevel world = EntityCompat.getServerWorld(player);
+        Vec3 pos = EntityCompat.getPos(player);
 
         if (config.enableTeleportParticles) {
             // Spawn portal particles at departure location
-            world.spawnParticles(
+            world.sendParticles(
                 ParticleTypes.PORTAL,
                 pos.x, pos.y + 1, pos.z,
                 50,           // count
@@ -46,9 +46,9 @@ public final class VisualEffects {
         if (config.enableTeleportSounds) {
             world.playSound(
                 null,
-                player.getBlockPos(),
-                SoundEvents.ENTITY_ENDERMAN_TELEPORT,
-                SoundCategory.PLAYERS,
+                player.blockPosition(),
+                SoundEvents.ENDERMAN_TELEPORT,
+                SoundSource.PLAYERS,
                 1.0f,
                 1.0f
             );
@@ -61,14 +61,14 @@ public final class VisualEffects {
      *
      * @param player The player who just teleported
      */
-    public static void playTeleportArrivalEffects(ServerPlayerEntity player) {
+    public static void playTeleportArrivalEffects(ServerPlayer player) {
         ModConfig config = ModConfig.get();
-        ServerWorld world = EntityCompat.getServerWorld(player);
-        Vec3d pos = EntityCompat.getPos(player);
+        ServerLevel world = EntityCompat.getServerWorld(player);
+        Vec3 pos = EntityCompat.getPos(player);
 
         if (config.enableTeleportParticles) {
             // Spawn reverse portal particles at arrival location
-            world.spawnParticles(
+            world.sendParticles(
                 ParticleTypes.REVERSE_PORTAL,
                 pos.x, pos.y + 1, pos.z,
                 30,           // count
@@ -81,9 +81,9 @@ public final class VisualEffects {
             // Slightly higher pitch for arrival to differentiate
             world.playSound(
                 null,
-                player.getBlockPos(),
-                SoundEvents.ENTITY_ENDERMAN_TELEPORT,
-                SoundCategory.PLAYERS,
+                player.blockPosition(),
+                SoundEvents.ENDERMAN_TELEPORT,
+                SoundSource.PLAYERS,
                 0.8f,
                 1.2f
             );
@@ -100,14 +100,14 @@ public final class VisualEffects {
      * @param world The world containing the portal
      * @param center The center position of the portal
      */
-    public static void playPortalActivationEffects(World world, BlockPos center) {
+    public static void playPortalActivationEffects(Level world, BlockPos center) {
         if (!ModConfig.get().enablePortalActivationEffects) {
             return;
         }
 
-        if (world instanceof ServerWorld serverWorld) {
+        if (world instanceof ServerLevel serverWorld) {
             // Spawn end portal particles around the frame
-            serverWorld.spawnParticles(
+            serverWorld.sendParticles(
                 ParticleTypes.REVERSE_PORTAL,
                 center.getX() + 0.5,
                 center.getY() + 1.5,
@@ -118,7 +118,7 @@ public final class VisualEffects {
             );
 
             // Add some enchant particles for extra effect
-            serverWorld.spawnParticles(
+            serverWorld.sendParticles(
                 ParticleTypes.ENCHANT,
                 center.getX() + 0.5,
                 center.getY() + 2.0,
@@ -137,16 +137,16 @@ public final class VisualEffects {
      *
      * @param guest The player who received the invitation
      */
-    public static void playInvitationReceivedEffect(ServerPlayerEntity guest) {
+    public static void playInvitationReceivedEffect(ServerPlayer guest) {
         if (!ModConfig.get().enableInvitationNotifications) {
             return;
         }
 
         // Pleasant notification sound
         //? if >=1.21 {
-        /*guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
+        /*guest.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
         *///?} else {
-        guest.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
+        guest.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5f, 1.2f);
         //?}
     }
 
@@ -156,16 +156,16 @@ public final class VisualEffects {
      *
      * @param guest The player whose invitation was revoked
      */
-    public static void playInvitationRevokedEffect(ServerPlayerEntity guest) {
+    public static void playInvitationRevokedEffect(ServerPlayer guest) {
         if (!ModConfig.get().enableInvitationNotifications) {
             return;
         }
 
         // Warning bass note
         //? if >=1.21 {
-        /*guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 0.7f, 0.5f);
+        /*guest.playSound(SoundEvents.NOTE_BLOCK_BASS.value(), 0.7f, 0.5f);
         *///?} else {
-        guest.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.7f, 0.5f);
+        guest.playNotifySound(SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 0.7f, 0.5f);
         //?}
     }
 
@@ -174,16 +174,16 @@ public final class VisualEffects {
      *
      * @param owner The player who sent the invitation
      */
-    public static void playInvitationSentEffect(ServerPlayerEntity owner) {
+    public static void playInvitationSentEffect(ServerPlayer owner) {
         if (!ModConfig.get().enableInvitationNotifications) {
             return;
         }
 
         // Subtle confirmation sound
         //? if >=1.21 {
-        /*owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
+        /*owner.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
         *///?} else {
-        owner.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3f, 1.5f);
+        owner.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.3f, 1.5f);
         //?}
     }
 
@@ -195,16 +195,16 @@ public final class VisualEffects {
      *
      * @param player The player entering the dimension
      */
-    public static void playDimensionEntryEffect(ServerPlayerEntity player) {
+    public static void playDimensionEntryEffect(ServerPlayer player) {
         if (!ModConfig.get().enableTeleportSounds) {
             return;
         }
 
         // Mystical arrival sound
         //? if >=1.21 {
-        /*player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
+        /*player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1.5f);
         *///?} else {
-        player.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.AMBIENT, 0.5f, 1.5f);
+        player.playNotifySound(SoundEvents.BEACON_ACTIVATE, SoundSource.AMBIENT, 0.5f, 1.5f);
         //?}
     }
 
@@ -213,16 +213,16 @@ public final class VisualEffects {
      *
      * @param player The player leaving the dimension
      */
-    public static void playDimensionExitEffect(ServerPlayerEntity player) {
+    public static void playDimensionExitEffect(ServerPlayer player) {
         if (!ModConfig.get().enableTeleportSounds) {
             return;
         }
 
         // Subtle deactivation sound
         //? if >=1.21 {
-        /*player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, 0.3f, 1.2f);
+        /*player.playSound(SoundEvents.BEACON_DEACTIVATE, 0.3f, 1.2f);
         *///?} else {
-        player.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.AMBIENT, 0.3f, 1.2f);
+        player.playNotifySound(SoundEvents.BEACON_DEACTIVATE, SoundSource.AMBIENT, 0.3f, 1.2f);
         //?}
     }
 
@@ -233,11 +233,11 @@ public final class VisualEffects {
      *
      * @param admin The admin executing the command
      */
-    public static void playAdminWarningEffect(ServerPlayerEntity admin) {
+    public static void playAdminWarningEffect(ServerPlayer admin) {
         //? if >=1.21 {
-        /*admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0f, 0.5f);
+        /*admin.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0f, 0.5f);
         *///?} else {
-        admin.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 1.0f, 0.5f);
+        admin.playNotifySound(SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.MASTER, 1.0f, 0.5f);
         //?}
     }
 
@@ -246,11 +246,11 @@ public final class VisualEffects {
      *
      * @param admin The admin who executed the command
      */
-    public static void playAdminSuccessEffect(ServerPlayerEntity admin) {
+    public static void playAdminSuccessEffect(ServerPlayer admin) {
         //? if >=1.21 {
-        /*admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 0.3f, 2.0f);
+        /*admin.playSound(SoundEvents.PLAYER_LEVELUP, 0.3f, 2.0f);
         *///?} else {
-        admin.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.3f, 2.0f);
+        admin.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.MASTER, 0.3f, 2.0f);
         //?}
     }
 

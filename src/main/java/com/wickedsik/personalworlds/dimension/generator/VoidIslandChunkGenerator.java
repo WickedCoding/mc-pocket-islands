@@ -1,22 +1,23 @@
 package com.wickedsik.personalworlds.dimension.generator;
 
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkRegion;
-import net.minecraft.world.HeightLimitView;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.Blender;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.VerticalBlockSample;
-import net.minecraft.world.gen.noise.NoiseConfig;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.NoiseColumn;
+import net.minecraft.world.level.levelgen.RandomState;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,12 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
                 .forGetter(generator -> generator.islandLayers)
         ).apply(instance, VoidIslandChunkGenerator::new)
     );
+
+    //? if >=1.21 {
+    /*// One instance for the registry and codec(): the registry finds codecs by identity,
+    // and saving a level stem to level.dat (Infiniverse levels) needs that lookup
+    public static final com.mojang.serialization.MapCodec<VoidIslandChunkGenerator> MAP_CODEC = CODEC.fieldOf("void_island");
+    *///?}
 
     // ==================== ISLAND CONSTANTS ====================
 
@@ -64,12 +71,12 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     //? if >=1.21 {
     /*@Override
-    public com.mojang.serialization.MapCodec<? extends ChunkGenerator> getCodec() {
-        return CODEC.fieldOf("void_island");
+    public com.mojang.serialization.MapCodec<? extends ChunkGenerator> codec() {
+        return MAP_CODEC;
     }
     *///?} else {
     @Override
-    protected Codec<? extends ChunkGenerator> getCodec() {
+    protected Codec<? extends ChunkGenerator> codec() {
         return CODEC;
     }
     //?}
@@ -81,11 +88,11 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
      */
     //? if >=1.21 {
     /*@Override
-    public CompletableFuture<Chunk> populateNoise(
+    public CompletableFuture<ChunkAccess> fillFromNoise(
             Blender blender,
-            NoiseConfig noiseConfig,
-            StructureAccessor structureAccessor,
-            Chunk chunk
+            RandomState noiseConfig,
+            StructureManager structureAccessor,
+            ChunkAccess chunk
     ) {
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
@@ -100,12 +107,12 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     }
     *///?} else {
     @Override
-    public CompletableFuture<Chunk> populateNoise(
+    public CompletableFuture<ChunkAccess> fillFromNoise(
             Executor executor,
             Blender blender,
-            NoiseConfig noiseConfig,
-            StructureAccessor structureAccessor,
-            Chunk chunk
+            RandomState noiseConfig,
+            StructureManager structureAccessor,
+            ChunkAccess chunk
     ) {
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
@@ -133,15 +140,15 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
      * Generates layers top-to-bottom: Y=64 (first layer), Y=63 (second), etc.
      * Each chunk gets a full 16x16 section of each layer.
      */
-    private void generateIslandSection(Chunk chunk) {
+    private void generateIslandSection(ChunkAccess chunk) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 // Generate layers top-to-bottom
                 for (int layerIdx = 0; layerIdx < islandLayers.length; layerIdx++) {
                     BlockPos pos = new BlockPos(
-                        chunk.getPos().getStartX() + x,
+                        chunk.getPos().getMinBlockX() + x,
                         ISLAND_Y - layerIdx,  // Y=64, 63, 62, 61, 60
-                        chunk.getPos().getStartZ() + z
+                        chunk.getPos().getMinBlockZ() + z
                     );
                     //? if >=1.21 {
                     /*chunk.setBlockState(pos, islandLayers[layerIdx], 0);
@@ -157,43 +164,43 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     @Override
     public void buildSurface(
-            ChunkRegion region,
-            StructureAccessor structures,
-            NoiseConfig noiseConfig,
-            Chunk chunk
+            WorldGenRegion region,
+            StructureManager structures,
+            RandomState noiseConfig,
+            ChunkAccess chunk
     ) {
         // No surface generation for void world
     }
 
     //? if >=1.21 {
     /*@Override
-    public void carve(
-            ChunkRegion chunkRegion,
+    public void applyCarvers(
+            WorldGenRegion chunkRegion,
             long seed,
-            NoiseConfig noiseConfig,
-            BiomeAccess biomeAccess,
-            StructureAccessor structureAccessor,
-            Chunk chunk
+            RandomState noiseConfig,
+            BiomeManager biomeAccess,
+            StructureManager structureAccessor,
+            ChunkAccess chunk
     ) {
         // No carving for void world
     }
     *///?} else {
     @Override
-    public void carve(
-            ChunkRegion chunkRegion,
+    public void applyCarvers(
+            WorldGenRegion chunkRegion,
             long seed,
-            NoiseConfig noiseConfig,
-            BiomeAccess biomeAccess,
-            StructureAccessor structureAccessor,
-            Chunk chunk,
-            GenerationStep.Carver carverStep
+            RandomState noiseConfig,
+            BiomeManager biomeAccess,
+            StructureManager structureAccessor,
+            ChunkAccess chunk,
+            GenerationStep.Carving carverStep
     ) {
         // No carving for void world
     }
     //?}
 
     @Override
-    public void populateEntities(ChunkRegion region) {
+    public void spawnOriginalMobs(WorldGenRegion region) {
         // No natural entity spawning
     }
 
@@ -205,12 +212,12 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
      * For void chunks, return minimum Y.
      */
     @Override
-    public int getHeight(
+    public int getBaseHeight(
             int x,
             int z,
-            Heightmap.Type heightmap,
-            HeightLimitView world,
-            NoiseConfig noiseConfig
+            Heightmap.Types heightmap,
+            LevelHeightAccessor world,
+            RandomState noiseConfig
     ) {
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
@@ -219,7 +226,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             // Height is one above the top layer (Y=64 -> height Y=65)
             return ISLAND_Y + 1;
         }
-        return world.getBottomY();
+        return WorldCompat.getBottomY(world);
     }
 
     /**
@@ -227,22 +234,22 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
      * Includes all island layers for proper heightmap calculations.
      */
     @Override
-    public VerticalBlockSample getColumnSample(
+    public NoiseColumn getBaseColumn(
             int x,
             int z,
-            HeightLimitView world,
-            NoiseConfig noiseConfig
+            LevelHeightAccessor world,
+            RandomState noiseConfig
     ) {
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
         int height = world.getHeight();
-        int bottomY = world.getBottomY();
+        int bottomY = WorldCompat.getBottomY(world);
         BlockState[] states = new BlockState[height];
 
         // Fill with air by default
         for (int i = 0; i < height; i++) {
-            states[i] = Blocks.AIR.getDefaultState();
+            states[i] = Blocks.AIR.defaultBlockState();
         }
 
         // Add island layers top-to-bottom if in island area
@@ -256,18 +263,18 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             }
         }
 
-        return new VerticalBlockSample(bottomY, states);
+        return new NoiseColumn(bottomY, states);
     }
 
     // ==================== WORLD DIMENSIONS ====================
 
     @Override
-    public int getWorldHeight() {
+    public int getGenDepth() {
         return 384;
     }
 
     @Override
-    public int getMinimumY() {
+    public int getMinY() {
         return -64;
     }
 
@@ -280,7 +287,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     //? if >=1.21 {
     /*@Override
-    public void appendDebugHudText(List<String> text, NoiseConfig noiseConfig, BlockPos pos) {
+    public void addDebugScreenInfo(List<String> text, RandomState noiseConfig, BlockPos pos) {
         text.add("VoidIsland Generator");
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
@@ -288,7 +295,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     }
     *///?} else {
     @Override
-    public void getDebugHudText(List<String> text, NoiseConfig noiseConfig, BlockPos pos) {
+    public void addDebugScreenInfo(List<String> text, RandomState noiseConfig, BlockPos pos) {
         text.add("VoidIsland Generator");
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;

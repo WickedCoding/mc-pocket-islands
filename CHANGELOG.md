@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Forge 1.20.1 support. Runtime dimensions come from Infiniverse, which is bundled in the jar along with MixinExtras. Permissions go through Forge's PermissionAPI, so LuckPerms works. See "Loader Differences" in the README for what behaves differently on Forge.
+- NeoForge 1.21.11 support (NeoForge 21.11.45 or newer). Infiniverse is bundled in the jar, and permissions go through NeoForge's PermissionAPI, so LuckPerms works. Behaves like the Forge build: the island clock follows the overworld, and `OVERWORLD`/`FLAT` islands use the overworld's seed.
+- Modrinth versions per loader: Fabric builds keep `<version>+<mc>`, Forge and NeoForge builds are published as `<version>+<mc>-forge` and `<version>+<mc>-neoforge`.
+
+### Changed
+- Release jars carry the loader in their name: `pocketislands-<version>+<mc>-<loader>.jar` (for example `pocketislands-0.8.0+1.20.1-fabric.jar`).
+- Chunk sanitizer is now opt-in: `sanitizeChunksOnLoad` and `sanitizeRemoveOrphanBlocks` default to `false`. Earlier versions wrote `true` for both into every new config file, so existing configs are migrated once on startup: both flags are set to `false`, all other settings are kept, and the original file is saved as `pocketislands.json.v0.bak`. A warning in the log says what changed. To keep the sanitizer, set the flags back to `true` after upgrading. `/pi admin sanitize` is unaffected.
+- Config files now carry a `configVersion` field. Do not edit it by hand.
+- Per-dimension game rules (`dimensionGameRules`) are applied by the mod itself on every loader instead of through Fantasy. Configured values behave as before.
+
+### Fixed
+- Dying on an island with `keepInventory` enabled there but disabled in the overworld no longer deletes the inventory. The death kept the items (island rule), but the respawn in the overworld read the overworld rule and did not copy them over, so they vanished. The respawn now uses the rule of the dimension the player died in; dying in the overworld still drops the items.
+- `/pi admin list` shows the `[LOADED]` / `[unloaded]` brackets again (the opening bracket went missing when the messages were made translatable).
+- Chunk sanitizer no longer crashes the server on chunk load. The 0.7.3 fix deferred the sweep with `MinecraftServer#execute`, but that runs the task immediately when called on the server thread, so the sanitizer still waited on the chunk that was loading and the watchdog killed the server. Loaded chunks are now queued and sanitized at the end of the server tick.
+- 1.21.11: entering a portal no longer disconnects the player with "Internal server error". The `/pi` permission check cast the player's permissions to `LeveledPermissionPredicate`, which fails for other `PermissionPredicate` implementations when the command tree is resent after a teleport.
+
 ## [0.7.3] - 2026-08-16
 
 ### Added

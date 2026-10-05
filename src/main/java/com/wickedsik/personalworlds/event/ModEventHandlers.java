@@ -7,29 +7,26 @@ import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.cleanup.ChunkSanitizer;
+import com.wickedsik.personalworlds.platform.Platform;
+import com.wickedsik.personalworlds.platform.PlatformEvents;
 import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import com.wickedsik.personalworlds.util.PerformanceMonitor;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 public class ModEventHandlers {
 
@@ -42,28 +39,28 @@ public class ModEventHandlers {
     private static final int VOID_EJECTION_THRESHOLD = 0; // Y level for ejection
 
     public static void register() {
+        PlatformEvents events = Platform.get().events();
+
         // Server started - restore all dimensions
-        ServerLifecycleEvents.SERVER_STARTED.register(ModEventHandlers::onServerStarted);
+        events.onServerStarted(ModEventHandlers::onServerStarted);
 
         // Server stopping - cleanup
-        ServerLifecycleEvents.SERVER_STOPPING.register(ModEventHandlers::onServerStopping);
+        events.onServerStopping(ModEventHandlers::onServerStopping);
 
         // Periodic tick for unloading empty dimensions
-        ServerTickEvents.END_SERVER_TICK.register(ModEventHandlers::onServerTick);
+        events.onServerTickEnd(ModEventHandlers::onServerTick);
 
         // Portal activation via block interaction
-        UseBlockCallback.EVENT.register(ModEventHandlers::onUseBlock);
+        events.onUseBlock(ModEventHandlers::onUseBlock);
 
         // Player join - crash recovery
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-            CrashRecoveryHandler.onPlayerJoin(handler.getPlayer()));
+        events.onPlayerJoin(CrashRecoveryHandler::onPlayerJoin);
 
         // Player disconnect - release portal locks
-        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-            ConcurrentPortalGuard.forceRelease(handler.getPlayer().getUuid()));
+        events.onPlayerDisconnect(player -> ConcurrentPortalGuard.forceRelease(player.getUUID()));
 
         // Chunk sanitizer - purge orphaned state in pocket dimensions on load
-        ServerChunkEvents.CHUNK_LOAD.register(ChunkSanitizer::onChunkLoad);
+        events.onChunkLoad(ChunkSanitizer::onChunkLoad);
 
         PersonalWorldsMod.LOGGER.info("Event handlers registered");
     }
@@ -82,12 +79,17 @@ public class ModEventHandlers {
 
     private static void onServerStopping(MinecraftServer server) {
         PersonalWorldsMod.LOGGER.info("Server stopping - unloading all dimensions");
+        ChunkSanitizer.clearPending();
         DimensionManager.unloadAll();
     }
 
     private static void onServerTick(MinecraftServer server) {
         // Check void falling every tick (safety critical)
         checkVoidFalling(server);
+
+        // Sanitize chunks queued by the chunk-load callback, now that no
+        // chunk-loading code is on the stack
+        ChunkSanitizer.processPending();
 
         tickCounter++;
         if (tickCounter >= UNLOAD_CHECK_INTERVAL) {
@@ -111,8 +113,8 @@ public class ModEventHandlers {
      * Ejects them safely before void damage can occur.
      */
     private static void checkVoidFalling(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            ServerWorld world = EntityCompat.getServerWorld(player);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            ServerLevel world = EntityCompat.getServerWorld(player);
 
             // Only check in personal dimensions
             if (!PortalHelper.isInPersonalDimension(world)) {
@@ -128,8 +130,8 @@ public class ModEventHandlers {
                 PortalHelper.teleportToReturnPosition(player, server);
 
                 // Notify player
-                player.sendMessage(
-                    Text.translatable("pocketislands.void_ejection"),
+                player.displayClientMessage(
+                    Component.translatable("pocketislands.void_ejection"),
                     false
                 );
 
@@ -144,24 +146,24 @@ public class ModEventHandlers {
      * When a player right-clicks with an emerald on or near a nether brick frame,
      * attempt to activate a personal portal.
      */
-    private static ActionResult onUseBlock(
-            PlayerEntity player,
-            World world,
-            Hand hand,
+    private static InteractionResult onUseBlock(
+            Player player,
+            Level world,
+            InteractionHand hand,
             BlockHitResult hitResult
     ) {
         // Only process on server side
-        if (world.isClient()) {
-            return ActionResult.PASS;
+        if (world.isClientSide()) {
+            return InteractionResult.PASS;
         }
 
         // Only process for server players
-        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
-            return ActionResult.PASS;
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
         }
 
         // Get the item being used - let portal detection handle validation
-        ItemStack heldItem = player.getStackInHand(hand);
+        ItemStack heldItem = player.getItemInHand(hand);
 
         BlockPos clickedPos = hitResult.getBlockPos();
         BlockState clickedState = world.getBlockState(clickedPos);
@@ -180,7 +182,7 @@ public class ModEventHandlers {
 
         if (clickedOnFrame) {
             // Player clicked on frame block - check the block on the clicked face
-            targetPos = clickedPos.offset(hitResult.getSide());
+            targetPos = clickedPos.relative(hitResult.getDirection());
         } else {
             // Player clicked on something else (possibly air inside frame)
             targetPos = clickedPos;
@@ -188,15 +190,15 @@ public class ModEventHandlers {
 
         // Target must be air for portal activation
         if (!world.getBlockState(targetPos).isAir()) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         // Attempt to activate the portal with activation item
         if (PortalHelper.tryActivatePortal(world, targetPos, serverPlayer, heldItem.getItem())) {
             // Success - don't consume the activation item (swing arm for feedback)
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 }

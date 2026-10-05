@@ -3,9 +3,9 @@ package com.wickedsik.personalworlds.command.executor;
 import com.wickedsik.personalworlds.command.CommandResult;
 import com.wickedsik.personalworlds.util.PerformanceMonitor;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 /**
  * Executor for debug/testing commands.
@@ -25,8 +25,8 @@ public class DebugCommandExecutor {
     public CommandResult enablePerf() {
         PerformanceMonitor.enable();
         return CommandResult.successBroadcast(
-            Text.translatable("pocketislands.command.perf.enabled")
-                .formatted(Formatting.GREEN)
+            Component.translatable("pocketislands.command.perf.enabled")
+                .withStyle(ChatFormatting.GREEN)
         );
     }
 
@@ -36,8 +36,8 @@ public class DebugCommandExecutor {
     public CommandResult disablePerf() {
         PerformanceMonitor.disable();
         return CommandResult.successBroadcast(
-            Text.translatable("pocketislands.command.perf.disabled")
-                .formatted(Formatting.YELLOW)
+            Component.translatable("pocketislands.command.perf.disabled")
+                .withStyle(ChatFormatting.YELLOW)
         );
     }
 
@@ -48,11 +48,11 @@ public class DebugCommandExecutor {
      * @param source Command source for sending multi-line output
      * @param server Server for getting status
      */
-    public void showStatus(ServerCommandSource source, MinecraftServer server) {
+    public void showStatus(CommandSourceStack source, MinecraftServer server) {
         String status = PerformanceMonitor.getStatusSummary(server);
         for (String line : status.split("\n")) {
             final String finalLine = line;
-            source.sendFeedback(() -> Text.literal(finalLine), false);
+            source.sendSuccess(() -> Component.literal(finalLine), false);
         }
     }
 
@@ -62,8 +62,8 @@ public class DebugCommandExecutor {
     public CommandResult resetCounters() {
         PerformanceMonitor.resetCounters();
         return CommandResult.successBroadcast(
-            Text.translatable("pocketislands.command.perf.reset")
-                .formatted(Formatting.YELLOW)
+            Component.translatable("pocketislands.command.perf.reset")
+                .withStyle(ChatFormatting.YELLOW)
         );
     }
 }

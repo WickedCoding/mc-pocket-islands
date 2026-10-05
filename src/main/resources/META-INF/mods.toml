@@ -1,0 +1,27 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "MIT"
+issueTrackerURL = "https://github.com/WickedCoding/mc-pocket-islands/issues"
+
+[[mods]]
+modId = "personalworlds"
+version = "${version}"
+displayName = "Pocket Islands"
+displayURL = "https://modrinth.com/mod/pocket-islands"
+logoFile = "assets/personalworlds/icon.png"
+authors = "Jurriën"
+description = '''Give each player their own pocket dimension island that survives world resets'''
+
+[[dependencies.personalworlds]]
+modId = "${loader}"
+mandatory = true
+versionRange = "${loader_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.personalworlds]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

@@ -114,7 +114,7 @@ public class PerformanceMonitor {
         long heapMax = memoryBean.getHeapMemoryUsage().getMax() / (1024 * 1024);
 
         int loadedDimensions = DimensionManager.getLoadedDimensionCount();
-        int onlinePlayers = server.getCurrentPlayerCount();
+        int onlinePlayers = server.getPlayerCount();
 
         PersonalWorldsMod.LOGGER.info("[PERF] Status: {} dims loaded, {} players, heap {}/{}MB",
             loadedDimensions, onlinePlayers, heapUsed, heapMax);
@@ -136,7 +136,7 @@ public class PerformanceMonitor {
         long heapMax = memoryBean.getHeapMemoryUsage().getMax() / (1024 * 1024);
 
         int loadedDimensions = DimensionManager.getLoadedDimensionCount();
-        int onlinePlayers = server.getCurrentPlayerCount();
+        int onlinePlayers = server.getPlayerCount();
 
         StringBuilder sb = new StringBuilder();
         sb.append("=== Performance Status ===\n");

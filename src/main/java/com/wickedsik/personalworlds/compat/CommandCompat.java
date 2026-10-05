@@ -1,18 +1,18 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 
 //? if >=1.21 {
-/*import net.minecraft.command.permission.LeveledPermissionPredicate;
-import net.minecraft.command.permission.PermissionLevel;
+/*import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 *///?}
 
 /**
  * Compatibility layer for command permission checking.
  * <p>
- * MC 1.20.x uses: source.hasPermissionLevel(level), player.hasPermissionLevel(level)
- * MC 1.21.x uses: PermissionPredicate system via getPermissions() with PermissionLevel
+ * MC 1.20.x uses: source.hasPermission(level), player.hasPermissions(level)
+ * MC 1.21.x uses: getPermissions().hasPermission(new Permission.Level(PermissionLevel))
  * <p>
  * This class centralizes all permission checks to simplify version migration.
  */
@@ -29,12 +29,14 @@ public final class CommandCompat {
      * @param level  The required permission level (0-4)
      * @return true if the source has at least the required permission level
      */
-    public static boolean hasPermissionLevel(ServerCommandSource source, int level) {
+    public static boolean hasPermissionLevel(CommandSourceStack source, int level) {
+        if (level <= 0) {
+            return true; // level 0 is everyone, as in 1.20.x
+        }
         //? if >=1.21 {
-        /*LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) source.getPermissions();
-        return permissions.getLevel().isAtLeast(PermissionLevel.fromLevel(level));
+        /*return source.permissions().hasPermission(levelPermission(level));
         *///?} else {
-        return source.hasPermissionLevel(level);
+        return source.hasPermission(level);
         //?}
     }
 
@@ -45,14 +47,25 @@ public final class CommandCompat {
      * @param level  The required permission level (0-4)
      * @return true if the player has at least the required permission level
      */
-    public static boolean hasPermissionLevel(ServerPlayerEntity player, int level) {
+    public static boolean hasPermissionLevel(ServerPlayer player, int level) {
+        if (level <= 0) {
+            return true; // level 0 is everyone, as in 1.20.x
+        }
         //? if >=1.21 {
-        /*LeveledPermissionPredicate permissions = (LeveledPermissionPredicate) player.getPermissions();
-        return permissions.getLevel().isAtLeast(PermissionLevel.fromLevel(level));
+        /*return player.permissions().hasPermission(levelPermission(level));
         *///?} else {
-        return player.hasPermissionLevel(level);
+        return player.hasPermissions(level);
         //?}
     }
+
+    //? if >=1.21 {
+    /*// Ask through the PermissionPredicate interface. Not every predicate is a
+    // LeveledPermissionPredicate (NONE/ALL are lambdas, or() builds an
+    // OrPermissionPredicate), so casting to read the level throws.
+    private static Permission levelPermission(int level) {
+        return new Permission.HasCommandLevel(PermissionLevel.byId(level));
+    }
+    *///?}
 
     /**
      * Get a Predicate for command requirements that checks permission level.
@@ -61,7 +74,7 @@ public final class CommandCompat {
      * @param level The required permission level
      * @return A predicate that checks the permission level
      */
-    public static java.util.function.Predicate<ServerCommandSource> requiresLevel(int level) {
+    public static java.util.function.Predicate<CommandSourceStack> requiresLevel(int level) {
         return source -> hasPermissionLevel(source, level);
     }
 }

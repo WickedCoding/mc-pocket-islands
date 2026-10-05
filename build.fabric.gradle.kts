@@ -2,6 +2,7 @@ plugins {
     id("fabric-loom") version "1.15.3"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
+    id("pocketislands-harness")
 }
 
 version = property("mod_version") as String
@@ -15,7 +16,22 @@ repositories {
     maven("https://maven.nucleoid.xyz/") {
         name = "Nucleoid"
     }
+    maven("https://maven.parchmentmc.org") {
+        name = "ParchmentMC"
+    }
     mavenCentral()
+}
+
+// Loader implementations live in platform/<loader>/; this build compiles only the Fabric one
+sourceSets.main {
+    java.exclude("**/platform/forge/**", "**/platform/neoforge/**")
+}
+
+// In-game tests (GameTest server), kept out of the release jar. Compiled against main.
+val gametest: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+    java.exclude("**/platform/forge/**", "**/platform/neoforge/**")
 }
 
 loom {
@@ -27,12 +43,59 @@ loom {
             sourceSet(sourceSets["client"])
         }
     }
+
+    mods {
+        create("personalworlds-gametest") {
+            sourceSet(gametest)
+        }
+    }
+
+    // Fixed dev names: offline UUIDs derive from the name, so a random name per launch
+    // would be a new player (and a new island) every time. Dev2 is the invite-test player.
+    runs {
+        create("client2") {
+            inherit(getByName("client"))
+            configName = "Minecraft Client 2"
+            runDir("run/client2")
+            programArgs("--username", "Dev2")
+        }
+        named("client") {
+            programArgs("--username", "Dev")
+        }
+
+        // Restart harness (pocketislands-harness plugin): one dedicated server run per phase
+        for ((run, phase) in listOf("harnessSetup" to "setup", "harnessVerify" to "verify", "harnessVerifyReset" to "verify-reset")) {
+            create(run) {
+                server()
+                configName = "Harness ($phase)"
+                source(gametest)
+                runDir("build/harness")
+                vmArg("-Dpocketislands.harness=$phase")
+                vmArg("-Xmx1G")
+            }
+        }
+
+        // Headless GameTest server: runs every test, writes JUnit XML, exits with the failure count
+        create("gametest") {
+            server()
+            configName = "Game Test"
+            source(gametest)
+            runDir("build/gametest")
+            vmArg("-Dfabric-api.gametest")
+            vmArg("-Dfabric-api.gametest.report-file=${layout.buildDirectory.file("gametest/junit.xml").get().asFile}")
+            // Capped so all nodes can run in parallel on CI runners
+            vmArg("-Xmx1G")
+        }
+    }
 }
 
 dependencies {
     // Minecraft and mappings
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
-    mappings("net.fabricmc:yarn:${property("yarn_mappings")}:v2")
+    mappings(loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${property("minecraft_version")}:${property("parchment_version")}@zip")
+    })
     modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
     // Fabric API
@@ -58,6 +121,13 @@ dependencies {
 
 val minecraft_version: String by project
 
+tasks.named<ProcessResources>("processGametestResources") {
+    inputs.property("version", project.version)
+    filesMatching("fabric.mod.json") {
+        expand("version" to project.version)
+    }
+}
+
 tasks.processResources {
     inputs.property("version", project.version)
     inputs.property("minecraft_version", minecraft_version)
@@ -68,16 +138,22 @@ tasks.processResources {
             "minecraft_version" to minecraft_version
         )
     }
+
+    exclude("META-INF/mods.toml", "META-INF/neoforge.mods.toml", "pack.mcmeta")
 }
 
+// Per-version Java (17 for 1.20.x, 21 for 1.21.x), also used by runClient/runServer
+val javaVersion = (property("java_version") as String).toInt()
+
 tasks.withType<JavaCompile>().configureEach {
-    options.release.set(17)
+    options.release.set(javaVersion)
 }
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    }
 }
 
 tasks.test {
@@ -93,7 +169,7 @@ tasks.test {
 tasks.jar {
     inputs.property("archivesName", base.archivesName)
 
-    from("LICENSE") {
+    from(rootProject.file("LICENSE")) {
         rename { "${it}_${base.archivesName.get()}" }
     }
 }
@@ -128,7 +204,7 @@ modrinth {
     val changelogContent = System.getenv("RELEASE_CHANGELOG")
     changelog.set(
         if (changelogContent.isNullOrBlank())
-            "See [GitHub release](https://github.com/WickedSik/pocket-islands/releases) for full changelog."
+            "See [GitHub release](https://github.com/WickedCoding/mc-pocket-islands/releases) for full changelog."
         else
             changelogContent
     )
@@ -139,4 +215,12 @@ modrinth {
 
 tasks.modrinth {
     dependsOn(tasks.remapJar)
+}
+
+// Each GameTest run starts from an empty world: islands from a previous run would be
+// restored from the registry and change what the tests see
+tasks.named("runGametest") {
+    doFirst {
+        delete(layout.buildDirectory.dir("gametest/world"))
+    }
 }

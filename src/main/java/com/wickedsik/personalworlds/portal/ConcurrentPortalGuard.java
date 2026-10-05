@@ -1,8 +1,8 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
 
 import java.util.Map;
 import java.util.UUID;
@@ -48,8 +48,8 @@ public class ConcurrentPortalGuard {
      * @param portalPos The portal position
      * @return true if teleport can proceed
      */
-    public static boolean tryAcquire(ServerPlayerEntity player, BlockPos portalPos) {
-        UUID playerUuid = player.getUuid();
+    public static boolean tryAcquire(ServerPlayer player, BlockPos portalPos) {
+        UUID playerUuid = player.getUUID();
         long now = System.currentTimeMillis();
         long portalHash = hashPosition(portalPos);
 
@@ -95,8 +95,8 @@ public class ConcurrentPortalGuard {
      * @param player The player who completed teleportation
      * @param portalPos The portal position
      */
-    public static void release(ServerPlayerEntity player, BlockPos portalPos) {
-        UUID playerUuid = player.getUuid();
+    public static void release(ServerPlayer player, BlockPos portalPos) {
+        UUID playerUuid = player.getUUID();
         long portalHash = hashPosition(portalPos);
 
         // Release portal lock only if we own it

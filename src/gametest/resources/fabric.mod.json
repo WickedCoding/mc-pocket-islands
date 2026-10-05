@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "personalworlds-gametest",
+  "version": "${version}",
+  "name": "Pocket Islands GameTests",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.wickedsik.personalworlds.gametest.platform.fabric.FabricHarness"],
+    "fabric-gametest": ["com.wickedsik.personalworlds.gametest.platform.fabric.FabricGameTests"]
+  },
+  "depends": {
+    "personalworlds": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}

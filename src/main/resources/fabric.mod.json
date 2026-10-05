@@ -9,7 +9,7 @@
   "icon": "assets/personalworlds/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.wickedsik.personalworlds.PersonalWorldsMod"]
+    "main": ["com.wickedsik.personalworlds.platform.fabric.FabricEntrypoint"]
   },
   "mixins": ["pocketislands.mixins.json"],
   "depends": {

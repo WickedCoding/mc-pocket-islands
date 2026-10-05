@@ -1,17 +1,17 @@
 package com.wickedsik.personalworlds.command.service;
 
 import com.wickedsik.personalworlds.compat.WorldCompat;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.TeleportTarget;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.portal.PortalInfo;
 
 /**
- * Factory for creating TeleportTarget instances.
+ * Factory for creating PortalInfo instances.
  * Reduces boilerplate in teleportation code.
  *
- * Note: In 1.21+, TeleportTarget requires ServerWorld and PostDimensionTransition.
+ * Note: In 1.21+, PortalInfo requires ServerLevel and a PostTeleportTransition.
  * This class provides 1.20.x-style API; use TeleportCompat for actual teleportation.
  */
 public final class TeleportHelper {
@@ -26,24 +26,24 @@ public final class TeleportHelper {
      * @param world The target world (required in 1.21+)
      * @param pos The target position
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget for the position
+     * @return PortalInfo for the position
      */
-    public static TeleportTarget toPosition(ServerWorld world, Vec3d pos, ServerPlayerEntity player) {
+    public static PortalInfo toPosition(ServerLevel world, Vec3 pos, ServerPlayer player) {
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch(),
-            TeleportTarget.NO_OP
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot(),
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot()
         );
         //?}
     }
@@ -55,22 +55,22 @@ public final class TeleportHelper {
      * @param pos The target position
      * @param yaw The target yaw
      * @param pitch The target pitch
-     * @return TeleportTarget for the position
+     * @return PortalInfo for the position
      */
-    public static TeleportTarget toPosition(ServerWorld world, Vec3d pos, float yaw, float pitch) {
+    public static PortalInfo toPosition(ServerLevel world, Vec3 pos, float yaw, float pitch) {
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             pos,
-            Vec3d.ZERO,
+            Vec3.ZERO,
             yaw,
             pitch,
-            TeleportTarget.NO_OP
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             pos,
-            Vec3d.ZERO,
+            Vec3.ZERO,
             yaw,
             pitch
         );
@@ -84,29 +84,29 @@ public final class TeleportHelper {
      * @param world The target world (required in 1.21+)
      * @param blockPos The target block position
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget centered on the block
+     * @return PortalInfo centered on the block
      */
-    public static TeleportTarget toBlockPos(ServerWorld world, BlockPos blockPos, ServerPlayerEntity player) {
-        Vec3d pos = new Vec3d(
+    public static PortalInfo toBlockPos(ServerLevel world, BlockPos blockPos, ServerPlayer player) {
+        Vec3 pos = new Vec3(
             blockPos.getX() + 0.5,
             blockPos.getY(),
             blockPos.getZ() + 0.5
         );
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch(),
-            TeleportTarget.NO_OP
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot(),
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot()
         );
         //?}
     }
@@ -119,27 +119,27 @@ public final class TeleportHelper {
      * @param blockPos The target block position
      * @param yaw The target yaw
      * @param pitch The target pitch
-     * @return TeleportTarget centered on the block
+     * @return PortalInfo centered on the block
      */
-    public static TeleportTarget toBlockPos(ServerWorld world, BlockPos blockPos, float yaw, float pitch) {
-        Vec3d pos = new Vec3d(
+    public static PortalInfo toBlockPos(ServerLevel world, BlockPos blockPos, float yaw, float pitch) {
+        Vec3 pos = new Vec3(
             blockPos.getX() + 0.5,
             blockPos.getY(),
             blockPos.getZ() + 0.5
         );
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             pos,
-            Vec3d.ZERO,
+            Vec3.ZERO,
             yaw,
             pitch,
-            TeleportTarget.NO_OP
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             pos,
-            Vec3d.ZERO,
+            Vec3.ZERO,
             yaw,
             pitch
         );
@@ -151,25 +151,25 @@ public final class TeleportHelper {
      *
      * @param world The target world
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget at world spawn
+     * @return PortalInfo at world spawn
      */
-    public static TeleportTarget toWorldSpawn(ServerWorld world, ServerPlayerEntity player) {
-        Vec3d spawnPos = Vec3d.ofCenter(WorldCompat.getSpawnPos(world));
+    public static PortalInfo toWorldSpawn(ServerLevel world, ServerPlayer player) {
+        Vec3 spawnPos = Vec3.atCenterOf(WorldCompat.getSpawnPos(world));
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             spawnPos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch(),
-            TeleportTarget.NO_OP
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot(),
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             spawnPos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot()
         );
         //?}
     }
@@ -180,25 +180,25 @@ public final class TeleportHelper {
      *
      * @param world The target world (required in 1.21+)
      * @param player The player being teleported (for yaw/pitch)
-     * @return TeleportTarget at default spawn
+     * @return PortalInfo at default spawn
      */
-    public static TeleportTarget toDefaultSpawn(ServerWorld world, ServerPlayerEntity player) {
-        Vec3d pos = new Vec3d(0.5, 65, 0.5);
+    public static PortalInfo toDefaultSpawn(ServerLevel world, ServerPlayer player) {
+        Vec3 pos = new Vec3(0.5, 65, 0.5);
         //? if >=1.21 {
-        /*return new TeleportTarget(
+        /*return new PortalInfo(
             world,
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch(),
-            TeleportTarget.NO_OP
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot(),
+            PortalInfo.DO_NOTHING
         );
         *///?} else {
-        return new TeleportTarget(
+        return new PortalInfo(
             pos,
-            Vec3d.ZERO,
-            player.getYaw(),
-            player.getPitch()
+            Vec3.ZERO,
+            player.getYRot(),
+            player.getXRot()
         );
         //?}
     }

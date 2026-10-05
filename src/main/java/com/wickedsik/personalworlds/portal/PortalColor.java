@@ -1,10 +1,10 @@
 package com.wickedsik.personalworlds.portal;
 
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.StringRepresentable;
 
 /**
  * Enum representing available portal colors.
- * Implements StringIdentifiable for use as a block state property.
+ * Implements StringRepresentable for use as a block state property.
  *
  * To add new colors:
  * 1. Add enum value (e.g., PURPLE("purple"))
@@ -12,7 +12,7 @@ import net.minecraft.util.StringIdentifiable;
  * 3. Create models: personal_portal_ns_purple.json, personal_portal_ew_purple.json
  * 4. Add blockstate entries for color=purple
  */
-public enum PortalColor implements StringIdentifiable {
+public enum PortalColor implements StringRepresentable {
     WHITE("white"),
     LIGHT_GRAY("light_gray"),
     GRAY("gray"),
@@ -37,7 +37,7 @@ public enum PortalColor implements StringIdentifiable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return name;
     }
 

@@ -1,8 +1,13 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "com.wickedsik.personalworlds.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "mixins": [
+    "LevelMixin",
+    "ServerLevelMixin",
+    "ServerPlayerMixin"
+  ],
   "client": [],
   "injectors": {
     "defaultRequire": 1

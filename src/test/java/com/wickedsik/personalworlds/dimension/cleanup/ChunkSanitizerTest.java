@@ -1,6 +1,6 @@
 package com.wickedsik.personalworlds.dimension.cleanup;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link ChunkSanitizer} covering the pure logic. The
- * ServerWorld/WorldChunk adapter is verified by cross-version compile only.
+ * ServerLevel/LevelChunk adapter is verified by cross-version compile only.
  */
 class ChunkSanitizerTest {
 

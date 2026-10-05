@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.portal;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,11 +46,11 @@ public record PortalFrame(
 
         // Start from one block inside the frame (above bottom, after left edge)
         // bottomLeft is the corner frame block, so interior starts at +1 up and +1 horizontal
-        BlockPos start = bottomLeft.up().offset(horizontal);
+        BlockPos start = bottomLeft.above().relative(horizontal);
 
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                BlockPos pos = start.up(h).offset(horizontal, w);
+                BlockPos pos = start.above(h).relative(horizontal, w);
                 positions.add(pos);
             }
         }
@@ -75,22 +75,22 @@ public record PortalFrame(
 
         // Bottom edge (full width)
         for (int w = 0; w < frameWidth; w++) {
-            positions.add(bottomLeft.offset(horizontal, w));
+            positions.add(bottomLeft.relative(horizontal, w));
         }
 
         // Top edge (full width)
         for (int w = 0; w < frameWidth; w++) {
-            positions.add(bottomLeft.up(frameHeight - 1).offset(horizontal, w));
+            positions.add(bottomLeft.above(frameHeight - 1).relative(horizontal, w));
         }
 
         // Left edge (excluding corners already added)
         for (int h = 1; h < frameHeight - 1; h++) {
-            positions.add(bottomLeft.up(h));
+            positions.add(bottomLeft.above(h));
         }
 
         // Right edge (excluding corners already added)
         for (int h = 1; h < frameHeight - 1; h++) {
-            positions.add(bottomLeft.offset(horizontal, frameWidth - 1).up(h));
+            positions.add(bottomLeft.relative(horizontal, frameWidth - 1).above(h));
         }
 
         return positions;
@@ -105,7 +105,7 @@ public record PortalFrame(
     public BlockPos getCenter() {
         Direction horizontal = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
         return bottomLeft
-            .up(1 + height / 2)
-            .offset(horizontal, 1 + width / 2);
+            .above(1 + height / 2)
+            .relative(horizontal, 1 + width / 2);
     }
 }

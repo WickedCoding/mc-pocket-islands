@@ -1,24 +1,18 @@
 package com.wickedsik.personalworlds.compat;
 
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 //? if >=1.21.2 {
-/*import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-*///?} else if >=1.21 {
-/*import net.minecraft.block.AbstractBlock;
-*///?} else {
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-//?}
+/*import net.minecraft.world.level.block.Block;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+*///?}
 
 /**
  * Compatibility layer for Block settings creation.
  * <p>
- * MC 1.20.x uses: FabricBlockSettings.create()
- * MC 1.21.0-1.21.1 uses: AbstractBlock.Settings.create()
- * MC 1.21.2+ uses: AbstractBlock.Settings.create().registryKey(key) - REQUIRED
+ * MC 1.20.x uses: BlockBehaviour.Properties.of()
+ * MC 1.21.2+ uses: BlockBehaviour.Properties.of().setId(key) - REQUIRED
  * <p>
  * This class centralizes block settings creation to simplify version migration.
  */
@@ -35,33 +29,13 @@ public final class BlockSettingsCompat {
      * @return A new block settings builder
      */
     //? if >=1.21.2 {
-    /*public static AbstractBlock.Settings create(Identifier id) {
-        RegistryKey<Block> key = RegistryKey.of(RegistryKeys.BLOCK, id);
-        return AbstractBlock.Settings.create().registryKey(key);
-    }
-    *///?} else if >=1.21 {
-    /*public static AbstractBlock.Settings create(Identifier id) {
-        return AbstractBlock.Settings.create();
-    }*/
-    //?} else {
-    public static FabricBlockSettings create(Identifier id) {
-        return FabricBlockSettings.create();
-    }
-    //?}
-
-    /**
-     * Create a new block settings instance without registry key.
-     * @deprecated Use create(Identifier) instead for 1.21.2+ compatibility.
-     */
-    //? if >=1.21 {
-    /*@Deprecated
-    public static AbstractBlock.Settings create() {
-        return AbstractBlock.Settings.create();
+    /*public static BlockBehaviour.Properties create(ResourceLocation id) {
+        ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, id);
+        return BlockBehaviour.Properties.of().setId(key);
     }
     *///?} else {
-    @Deprecated
-    public static FabricBlockSettings create() {
-        return FabricBlockSettings.create();
+    public static BlockBehaviour.Properties create(ResourceLocation id) {
+        return BlockBehaviour.Properties.of();
     }
     //?}
 }

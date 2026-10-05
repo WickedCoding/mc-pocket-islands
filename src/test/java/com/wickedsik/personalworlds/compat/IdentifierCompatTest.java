@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.compat;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link IdentifierCompat}.
- * Tests the compatibility layer for Identifier construction across Minecraft versions.
+ * Tests the compatibility layer for ResourceLocation construction across Minecraft versions.
  *
- * Note: These tests work without Bootstrap.initialize() as the Identifier class
+ * Note: These tests work without Bootstrap.initialize() as the ResourceLocation class
  * can be used for basic construction/parsing without full Minecraft initialization.
  */
 @DisplayName("IdentifierCompat")
@@ -31,7 +31,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates identifier with namespace and path")
         void createsIdentifierWithNamespaceAndPath() {
-            Identifier id = IdentifierCompat.create("minecraft", "stone");
+            ResourceLocation id = IdentifierCompat.create("minecraft", "stone");
 
             assertEquals("minecraft", id.getNamespace());
             assertEquals("stone", id.getPath());
@@ -41,7 +41,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates identifier with custom namespace")
         void createsIdentifierWithCustomNamespace() {
-            Identifier id = IdentifierCompat.create("mymod", "custom_block");
+            ResourceLocation id = IdentifierCompat.create("mymod", "custom_block");
 
             assertEquals("mymod", id.getNamespace());
             assertEquals("custom_block", id.getPath());
@@ -57,7 +57,7 @@ class IdentifierCompatTest {
         })
         @DisplayName("creates valid identifiers for various inputs")
         void createsValidIdentifiersForVariousInputs(String namespace, String path) {
-            Identifier id = IdentifierCompat.create(namespace, path);
+            ResourceLocation id = IdentifierCompat.create(namespace, path);
 
             assertNotNull(id);
             assertEquals(namespace, id.getNamespace());
@@ -67,7 +67,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates identifier with path containing slashes")
         void createsIdentifierWithPathContainingSlashes() {
-            Identifier id = IdentifierCompat.create("minecraft", "textures/block/stone");
+            ResourceLocation id = IdentifierCompat.create("minecraft", "textures/block/stone");
 
             assertEquals("textures/block/stone", id.getPath());
         }
@@ -75,7 +75,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates identifier with underscores and numbers")
         void createsIdentifierWithUnderscoresAndNumbers() {
-            Identifier id = IdentifierCompat.create("mod_123", "block_456");
+            ResourceLocation id = IdentifierCompat.create("mod_123", "block_456");
 
             assertEquals("mod_123", id.getNamespace());
             assertEquals("block_456", id.getPath());
@@ -89,7 +89,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("uses mod namespace")
         void usesModNamespace() {
-            Identifier id = IdentifierCompat.modId("test_resource");
+            ResourceLocation id = IdentifierCompat.modId("test_resource");
 
             assertEquals(PersonalWorldsMod.MOD_ID, id.getNamespace());
             assertEquals("test_resource", id.getPath());
@@ -98,7 +98,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates personal_portal identifier")
         void createsPersonalPortalIdentifier() {
-            Identifier id = IdentifierCompat.modId("personal_portal");
+            ResourceLocation id = IdentifierCompat.modId("personal_portal");
 
             assertEquals("personalworlds:personal_portal", id.toString());
         }
@@ -106,7 +106,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("creates void_island identifier")
         void createsVoidIslandIdentifier() {
-            Identifier id = IdentifierCompat.modId("void_island");
+            ResourceLocation id = IdentifierCompat.modId("void_island");
 
             assertEquals("personalworlds:void_island", id.toString());
         }
@@ -121,7 +121,7 @@ class IdentifierCompatTest {
         })
         @DisplayName("creates valid mod identifiers for various resources")
         void createsValidModIdentifiersForVariousResources(String path) {
-            Identifier id = IdentifierCompat.modId(path);
+            ResourceLocation id = IdentifierCompat.modId(path);
 
             assertNotNull(id);
             assertEquals(PersonalWorldsMod.MOD_ID, id.getNamespace());
@@ -137,7 +137,7 @@ class IdentifierCompatTest {
         @DisplayName("creates dimension ID from UUID")
         void createsDimensionIdFromUuid() {
             UUID uuid = UUID.fromString("12345678-1234-1234-1234-123456789abc");
-            Identifier id = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation id = IdentifierCompat.dimensionId(uuid);
 
             assertEquals(PersonalWorldsMod.MOD_ID, id.getNamespace());
             assertEquals("pw_12345678-1234-1234-1234-123456789abc", id.getPath());
@@ -148,8 +148,8 @@ class IdentifierCompatTest {
         void createsConsistentDimensionIdForSameUuid() {
             UUID uuid = UUID.randomUUID();
 
-            Identifier id1 = IdentifierCompat.dimensionId(uuid);
-            Identifier id2 = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation id1 = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation id2 = IdentifierCompat.dimensionId(uuid);
 
             assertEquals(id1, id2);
         }
@@ -160,8 +160,8 @@ class IdentifierCompatTest {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
 
-            Identifier id1 = IdentifierCompat.dimensionId(uuid1);
-            Identifier id2 = IdentifierCompat.dimensionId(uuid2);
+            ResourceLocation id1 = IdentifierCompat.dimensionId(uuid1);
+            ResourceLocation id2 = IdentifierCompat.dimensionId(uuid2);
 
             assertNotEquals(id1, id2);
         }
@@ -170,7 +170,7 @@ class IdentifierCompatTest {
         @DisplayName("dimension ID path starts with pw_ prefix")
         void dimensionIdPathStartsWithPwPrefix() {
             UUID uuid = UUID.randomUUID();
-            Identifier id = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation id = IdentifierCompat.dimensionId(uuid);
 
             assertTrue(id.getPath().startsWith("pw_"));
         }
@@ -179,7 +179,7 @@ class IdentifierCompatTest {
         @DisplayName("dimension ID contains full UUID string")
         void dimensionIdContainsFullUuidString() {
             UUID uuid = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-            Identifier id = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation id = IdentifierCompat.dimensionId(uuid);
 
             assertTrue(id.getPath().contains("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
         }
@@ -192,7 +192,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses valid identifier string")
         void parsesValidIdentifierString() {
-            Identifier id = IdentifierCompat.tryParse("minecraft:stone");
+            ResourceLocation id = IdentifierCompat.tryParse("minecraft:stone");
 
             assertNotNull(id);
             assertEquals("minecraft", id.getNamespace());
@@ -202,7 +202,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses identifier without explicit namespace")
         void parsesIdentifierWithoutExplicitNamespace() {
-            Identifier id = IdentifierCompat.tryParse("stone");
+            ResourceLocation id = IdentifierCompat.tryParse("stone");
 
             assertNotNull(id);
             assertEquals("minecraft", id.getNamespace()); // default namespace
@@ -213,7 +213,7 @@ class IdentifierCompatTest {
         @NullAndEmptySource
         @DisplayName("returns null for null or empty input")
         void returnsNullForNullOrEmptyInput(String input) {
-            Identifier id = IdentifierCompat.tryParse(input);
+            ResourceLocation id = IdentifierCompat.tryParse(input);
 
             assertNull(id);
         }
@@ -227,7 +227,7 @@ class IdentifierCompatTest {
         })
         @DisplayName("parses various valid identifier strings")
         void parsesVariousValidIdentifierStrings(String input) {
-            Identifier id = IdentifierCompat.tryParse(input);
+            ResourceLocation id = IdentifierCompat.tryParse(input);
 
             assertNotNull(id);
             assertTrue(input.contains(id.getPath()));
@@ -236,7 +236,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses identifier with path containing slashes")
         void parsesIdentifierWithPathContainingSlashes() {
-            Identifier id = IdentifierCompat.tryParse("minecraft:textures/block/stone");
+            ResourceLocation id = IdentifierCompat.tryParse("minecraft:textures/block/stone");
 
             assertNotNull(id);
             assertEquals("textures/block/stone", id.getPath());
@@ -250,7 +250,7 @@ class IdentifierCompatTest {
         })
         @DisplayName("returns null for invalid identifier strings")
         void returnsNullForInvalidIdentifierStrings(String input) {
-            Identifier id = IdentifierCompat.tryParse(input);
+            ResourceLocation id = IdentifierCompat.tryParse(input);
 
             assertNull(id);
         }
@@ -263,7 +263,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses valid NBT identifier string")
         void parsesValidNbtIdentifierString() {
-            Identifier id = IdentifierCompat.fromNbtString("minecraft:overworld");
+            ResourceLocation id = IdentifierCompat.fromNbtString("minecraft:overworld");
 
             assertEquals("minecraft", id.getNamespace());
             assertEquals("overworld", id.getPath());
@@ -272,7 +272,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses dimension identifier from NBT")
         void parsesDimensionIdentifierFromNbt() {
-            Identifier id = IdentifierCompat.fromNbtString("personalworlds:pw_12345678-1234-1234-1234-123456789abc");
+            ResourceLocation id = IdentifierCompat.fromNbtString("personalworlds:pw_12345678-1234-1234-1234-123456789abc");
 
             assertEquals("personalworlds", id.getNamespace());
             assertEquals("pw_12345678-1234-1234-1234-123456789abc", id.getPath());
@@ -287,7 +287,7 @@ class IdentifierCompatTest {
         })
         @DisplayName("parses various valid NBT strings")
         void parsesVariousValidNbtStrings(String input) {
-            Identifier id = IdentifierCompat.fromNbtString(input);
+            ResourceLocation id = IdentifierCompat.fromNbtString(input);
 
             assertNotNull(id);
             assertEquals(input, id.toString());
@@ -296,7 +296,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("parses string without namespace using default")
         void parsesStringWithoutNamespaceUsingDefault() {
-            Identifier id = IdentifierCompat.fromNbtString("overworld");
+            ResourceLocation id = IdentifierCompat.fromNbtString("overworld");
 
             assertEquals("minecraft", id.getNamespace());
             assertEquals("overworld", id.getPath());
@@ -329,11 +329,11 @@ class IdentifierCompatTest {
             UUID uuid = UUID.fromString("12345678-1234-1234-1234-123456789abc");
 
             // Create dimension ID
-            Identifier original = IdentifierCompat.dimensionId(uuid);
+            ResourceLocation original = IdentifierCompat.dimensionId(uuid);
 
             // Simulate saving to NBT and loading back
             String nbtString = original.toString();
-            Identifier restored = IdentifierCompat.fromNbtString(nbtString);
+            ResourceLocation restored = IdentifierCompat.fromNbtString(nbtString);
 
             assertEquals(original, restored);
         }
@@ -341,7 +341,7 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("mod ID matches expected format")
         void modIdMatchesExpectedFormat() {
-            Identifier id = IdentifierCompat.modId("personal_portal");
+            ResourceLocation id = IdentifierCompat.modId("personal_portal");
 
             // Should match what ModBlocks expects
             assertEquals("personalworlds:personal_portal", id.toString());
@@ -350,10 +350,10 @@ class IdentifierCompatTest {
         @Test
         @DisplayName("tryParse can recover fromNbtString output")
         void tryParseCanRecoverFromNbtStringOutput() {
-            Identifier original = IdentifierCompat.create("minecraft", "diamond_ore");
+            ResourceLocation original = IdentifierCompat.create("minecraft", "diamond_ore");
             String stringForm = original.toString();
 
-            Identifier parsed = IdentifierCompat.tryParse(stringForm);
+            ResourceLocation parsed = IdentifierCompat.tryParse(stringForm);
 
             assertEquals(original, parsed);
         }

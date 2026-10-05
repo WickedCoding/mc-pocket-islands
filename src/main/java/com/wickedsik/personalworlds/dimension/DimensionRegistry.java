@@ -3,19 +3,19 @@ package com.wickedsik.personalworlds.dimension;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.PersistentStateCompat;
 import com.wickedsik.personalworlds.util.DataValidator;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class DimensionRegistry extends PersistentState {
+public class DimensionRegistry extends SavedData {
 
     private static final String DATA_NAME = PersonalWorldsMod.MOD_ID + "_registry";
 
@@ -36,7 +36,7 @@ public class DimensionRegistry extends PersistentState {
         }
 
         dimensions.put(data.ownerUuid(), data);
-        markDirty();
+        setDirty();
         PersonalWorldsMod.LOGGER.info("Registered dimension for player: {} ({})",
             data.ownerName(), data.ownerUuid());
     }
@@ -55,7 +55,7 @@ public class DimensionRegistry extends PersistentState {
 
     public void removeDimension(UUID playerUuid) {
         if (dimensions.remove(playerUuid) != null) {
-            markDirty();
+            setDirty();
             PersonalWorldsMod.LOGGER.info("Removed dimension for player: {}", playerUuid);
         }
     }
@@ -78,30 +78,20 @@ public class DimensionRegistry extends PersistentState {
     // --- Serialization ---
 
     //? if >=1.21.5 {
-    /*// In 1.21.5+, PersistentState uses Codec-based serialization - no override needed
+    /*// In 1.21.5+, SavedData uses Codec-based serialization - no override needed
     // The Codec in PersistentStateCompat calls writeNbtData() via reflection
-    public NbtCompound writeNbtData(NbtCompound nbt) {
-        NbtList dimensionList = new NbtList();
+    public CompoundTag writeNbtData(CompoundTag nbt) {
+        ListTag dimensionList = new ListTag();
         for (PlayerDimensionData data : dimensions.values()) {
             dimensionList.add(data.toNbt());
         }
         nbt.put("Dimensions", dimensionList);
         return nbt;
     }
-    *///?} else if >=1.21 {
-    /*@Override
-    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
-        NbtList dimensionList = new NbtList();
-        for (PlayerDimensionData data : dimensions.values()) {
-            dimensionList.add(data.toNbt());
-        }
-        nbt.put("Dimensions", dimensionList);
-        return nbt;
-    }*/
-    //?} else {
+    *///?} else {
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        NbtList dimensionList = new NbtList();
+    public CompoundTag save(CompoundTag nbt) {
+        ListTag dimensionList = new ListTag();
         for (PlayerDimensionData data : dimensions.values()) {
             dimensionList.add(data.toNbt());
         }
@@ -110,9 +100,9 @@ public class DimensionRegistry extends PersistentState {
     }
     //?}
 
-    public static DimensionRegistry fromNbt(NbtCompound nbt) {
+    public static DimensionRegistry fromNbt(CompoundTag nbt) {
         DimensionRegistry registry = new DimensionRegistry();
-        NbtList dimensionList = com.wickedsik.personalworlds.compat.NbtCompat.getList(nbt, "Dimensions", NbtElement.COMPOUND_TYPE);
+        ListTag dimensionList = com.wickedsik.personalworlds.compat.NbtCompat.getList(nbt, "Dimensions", Tag.TAG_COMPOUND);
         int skipped = 0;
 
         for (int i = 0; i < dimensionList.size(); i++) {
@@ -143,7 +133,7 @@ public class DimensionRegistry extends PersistentState {
     // --- Static Access ---
 
     public static DimensionRegistry get(MinecraftServer server) {
-        PersistentStateManager stateManager = server.getOverworld().getPersistentStateManager();
+        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
             stateManager,
             DATA_NAME,

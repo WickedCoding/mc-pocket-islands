@@ -1,7 +1,7 @@
 package com.wickedsik.personalworlds.command;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 
 /**
  * Result value object for command execution.
@@ -13,7 +13,7 @@ import net.minecraft.text.Text;
  */
 public record CommandResult(
     boolean success,
-    Text message,
+    Component message,
     boolean broadcast
 ) {
     /** Brigadier return value for successful command execution. */
@@ -24,21 +24,21 @@ public record CommandResult(
     /**
      * Create a successful result with a message.
      */
-    public static CommandResult success(Text message) {
+    public static CommandResult success(Component message) {
         return new CommandResult(true, message, false);
     }
 
     /**
      * Create a successful result with broadcast enabled.
      */
-    public static CommandResult successBroadcast(Text message) {
+    public static CommandResult successBroadcast(Component message) {
         return new CommandResult(true, message, true);
     }
 
     /**
      * Create an error result with a message.
      */
-    public static CommandResult error(Text message) {
+    public static CommandResult error(Component message) {
         return new CommandResult(false, message, false);
     }
 
@@ -59,13 +59,13 @@ public record CommandResult(
     /**
      * Apply this result to a command source - sends feedback/error and returns command value.
      */
-    public int applyTo(ServerCommandSource source) {
+    public int applyTo(CommandSourceStack source) {
         if (message != null) {
             if (success) {
-                final Text msg = message;
-                source.sendFeedback(() -> msg, broadcast);
+                final Component msg = message;
+                source.sendSuccess(() -> msg, broadcast);
             } else {
-                source.sendError(message);
+                source.sendFailure(message);
             }
         }
         return toCommandReturn();

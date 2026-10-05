@@ -20,19 +20,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v5
 
       - name: Setup JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'microsoft'
 
+      # v5 on purpose: v6 moved caching into a proprietary, non-MIT component
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build all versions
         run: ./gradlew chiseledBuild
@@ -74,7 +75,9 @@ jobs:
           mkdir -p release-artifacts
           MOD_VERSION="${{ steps.mod_version.outputs.version }}"
 
-          # Dynamically find and rename all built JARs
+          # Dynamically find and rename all built JARs. Node directories are named
+          # <mc>-<loader>, so names come out as pocketislands-<ver>+<mc>-<loader>.jar.
+          # Forge's build/libs jar is the reobfuscated one.
           for version_dir in versions/*/; do
             mc_version=$(basename "$version_dir")
             jar_path="${version_dir}build/libs/pocketislands-${MOD_VERSION}.jar"
@@ -93,7 +96,7 @@ jobs:
           ls -la release-artifacts/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: ${{ steps.changelog.outputs.content }}
           fail_on_unmatched_files: false

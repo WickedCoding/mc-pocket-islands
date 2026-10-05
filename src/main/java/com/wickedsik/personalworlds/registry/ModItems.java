@@ -2,11 +2,12 @@ package com.wickedsik.personalworlds.registry;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.RegistryCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Registers all items for the PersonalWorlds mod.
@@ -28,7 +29,6 @@ public class ModItems {
      * players cannot obtain or place it directly.
      */
     public static void register() {
-        // No custom items needed for Phase 2
         // Portal block has no BlockItem (can't be placed by player)
 
         PersonalWorldsMod.LOGGER.info("Registered items");
@@ -48,8 +48,8 @@ public class ModItems {
 
             for (int i = 0; i < configs.size(); i++) {
                 String itemId = configs.get(i).activationItem;
-                Identifier id = IdentifierCompat.tryParse(itemId);
-                Item item = id != null ? Registries.ITEM.get(id) : Items.AIR;
+                ResourceLocation id = IdentifierCompat.tryParse(itemId);
+                Item item = id != null ? RegistryCompat.get(BuiltInRegistries.ITEM, id) : Items.AIR;
 
                 // Validate the item exists (get() returns AIR for unknown IDs)
                 if (item == Items.AIR && !itemId.equals("minecraft:air")) {
@@ -60,7 +60,7 @@ public class ModItems {
 
                 cachedActivationItems[i] = item;
                 PersonalWorldsMod.LOGGER.debug("Portal type {} activation item set to: {}",
-                    i, Registries.ITEM.getId(item));
+                    i, BuiltInRegistries.ITEM.getKey(item));
             }
         }
 

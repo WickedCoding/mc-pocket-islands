@@ -6,9 +6,9 @@ import com.google.gson.JsonSyntaxException;
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.core.BlockPos;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -193,7 +193,7 @@ public class DimensionMetadataFile {
     private static Path getMetadataPath(MinecraftServer server, UUID playerUuid) {
         try {
             // Get the world root directory
-            Path worldRoot = server.getSavePath(WorldSavePath.ROOT);
+            Path worldRoot = server.getWorldPath(LevelResource.ROOT);
 
             // Build path: world/dimensions/personalworlds/pw_<uuid>/personalworlds_metadata.json
             String folderName = "pw_" + playerUuid.toString().replace("-", "");
@@ -218,7 +218,7 @@ public class DimensionMetadataFile {
      * @return Path to the dimension folder
      */
     public static Path getDimensionFolderPath(MinecraftServer server, UUID playerUuid) {
-        Path worldRoot = server.getSavePath(WorldSavePath.ROOT);
+        Path worldRoot = server.getWorldPath(LevelResource.ROOT);
         String folderName = "pw_" + playerUuid.toString().replace("-", "");
         return worldRoot
             .resolve("dimensions")
@@ -234,7 +234,7 @@ public class DimensionMetadataFile {
      * @return Path to the dimensions folder (world/dimensions/personalworlds/)
      */
     public static Path getDimensionsRootPath(MinecraftServer server) {
-        Path worldRoot = server.getSavePath(WorldSavePath.ROOT);
+        Path worldRoot = server.getWorldPath(LevelResource.ROOT);
         return worldRoot
             .resolve("dimensions")
             .resolve(PersonalWorldsMod.MOD_ID);
@@ -277,7 +277,7 @@ public class DimensionMetadataFile {
      * @param directory The directory to delete
      * @throws IOException If deletion fails
      */
-    private static void deleteDirectoryRecursively(Path directory) throws IOException {
+    public static void deleteDirectoryRecursively(Path directory) throws IOException {
         if (!Files.exists(directory)) {
             return;
         }

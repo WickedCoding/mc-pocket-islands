@@ -3,12 +3,12 @@ package com.wickedsik.personalworlds.player;
 //? if >=1.20.2 {
 /*import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.compat.NbtCompat;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,14 +26,14 @@ import static org.junit.jupiter.api.Assertions.*;
  ^/
 class ReturnDataTest {
 
-    private RegistryKey<World> testDimension;
+    private ResourceKey<Level> testDimension;
     private BlockPos testPosition;
     private float testYaw;
     private float testPitch;
 
     @BeforeEach
     void setUp() {
-        testDimension = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "overworld"));
+        testDimension = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("minecraft", "overworld"));
         testPosition = new BlockPos(100, 65, -200);
         testYaw = 90.0f;
         testPitch = -15.0f;
@@ -90,7 +90,7 @@ class ReturnDataTest {
         void toNbt_validData_createsCompound() {
             ReturnData data = new ReturnData(testDimension, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertNotNull(nbt);
             assertTrue(nbt.contains("Dimension"));
@@ -106,7 +106,7 @@ class ReturnDataTest {
         void toNbt_correctDimension() {
             ReturnData data = new ReturnData(testDimension, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals("minecraft:overworld", NbtCompat.getString(nbt, "Dimension", ""));
         }
@@ -116,7 +116,7 @@ class ReturnDataTest {
         void toNbt_correctCoordinates() {
             ReturnData data = new ReturnData(testDimension, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals(100, NbtCompat.getInt(nbt, "X", 0));
             assertEquals(65, NbtCompat.getInt(nbt, "Y", 0));
@@ -128,7 +128,7 @@ class ReturnDataTest {
         void toNbt_correctRotation() {
             ReturnData data = new ReturnData(testDimension, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals(90.0f, NbtCompat.getFloat(nbt, "Yaw", 0.0f), 0.001f);
             assertEquals(-15.0f, NbtCompat.getFloat(nbt, "Pitch", 0.0f), 0.001f);
@@ -137,7 +137,7 @@ class ReturnDataTest {
         @Test
         @DisplayName("fromNbt with valid compound creates record")
         void fromNbt_validCompound_createsRecord() {
-            NbtCompound nbt = new NbtCompound();
+            CompoundTag nbt = new CompoundTag();
             nbt.putString("Dimension", "minecraft:overworld");
             nbt.putInt("X", 100);
             nbt.putInt("Y", 65);
@@ -148,8 +148,8 @@ class ReturnDataTest {
             ReturnData data = ReturnData.fromNbt(nbt);
 
             assertNotNull(data);
-            assertEquals("minecraft", data.dimension().getValue().getNamespace());
-            assertEquals("overworld", data.dimension().getValue().getPath());
+            assertEquals("minecraft", IdentifierCompat.fromKey(data.dimension()).getNamespace());
+            assertEquals("overworld", IdentifierCompat.fromKey(data.dimension()).getPath());
             assertEquals(new BlockPos(100, 65, -200), data.position());
             assertEquals(90.0f, data.yaw(), 0.001f);
             assertEquals(-15.0f, data.pitch(), 0.001f);
@@ -160,10 +160,10 @@ class ReturnDataTest {
         void roundTrip_preservesAllFields() {
             ReturnData original = new ReturnData(testDimension, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
-            assertEquals(original.dimension().getValue(), restored.dimension().getValue());
+            assertEquals(IdentifierCompat.fromKey(original.dimension()), IdentifierCompat.fromKey(restored.dimension()));
             assertEquals(original.position(), restored.position());
             assertEquals(original.yaw(), restored.yaw(), 0.001f);
             assertEquals(original.pitch(), restored.pitch(), 0.001f);
@@ -175,7 +175,7 @@ class ReturnDataTest {
             BlockPos negative = new BlockPos(-500, -60, -1000);
             ReturnData original = new ReturnData(testDimension, negative, testYaw, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(negative, restored.position());
@@ -186,7 +186,7 @@ class ReturnDataTest {
         void roundTrip_extremeRotation() {
             ReturnData original = new ReturnData(testDimension, testPosition, 359.9f, -89.9f);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(359.9f, restored.yaw(), 0.001f);
@@ -201,10 +201,10 @@ class ReturnDataTest {
         @Test
         @DisplayName("Overworld dimension key serializes correctly")
         void overworldDimension_serializesCorrectly() {
-            RegistryKey<World> overworld = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "overworld"));
+            ResourceKey<Level> overworld = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("minecraft", "overworld"));
             ReturnData data = new ReturnData(overworld, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals("minecraft:overworld", NbtCompat.getString(nbt, "Dimension", ""));
         }
@@ -212,10 +212,10 @@ class ReturnDataTest {
         @Test
         @DisplayName("Nether dimension key serializes correctly")
         void netherDimension_serializesCorrectly() {
-            RegistryKey<World> nether = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_nether"));
+            ResourceKey<Level> nether = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("minecraft", "the_nether"));
             ReturnData data = new ReturnData(nether, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals("minecraft:the_nether", NbtCompat.getString(nbt, "Dimension", ""));
         }
@@ -223,10 +223,10 @@ class ReturnDataTest {
         @Test
         @DisplayName("End dimension key serializes correctly")
         void endDimension_serializesCorrectly() {
-            RegistryKey<World> end = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_end"));
+            ResourceKey<Level> end = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("minecraft", "the_end"));
             ReturnData data = new ReturnData(end, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
 
             assertEquals("minecraft:the_end", NbtCompat.getString(nbt, "Dimension", ""));
         }
@@ -234,29 +234,29 @@ class ReturnDataTest {
         @Test
         @DisplayName("Custom dimension key serializes correctly")
         void customDimension_serializesCorrectly() {
-            RegistryKey<World> custom = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("personalworlds", "pw_test"));
+            ResourceKey<Level> custom = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("personalworlds", "pw_test"));
             ReturnData data = new ReturnData(custom, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
-            assertEquals("personalworlds", restored.dimension().getValue().getNamespace());
-            assertEquals("pw_test", restored.dimension().getValue().getPath());
+            assertEquals("personalworlds", IdentifierCompat.fromKey(restored.dimension()).getNamespace());
+            assertEquals("pw_test", IdentifierCompat.fromKey(restored.dimension()).getPath());
         }
 
         @Test
         @DisplayName("Dimension with underscores serializes correctly")
         void dimensionWithUnderscores_serializesCorrectly() {
-            RegistryKey<World> custom = RegistryKey.of(RegistryKeys.WORLD,
+            ResourceKey<Level> custom = ResourceKey.create(Registries.DIMENSION,
                 IdentifierCompat.create("my_mod", "my_cool_dimension"));
             ReturnData data = new ReturnData(custom, testPosition, testYaw, testPitch);
 
-            NbtCompound nbt = data.toNbt();
+            CompoundTag nbt = data.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals("my_mod:my_cool_dimension", NbtCompat.getString(nbt, "Dimension", ""));
-            assertEquals("my_mod", restored.dimension().getValue().getNamespace());
-            assertEquals("my_cool_dimension", restored.dimension().getValue().getPath());
+            assertEquals("my_mod", IdentifierCompat.fromKey(restored.dimension()).getNamespace());
+            assertEquals("my_cool_dimension", IdentifierCompat.fromKey(restored.dimension()).getPath());
         }
     }
 
@@ -270,7 +270,7 @@ class ReturnDataTest {
             BlockPos zero = new BlockPos(0, 0, 0);
             ReturnData original = new ReturnData(testDimension, zero, 0f, 0f);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(zero, restored.position());
@@ -284,7 +284,7 @@ class ReturnDataTest {
             BlockPos maxY = new BlockPos(0, 320, 0);
             ReturnData original = new ReturnData(testDimension, maxY, testYaw, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(320, restored.position().getY());
@@ -296,7 +296,7 @@ class ReturnDataTest {
             BlockPos minY = new BlockPos(0, -64, 0);
             ReturnData original = new ReturnData(testDimension, minY, testYaw, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(-64, restored.position().getY());
@@ -308,7 +308,7 @@ class ReturnDataTest {
             BlockPos large = new BlockPos(10_000_000, 100, -10_000_000);
             ReturnData original = new ReturnData(testDimension, large, testYaw, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(large, restored.position());
@@ -324,7 +324,7 @@ class ReturnDataTest {
         void negativeYaw_works() {
             ReturnData original = new ReturnData(testDimension, testPosition, -90.0f, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(-90.0f, restored.yaw(), 0.001f);
@@ -335,7 +335,7 @@ class ReturnDataTest {
         void yawBeyond360_works() {
             ReturnData original = new ReturnData(testDimension, testPosition, 450.0f, testPitch);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(450.0f, restored.yaw(), 0.001f);
@@ -346,7 +346,7 @@ class ReturnDataTest {
         void maxPitch_works() {
             ReturnData original = new ReturnData(testDimension, testPosition, testYaw, 90.0f);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(90.0f, restored.pitch(), 0.001f);
@@ -357,7 +357,7 @@ class ReturnDataTest {
         void minPitch_works() {
             ReturnData original = new ReturnData(testDimension, testPosition, testYaw, -90.0f);
 
-            NbtCompound nbt = original.toNbt();
+            CompoundTag nbt = original.toNbt();
             ReturnData restored = ReturnData.fromNbt(nbt);
 
             assertEquals(-90.0f, restored.pitch(), 0.001f);
@@ -390,7 +390,7 @@ class ReturnDataTest {
         @Test
         @DisplayName("Different dimension not equal")
         void equals_differentDimension_notEqual() {
-            RegistryKey<World> other = RegistryKey.of(RegistryKeys.WORLD, IdentifierCompat.create("minecraft", "the_nether"));
+            ResourceKey<Level> other = ResourceKey.create(Registries.DIMENSION, IdentifierCompat.create("minecraft", "the_nether"));
             ReturnData data1 = new ReturnData(testDimension, testPosition, testYaw, testPitch);
             ReturnData data2 = new ReturnData(other, testPosition, testYaw, testPitch);
 

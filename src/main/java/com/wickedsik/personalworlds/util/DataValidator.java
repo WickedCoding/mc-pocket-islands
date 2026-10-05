@@ -7,8 +7,8 @@ import com.wickedsik.personalworlds.dimension.WorldGenType;
 import com.wickedsik.personalworlds.player.InvitationData;
 import com.wickedsik.personalworlds.player.ReturnData;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -51,16 +51,16 @@ public final class DataValidator {
         return uuid != null;
     }
 
-    // --- Identifier Validation ---
+    // --- ResourceLocation Validation ---
 
     /**
      * Validate an identifier string.
      *
      * @param namespace The namespace
      * @param path The path
-     * @return Optional containing the Identifier, or empty if invalid
+     * @return Optional containing the ResourceLocation, or empty if invalid
      */
-    public static Optional<Identifier> validateIdentifier(String namespace, String path) {
+    public static Optional<ResourceLocation> validateIdentifier(String namespace, String path) {
         if (namespace == null || path == null) {
             return Optional.empty();
         }
@@ -188,7 +188,7 @@ public final class DataValidator {
         String name = (data.ownerName() != null && !data.ownerName().isEmpty())
             ? data.ownerName()
             : "Unknown";
-        Identifier dimId = data.dimensionId() != null
+        ResourceLocation dimId = data.dimensionId() != null
             ? data.dimensionId()
             : IdentifierCompat.modId("pw_" + uuid.toString().replace("-", ""));
         long createdAt = data.createdAt() > 0 ? data.createdAt() : System.currentTimeMillis();
@@ -218,9 +218,9 @@ public final class DataValidator {
         }
 
         // Check if dimension exists
-        if (server.getWorld(data.dimension()) == null) {
+        if (server.getLevel(data.dimension()) == null) {
             PersonalWorldsMod.LOGGER.debug("Return dimension {} no longer exists",
-                data.dimension().getValue());
+                IdentifierCompat.fromKey(data.dimension()));
             return false;
         }
 

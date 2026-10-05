@@ -1,15 +1,14 @@
 package com.wickedsik.personalworlds.dimension.cleanup;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
  * removed mods.
  *
  * Post-load, vanilla has already resolved unknown block IDs to air and dropped
- * unresolvable ItemStacks to {@link net.minecraft.item.ItemStack#EMPTY}. Two
+ * unresolvable ItemStacks to {@link net.minecraft.world.item.ItemStack#EMPTY}. Two
  * classes of orphan remain:
  *
  * 1. Block entities whose backing block state is air (mod block removed, BE
@@ -32,17 +31,19 @@ import java.util.List;
  *
  * The pure sanitization logic operates on a {@link Target} interface so it can
  * be tested without a Minecraft runtime. {@link #onChunkLoad} adapts a live
- * {@code ServerWorld}/{@code WorldChunk} pair to that interface and enforces
+ * {@code ServerLevel}/{@code LevelChunk} pair to that interface and enforces
  * pocket-dimension scoping via {@link PortalHelper#isInPersonalDimension}.
  */
 public final class ChunkSanitizer {
+
+    private static final PendingChunkQueue<ServerLevel> PENDING = new PendingChunkQueue<>();
 
     private ChunkSanitizer() {
     }
 
     /**
      * Abstract surface for the sanitizer's chunk operations. The production
-     * adapter wraps {@link WorldChunk} + {@link ServerWorld}; tests provide an
+     * adapter wraps {@link LevelChunk} + {@link ServerLevel}; tests provide an
      * in-memory fake.
      */
     public interface Target {
@@ -138,35 +139,51 @@ public final class ChunkSanitizer {
 
     /**
      * Fabric {@code ServerChunkEvents.CHUNK_LOAD} handler. Enforces
-     * pocket-dimension scoping and config flags, then defers the actual
-     * sanitize pass to the next server tick.
+     * pocket-dimension scoping and config flags, then queues the chunk for
+     * {@link #processPending}, which the server-tick handler calls.
      *
-     * The deferral is required to avoid a server-thread deadlock: running
-     * inline during the chunk-load callback is unsafe because if any block's
-     * {@code canPlaceAt}
-     * walks into an unloaded neighbour chunk, {@code getBlockState} recurses
-     * into {@code getChunkBlocking} while still inside the outer chunk-load
-     * task pump, and the watchdog eventually kills the thread. Posting the
-     * work with {@link MinecraftServer#execute} guarantees it runs outside
-     * that pump on a subsequent tick.
+     * Nothing may touch the world from here. The callback runs on the server
+     * thread inside the chunk-load task pump, before the chunk's load future
+     * completes. Looking the chunk up (or a neighbour, via {@code canSurvive})
+     * makes the thread wait for a load that can only finish after this
+     * callback returns, and the watchdog kills the server.
+     *
+     * {@link MinecraftServer#execute} does not help: on the server thread it
+     * runs the task immediately instead of queueing it.
      */
-    public static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
-        ModConfig config = ModConfig.get();
-        if (!config.sanitizeChunksOnLoad) {
+    public static void onChunkLoad(ServerLevel world, LevelChunk chunk) {
+        if (!ModConfig.get().sanitizeChunksOnLoad) {
             return;
         }
         if (!PortalHelper.isInPersonalDimension(world)) {
             return;
         }
 
-        MinecraftServer server = world.getServer();
-        if (server == null) {
+        PENDING.enqueue(world, chunk.getPos().toLong());
+    }
+
+    /**
+     * Sanitizes every chunk queued by {@link #onChunkLoad}. Call from the end
+     * of the server tick, outside any chunk-loading code.
+     */
+    public static void processPending() {
+        if (PENDING.isEmpty()) {
             return;
         }
+        boolean removeOrphans = ModConfig.get().sanitizeRemoveOrphanBlocks;
+        PENDING.drain((world, chunkPos) -> {
+            try {
+                runDeferredSanitize(world, new ChunkPos(chunkPos), removeOrphans);
+            } catch (RuntimeException e) {
+                PersonalWorldsMod.LOGGER.warn("Failed to sanitize chunk {} in {}",
+                    new ChunkPos(chunkPos), IdentifierCompat.fromKey(world.dimension()), e);
+            }
+        });
+    }
 
-        ChunkPos pos = chunk.getPos();
-        boolean removeOrphans = config.sanitizeRemoveOrphanBlocks;
-        server.execute(() -> runDeferredSanitize(world, pos, removeOrphans));
+    /** Drops queued work, e.g. on server stop. */
+    public static void clearPending() {
+        PENDING.clear();
     }
 
     /**
@@ -179,26 +196,26 @@ public final class ChunkSanitizer {
      * @param fullChunk          when true, sweeps the entire 16×16 chunk
      *                           footprint. Only pass true if all four
      *                           horizontally adjacent chunks are loaded —
-     *                           otherwise a border block's {@code canPlaceAt}
+     *                           otherwise a border block's {@code canSurvive}
      *                           may force a synchronous neighbour-chunk load
-     * @param removeOrphanBlocks whether to run the canPlaceAt sweep
+     * @param removeOrphanBlocks whether to run the canSurvive sweep
      * @return counts of what was removed
      */
     public static Result sanitizeLoadedChunk(
-        ServerWorld world,
-        WorldChunk chunk,
+        ServerLevel world,
+        LevelChunk chunk,
         boolean fullChunk,
         boolean removeOrphanBlocks
     ) {
         return sanitize(new WorldChunkTarget(world, chunk, !fullChunk), removeOrphanBlocks);
     }
 
-    private static void runDeferredSanitize(ServerWorld world, ChunkPos pos, boolean removeOrphans) {
-        // The chunk may have unloaded between the load event and this tick
-        // (player left, server flushed the ticket). Fetch without forcing a
-        // reload and bail if it's gone.
-        Chunk current = world.getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
-        if (!(current instanceof WorldChunk worldChunk)) {
+    private static void runDeferredSanitize(ServerLevel world, ChunkPos pos, boolean removeOrphans) {
+        // The chunk may have unloaded since the load event (player left,
+        // server flushed the ticket). getChunkNow never waits on a load:
+        // it returns null unless the chunk is fully loaded right now.
+        LevelChunk worldChunk = world.getChunkSource().getChunkNow(pos.x, pos.z);
+        if (worldChunk == null) {
             return;
         }
 
@@ -207,7 +224,7 @@ public final class ChunkSanitizer {
         if (result.anyRemoved()) {
             PersonalWorldsMod.LOGGER.info(
                 "Sanitized chunk {} in {}: removed {} orphan block entities, {} unsupported blocks, {} malformed items",
-                pos, world.getRegistryKey().getValue(),
+                pos, IdentifierCompat.fromKey(world.dimension()),
                 result.orphanBlockEntities(), result.orphanBlocks(), result.orphanItems()
             );
         }

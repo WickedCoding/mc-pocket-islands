@@ -1,6 +1,6 @@
 package com.wickedsik.personalworlds.player;
 
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 
 import java.util.UUID;
 
@@ -42,8 +42,8 @@ public record InvitationData(
      *
      * @return NBT compound containing invitation data
      */
-    public NbtCompound toNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public CompoundTag toNbt() {
+        CompoundTag nbt = new CompoundTag();
         com.wickedsik.personalworlds.compat.NbtCompat.putUuid(nbt, "OwnerUuid", ownerUuid);
         nbt.putString("OwnerName", ownerName);
         nbt.putLong("InvitedAt", invitedAt);
@@ -58,7 +58,7 @@ public record InvitationData(
      * @param nbt NBT compound containing invitation data
      * @return Deserialized InvitationData
      */
-    public static InvitationData fromNbt(NbtCompound nbt) {
+    public static InvitationData fromNbt(CompoundTag nbt) {
         // Backward compatible: default to false if field doesn't exist
         boolean alwaysWelcome = com.wickedsik.personalworlds.compat.NbtCompat.getBoolean(nbt, "AlwaysWelcome", false);
 

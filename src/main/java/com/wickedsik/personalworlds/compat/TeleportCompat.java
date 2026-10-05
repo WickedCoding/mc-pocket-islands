@@ -1,22 +1,22 @@
 package com.wickedsik.personalworlds.compat;
 
-//? if <1.21 {
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
-//?}
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.TeleportTarget;
+import com.wickedsik.personalworlds.platform.Platform;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.portal.PortalInfo;
 
 /**
  * Compatibility layer for cross-dimension teleportation.
  * <p>
- * MC 1.20.x uses: FabricDimensions.teleport(entity, world, TeleportTarget)
- * MC 1.21.x uses: Entity#teleportTo(TeleportTarget) - FabricDimensions was removed
+ * MC 1.20.x: PortalInfo holds position, velocity and rotation; the destination level is separate
+ * MC 1.21.x: PortalInfo also holds the destination level and a post-teleport callback
+ * <p>
+ * The teleport itself goes through {@link Platform#teleport()} (loader-specific on 1.20.x).
  * <p>
  * This class centralizes all cross-dimension teleportation to simplify version migration.
- * Works alongside TeleportHelper which constructs TeleportTarget instances.
+ * Works alongside TeleportHelper which constructs PortalInfo instances.
  */
 public final class TeleportCompat {
 
@@ -34,57 +34,56 @@ public final class TeleportCompat {
      * @param pitch       The target pitch (vertical rotation)
      */
     public static void teleport(
-            ServerPlayerEntity player,
-            ServerWorld targetWorld,
-            Vec3d position,
+            ServerPlayer player,
+            ServerLevel targetWorld,
+            Vec3 position,
             float yaw,
             float pitch
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
-        // TeleportTarget now contains the destination world
-        TeleportTarget target = new TeleportTarget(
+        /*// MC 1.21+: PortalInfo contains the destination world
+        PortalInfo target = new PortalInfo(
             targetWorld,
             position,
-            Vec3d.ZERO,
+            Vec3.ZERO,
             yaw,
             pitch,
-            TeleportTarget.NO_OP
+            PortalInfo.DO_NOTHING
         );
-        player.teleportTo(target);
+        Platform.get().teleport().teleport(player, targetWorld, target);
         *///?} else {
-        TeleportTarget target = new TeleportTarget(position, Vec3d.ZERO, yaw, pitch);
+        PortalInfo target = new PortalInfo(position, Vec3.ZERO, yaw, pitch);
         teleport(player, targetWorld, target);
         //?}
     }
 
     /**
-     * Teleport a player using a pre-constructed TeleportTarget.
+     * Teleport a player using a pre-constructed PortalInfo.
      * This method bridges TeleportHelper (which creates TeleportTargets) with the actual teleport call.
      *
      * @param player      The player to teleport
      * @param targetWorld The destination world
-     * @param target      The TeleportTarget with position, velocity, and rotation
+     * @param target      The PortalInfo with position, velocity, and rotation
      */
     public static void teleport(
-            ServerPlayerEntity player,
-            ServerWorld targetWorld,
-            TeleportTarget target
+            ServerPlayer player,
+            ServerLevel targetWorld,
+            PortalInfo target
     ) {
         //? if >=1.21 {
-        /*// MC 1.21+ uses Entity#teleportTo() - FabricDimensions.teleport() was removed
-        // TeleportTarget is now a record with method accessors instead of field access
-        TeleportTarget newTarget = new TeleportTarget(
+        /*// MC 1.21+: rebuild the target with the destination world.
+        // PortalInfo is now a record with method accessors instead of field access
+        PortalInfo newTarget = new PortalInfo(
             targetWorld,
             target.position(),
-            target.velocity(),
-            target.yaw(),
-            target.pitch(),
-            TeleportTarget.NO_OP
+            target.deltaMovement(),
+            target.yRot(),
+            target.xRot(),
+            PortalInfo.DO_NOTHING
         );
-        player.teleportTo(newTarget);
+        Platform.get().teleport().teleport(player, targetWorld, newTarget);
         *///?} else {
-        FabricDimensions.teleport(player, targetWorld, target);
+        Platform.get().teleport().teleport(player, targetWorld, target);
         //?}
     }
 
@@ -99,13 +98,13 @@ public final class TeleportCompat {
      * @param pitch       The target pitch
      */
     public static void teleportToBlock(
-            ServerPlayerEntity player,
-            ServerWorld targetWorld,
+            ServerPlayer player,
+            ServerLevel targetWorld,
             BlockPos blockPos,
             float yaw,
             float pitch
     ) {
-        Vec3d position = Vec3d.ofCenter(blockPos);
+        Vec3 position = Vec3.atCenterOf(blockPos);
         teleport(player, targetWorld, position, yaw, pitch);
     }
 
@@ -117,11 +116,11 @@ public final class TeleportCompat {
      * @param position    The target position
      */
     public static void teleportPreserveRotation(
-            ServerPlayerEntity player,
-            ServerWorld targetWorld,
-            Vec3d position
+            ServerPlayer player,
+            ServerLevel targetWorld,
+            Vec3 position
     ) {
-        teleport(player, targetWorld, position, player.getYaw(), player.getPitch());
+        teleport(player, targetWorld, position, player.getYRot(), player.getXRot());
     }
 
     /**
@@ -132,11 +131,11 @@ public final class TeleportCompat {
      * @param blockPos    The target block position
      */
     public static void teleportToBlockPreserveRotation(
-            ServerPlayerEntity player,
-            ServerWorld targetWorld,
+            ServerPlayer player,
+            ServerLevel targetWorld,
             BlockPos blockPos
     ) {
-        Vec3d position = Vec3d.ofCenter(blockPos);
+        Vec3 position = Vec3.atCenterOf(blockPos);
         teleportPreserveRotation(player, targetWorld, position);
     }
 }

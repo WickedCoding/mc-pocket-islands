@@ -1,8 +1,11 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. Uses Stonecutter to build all supported MC versions.
+# Build every Stonecutter node and run all test suites, for pull requests and pushes to main.
+# Other branches are covered by their pull request (triggering on both runs everything twice).
 
 name: build
-on: [pull_request, push]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
@@ -10,19 +13,20 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v5
 
       - name: Setup JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'microsoft'
 
+      # v5 on purpose: v6 moved caching into a proprietary, non-MIT component
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -32,8 +36,25 @@ jobs:
       - name: Run tests for all versions
         run: ./gradlew chiseledTest
 
+      - name: Run in-game tests for all versions
+        run: ./gradlew chiseledGameTest
+
+      - name: Run restart and world-reset harness for all versions
+        run: ./gradlew chiseledHarnessTest
+
+      - name: Capture in-game test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: In-Game-Test-Reports
+          path: |
+            versions/*/build/gametest/junit.xml
+            versions/*/build/gametest/logs/latest.log
+            versions/*/build/harness/harness-report.properties
+            versions/*/build/harness/logs/latest.log
+
       - name: Capture build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Build-Artifacts
           path: |
