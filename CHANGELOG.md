@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-09
+
 ### Added
 - `/pi unstuck`: a player command that gets you out of a pocket island and clears the pocket island data that decides where you end up (return position, island tracking, portal lock). It sends you to the spot you entered from, your bed, or world spawn. It only works while you are in a pocket island or such data is left over, so it is not a free teleport to spawn.
 
