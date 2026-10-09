@@ -278,6 +278,16 @@ which returns a `RuntimeDimension` handle (`level()`, `unload()`, `delete()`). O
 `platform/fabric/FantasyDimensions` implements it with Fantasy (`xyz.nucleoid:fantasy`)
 persistent worlds. Without Fantasy, Fabric API alone cannot create dimensions at runtime.
 
+Unloading is not instant, and a level reopened before it is gone must stay loaded: `open()` cancels a
+pending unload (Fantasy before 0.7 needs `platform/fabric/mixin/FantasyAccessor` for that; Infiniverse
+releases are queued and only marked at `HIGHEST` priority in the tick-end dispatch). Players can enter a
+level without `open()` (login, `/tp`), so `DimensionManager.reclaim` runs at login and every tick end,
+and evacuates through `CrashRecoveryHandler` when the level cannot be kept.
+
+Fabric's `ServerPlayConnectionEvents.JOIN` fires inside `PlayerList#placeNewPlayer`, before the player is
+in their level: a teleport there leaves a second copy in the login level. `FabricEvents.onPlayerJoin`
+runs handlers at the end of the tick instead, matching Forge/NeoForge `PlayerLoggedInEvent`.
+
 On Forge and NeoForge, `platform/<loader>/InfiniverseDimensions` uses Infiniverse. `unload()` and
 `delete()` call `markDimensionForUnregistration`; Infiniverse unregisters at the end of a later tick (players
 inside go to their respawn point, the level is saved and dropped from the `LevelStem` registry,
@@ -432,6 +442,8 @@ behaves like the real game through that path:
   mock connections are not ticked by the server, so `ClientInput` runs `doTick()` itself
 - 1.21.4+ ignores movement until `ServerboundPlayerLoadedPacket`
 - Pending teleports must be confirmed with the current id (read by reflection; dev only)
+- 1.21.9+ loads saved player data in the configuration phase (`PrepareSpawnTask`), so `MockPlayers.join`
+  does that itself; a rejoin then lands in the saved level like a real client
 
 Each GameTest run deletes `build/gametest/world` first. All tests in a batch share one server:
 scenarios use their own player names and `TestSupport.ensureConfigured()` pins config values.

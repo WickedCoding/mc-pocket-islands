@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.platform.fabric;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.platform.RuntimeDimension;
 import com.wickedsik.personalworlds.platform.RuntimeDimensions;
+import com.wickedsik.personalworlds.platform.fabric.mixin.FantasyAccessor;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -26,7 +27,17 @@ final class FantasyDimensions implements RuntimeDimensions {
 
         // Game rules are not set here: DimensionGameRules + mixins supply them on every loader
 
-        RuntimeWorldHandle handle = Fantasy.get(server).getOrOpenPersistentWorld(IdentifierCompat.fromKey(key), config);
+        Fantasy fantasy = Fantasy.get(server);
+
+        // A world unloaded moments ago stays registered until its chunks are gone, and
+        // getOrOpenPersistentWorld hands it back still queued for unloading (fixed in Fantasy 0.7):
+        // Fantasy would move every player in it to overworld spawn on the next tick
+        ServerLevel existing = server.getLevel(key);
+        if (existing != null) {
+            ((FantasyAccessor) (Object) fantasy).pocketislands$getUnloadingQueue().remove(existing);
+        }
+
+        RuntimeWorldHandle handle = fantasy.getOrOpenPersistentWorld(IdentifierCompat.fromKey(key), config);
         return new FantasyDimension(handle);
     }
 

@@ -4,6 +4,7 @@ import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.gametest.GameRuleScenarios;
 import com.wickedsik.personalworlds.gametest.InvitationScenarios;
 import com.wickedsik.personalworlds.gametest.PortalScenarios;
+import com.wickedsik.personalworlds.gametest.UnloadScenarios;
 import com.wickedsik.personalworlds.gametest.VoidScenarios;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -74,5 +75,20 @@ public class ForgeGameTests {
     @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
     public static void voidEjection(GameTestHelper helper) {
         VoidScenarios.fallingIntoVoidEjects(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public static void reenterWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.reenterWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public static void rejoinWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.rejoinWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public static void rejoinAfterUnload(GameTestHelper helper) {
+        UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
     }
 }

@@ -3,6 +3,7 @@ package com.wickedsik.personalworlds.gametest.platform.fabric;
 import com.wickedsik.personalworlds.gametest.GameRuleScenarios;
 import com.wickedsik.personalworlds.gametest.InvitationScenarios;
 import com.wickedsik.personalworlds.gametest.PortalScenarios;
+import com.wickedsik.personalworlds.gametest.UnloadScenarios;
 import com.wickedsik.personalworlds.gametest.VoidScenarios;
 //? if >=1.21.5 {
 /*import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -56,6 +57,21 @@ import net.minecraft.gametest.framework.GameTestHelper;
     public void voidEjection(GameTestHelper helper) {
         VoidScenarios.fallingIntoVoidEjects(helper);
     }
+
+    @GameTest(structure = ARENA, maxTicks = TIMEOUT)
+    public void reenterWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.reenterWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(structure = ARENA, maxTicks = TIMEOUT)
+    public void rejoinWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.rejoinWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(structure = ARENA, maxTicks = TIMEOUT)
+    public void rejoinAfterUnload(GameTestHelper helper) {
+        UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
+    }
 }
 *///?} else {
 public class FabricGameTests implements FabricGameTest {
@@ -96,6 +112,21 @@ public class FabricGameTests implements FabricGameTest {
     @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
     public void voidEjection(GameTestHelper helper) {
         VoidScenarios.fallingIntoVoidEjects(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public void reenterWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.reenterWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public void rejoinWhileUnloading(GameTestHelper helper) {
+        UnloadScenarios.rejoinWhileUnloadingKeepsPlayer(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public void rejoinAfterUnload(GameTestHelper helper) {
+        UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
     }
 }
 //?}

@@ -10,6 +10,13 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+//? if >=1.21 {
+/*import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+*///?}
 //? if >=1.20.2 {
 /*import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -33,7 +40,21 @@ public final class MockPlayers {
         UUID uuid = UUID.nameUUIDFromBytes(("pocketislands-test:" + name).getBytes(StandardCharsets.UTF_8));
         GameProfile profile = new GameProfile(uuid, name);
 
-        //? if >=1.20.2 {
+        //? if >=1.21 {
+        /*// 1.21.9+ loads saved data during configuration (PrepareSpawnTask), not in placeNewPlayer:
+        // build the player in their saved level the same way, or rejoins always land in the overworld
+        ValueInput saved = server.getPlayerList().loadPlayerData(new NameAndId(profile))
+            .map(tag -> TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), tag))
+            .orElse(null);
+        ServerPlayer.SavedPosition savedPosition = saved == null ? ServerPlayer.SavedPosition.EMPTY
+            : saved.read(ServerPlayer.SavedPosition.MAP_CODEC).orElse(ServerPlayer.SavedPosition.EMPTY);
+        ServerLevel level = savedPosition.dimension().map(server::getLevel).orElse(server.overworld());
+        ServerPlayer player = new ServerPlayer(server, level, profile, ClientInformation.createDefault());
+        if (saved != null) {
+            player.load(saved);
+        }
+        savedPosition.position().ifPresent(player::setPos);
+        *///?} else if >=1.20.2 {
         /*ServerPlayer player = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault());
         *///?} else {
         ServerPlayer player = new ServerPlayer(server, server.overworld(), profile);

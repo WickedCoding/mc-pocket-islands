@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Logging back in after your island had unloaded (more than 30 seconds after logging out on it) said "Restored connection to your pocket dimension" but left you half in the overworld: the server kept a second copy of you there, the island never finished loading for your client, and every relog repeated it. On Fabric the restore ran before the server had finished placing the joining player; it now runs once they are placed.
+- Players were sent to world spawn when they entered, left or logged back in to an island that had just been unloaded but was not gone yet. An island that is reopened while it unloads now stays loaded. Affected Fabric 1.20.1 and 1.20.4 (Fantasy before 0.7) and, for one tick, Forge 1.20.1.
+- A player found in an island that can no longer stay loaded is moved to their return position, bed or world spawn instead of being ejected by the dimension library.
+- "Restored connection to your pocket dimension" is only shown when the teleport back to the island succeeded.
+- Recovery teleports no longer use a bed that is inside a pocket island.
+
 ## [1.0.0] - 2026-10-05
 
 ### Added

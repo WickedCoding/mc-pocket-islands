@@ -11,7 +11,7 @@
   "entrypoints": {
     "main": ["com.wickedsik.personalworlds.platform.fabric.FabricEntrypoint"]
   },
-  "mixins": ["pocketislands.mixins.json"],
+  "mixins": ["pocketislands.mixins.json", "pocketislands.fabric.mixins.json"],
   "depends": {
     "fabricloader": ">=0.15.0",
     "minecraft": "~${minecraft_version}",

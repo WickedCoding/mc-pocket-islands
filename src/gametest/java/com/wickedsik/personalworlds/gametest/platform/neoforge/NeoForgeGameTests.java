@@ -5,6 +5,7 @@ import com.wickedsik.personalworlds.compat.IdentifierCompat;
 import com.wickedsik.personalworlds.gametest.GameRuleScenarios;
 import com.wickedsik.personalworlds.gametest.InvitationScenarios;
 import com.wickedsik.personalworlds.gametest.PortalScenarios;
+import com.wickedsik.personalworlds.gametest.UnloadScenarios;
 import com.wickedsik.personalworlds.gametest.VoidScenarios;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -50,6 +51,9 @@ public final class NeoForgeGameTests {
         TESTS.put("pocket_death_keeps_inventory", GameRuleScenarios::pocketDeathKeepsInventory);
         TESTS.put("overworld_death_drops_inventory", GameRuleScenarios::overworldDeathDropsInventory);
         TESTS.put("void_ejection", VoidScenarios::fallingIntoVoidEjects);
+        TESTS.put("reenter_while_unloading", UnloadScenarios::reenterWhileUnloadingKeepsPlayer);
+        TESTS.put("rejoin_while_unloading", UnloadScenarios::rejoinWhileUnloadingKeepsPlayer);
+        TESTS.put("rejoin_after_unload", UnloadScenarios::rejoinAfterUnloadReturnsToIsland);
 
         // NeoForge has no report switch; GameTestServer flushes the global reporter when it finishes
         String reportFile = System.getProperty("pocketislands.gametest.report-file");

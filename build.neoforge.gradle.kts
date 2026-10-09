@@ -138,7 +138,7 @@ tasks.processResources {
     }
 
     // NeoForge generates the mod's pack metadata; the shared pack.mcmeta has the 1.20.1 format
-    exclude("fabric.mod.json", "META-INF/mods.toml", "pack.mcmeta")
+    exclude("fabric.mod.json", "pocketislands.fabric.mixins.json", "META-INF/mods.toml", "pack.mcmeta")
 }
 
 tasks.named("createMinecraftArtifacts") {

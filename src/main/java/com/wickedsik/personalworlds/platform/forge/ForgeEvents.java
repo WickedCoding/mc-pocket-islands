@@ -89,6 +89,10 @@ final class ForgeEvents implements PlatformEvents {
     }
 
     static <E extends Event> void listen(Class<E> type, Consumer<E> listener) {
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, type, listener);
+        listen(EventPriority.NORMAL, type, listener);
+    }
+
+    static <E extends Event> void listen(EventPriority priority, Class<E> type, Consumer<E> listener) {
+        MinecraftForge.EVENT_BUS.addListener(priority, false, type, listener);
     }
 }

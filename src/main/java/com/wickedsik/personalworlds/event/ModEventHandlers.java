@@ -28,6 +28,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
+import java.util.Optional;
+import java.util.UUID;
+
 public class ModEventHandlers {
 
     private static int tickCounter = 0;
@@ -84,6 +87,9 @@ public class ModEventHandlers {
     }
 
     private static void onServerTick(MinecraftServer server) {
+        // Before the next tick's unload processing can eject anyone
+        reclaimOccupiedDimensions(server);
+
         // Check void falling every tick (safety critical)
         checkVoidFalling(server);
 
@@ -105,6 +111,22 @@ public class ModEventHandlers {
         if (guardCleanupCounter >= GUARD_CLEANUP_INTERVAL) {
             guardCleanupCounter = 0;
             ConcurrentPortalGuard.cleanup();
+        }
+    }
+
+    /**
+     * Keep pocket dimensions loaded while players are inside, however they got there.
+     * A dimension that cannot be kept (already gone) has its players evacuated instead.
+     */
+    private static void reclaimOccupiedDimensions(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            ServerLevel world = EntityCompat.getServerWorld(player);
+            Optional<UUID> owner = PortalHelper.getDimensionOwner(world);
+            if (owner.isPresent() && !DimensionManager.reclaim(server, owner.get(), world)) {
+                PersonalWorldsMod.LOGGER.warn("Player {} is in pocket dimension {} that cannot be kept loaded, evacuating",
+                    player.getName().getString(), owner.get());
+                CrashRecoveryHandler.evacuate(player);
+            }
         }
     }
 

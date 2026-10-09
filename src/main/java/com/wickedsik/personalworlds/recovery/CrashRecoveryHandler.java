@@ -116,6 +116,14 @@ public class CrashRecoveryHandler {
             return;
         }
 
+        // Vanilla put them back in a level that may be unloading since they logged out
+        if (!DimensionManager.reclaim(server, ownerUuid, personalWorld)) {
+            PersonalWorldsMod.LOGGER.warn("Player {} logged in to pocket dimension {} that cannot be kept loaded, evacuating",
+                player.getName().getString(), ownerUuid);
+            evacuate(player);
+            return;
+        }
+
         // Player has permission - ensure tracking is up to date
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         dataManager.setCurrentPocketDimension(playerUuid, personalWorld.dimension());
@@ -197,6 +205,10 @@ public class CrashRecoveryHandler {
 
             TeleportCompat.teleportToBlockPreserveRotation(player, targetWorld, safePos);
 
+            if (EntityCompat.getServerWorld(player) != targetWorld) {
+                throw new RuntimeException("Teleport did not reach " + IdentifierCompat.fromKey(targetWorld.dimension()));
+            }
+
             PersonalWorldsMod.LOGGER.info("Restored player {} to pocket dimension after fallback spawn",
                 player.getName().getString());
             player.displayClientMessage(Component.translatable("pocketislands.message.dimension_restored"), false);
@@ -231,7 +243,7 @@ public class CrashRecoveryHandler {
     /**
      * Teleport player to their fallback position using the recovery chain:
      * 1. Return Data (where they entered from)
-     * 2. Bed Spawn
+     * 2. Bed Spawn (unless it is in a pocket dimension)
      * 3. World Spawn (always available)
      *
      * @param player The player to teleport
@@ -272,7 +284,8 @@ public class CrashRecoveryHandler {
         BlockPos bedPos = com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointPosition(player);
         if (bedPos != null) {
             ServerLevel bedWorld = server.getLevel(com.wickedsik.personalworlds.compat.EntityCompat.getSpawnPointDimension(player));
-            if (bedWorld != null) {
+            // A bed on an island would send them straight back into a pocket dimension
+            if (bedWorld != null && !PortalHelper.isInPersonalDimension(bedWorld)) {
                 BlockPos safePos = SafeSpawnFinder.findSafePosition(bedWorld, bedPos);
                 targetPos = Vec3.atCenterOf(safePos);
                 teleportPlayer(player, bedWorld, targetPos, yaw, pitch);
@@ -302,11 +315,17 @@ public class CrashRecoveryHandler {
     }
 
     /**
-     * Evacuate player to their stored return position, or overworld spawn as fallback.
-     * Used when player is in a dimension but loses permission.
+     * Move a player out of a pocket dimension that cannot stay loaded, through the
+     * fallback chain, and clear their pocket tracking.
      */
-    private static void evacuateToReturnPosition(ServerPlayer player, MinecraftServer server) {
+    public static void evacuate(ServerPlayer player) {
+        MinecraftServer server = EntityCompat.getServer(player);
+        if (server == null) return;
+
         PlayerDataManager dataManager = PlayerDataManager.get(server);
+        dataManager.clearCurrentPocketDimension(player.getUUID());
+        player.displayClientMessage(Component.translatable("pocketislands.message.island_unloading")
+            .withStyle(ChatFormatting.GOLD), false);
         teleportToFallbackPosition(player, server, dataManager);
     }
 

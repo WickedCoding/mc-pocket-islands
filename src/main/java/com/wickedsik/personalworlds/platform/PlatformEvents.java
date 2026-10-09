@@ -29,6 +29,7 @@ public interface PlatformEvents {
     /** At the end of every server tick. */
     void onServerTickEnd(Consumer<MinecraftServer> handler);
 
+    /** After a joining player is placed in their level and the player list, so handlers may teleport them. */
     void onPlayerJoin(Consumer<ServerPlayer> handler);
 
     void onPlayerDisconnect(Consumer<ServerPlayer> handler);

@@ -30,6 +30,7 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class DimensionManager {
@@ -132,6 +133,42 @@ public class DimensionManager {
 
         PersonalWorldsMod.LOGGER.debug("Restored dimension: {} with portal type {}",
             data.dimensionId(), data.portalTypeIndex());
+    }
+
+    /**
+     * Keep a pocket level loaded for a player found inside it.
+     * <p>
+     * Players can reach a pocket level without {@link #getOrCreatePlayerDimension}: vanilla puts
+     * a joining player back in the level they logged out in, and {@code /tp} works too. If the
+     * level was released for unloading, the runtime dimension would eject them. Reopening it
+     * cancels the release.
+     *
+     * @param server The Minecraft server
+     * @param ownerUuid The owner of the pocket level
+     * @param level The level the player is in
+     * @return false if the level cannot be kept: it is no longer registered, or the owner has no
+     *         registry entry. The caller must move the player out
+     */
+    public static boolean reclaim(MinecraftServer server, UUID ownerUuid, ServerLevel level) {
+        RuntimeDimension active = activeHandles.get(ownerUuid);
+        if (active != null && active.level() == level) {
+            return true;
+        }
+
+        Optional<PlayerDimensionData> data = DimensionRegistry.get(server).getDimensionData(ownerUuid);
+        if (data.isEmpty() || server.getLevel(level.dimension()) != level) {
+            return false;
+        }
+
+        PlayerDimensionData dimension = data.get();
+        ServerLevel reopened = getOrCreatePlayerDimension(server, ownerUuid, dimension.ownerName(),
+            dimension.generatorType(), dimension.portalTypeIndex());
+        if (reopened != level) {
+            return false;
+        }
+
+        PersonalWorldsMod.LOGGER.info("Reclaimed pocket dimension {} while it was unloading", ownerUuid);
+        return true;
     }
 
     /**

@@ -166,7 +166,7 @@ tasks.processResources {
         filter { line -> line.replace("\"required\": true,", "\"required\": true,\n  \"refmap\": \"pocketislands.refmap.json\",") }
     }
 
-    exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
+    exclude("fabric.mod.json", "pocketislands.fabric.mixins.json", "META-INF/neoforge.mods.toml")
 }
 
 tasks.named("createMinecraftArtifacts") {

@@ -16,6 +16,7 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -32,22 +33,39 @@ import java.util.Map;
  * close the level, and the server no longer knows it, so this class closes it once it
  * is gone, and deletes the folder afterwards when asked to. Infiniverse has no delete.
  * <p>
+ * Infiniverse cannot take a mark back, and {@code getOrCreateLevel} hands out a marked level
+ * as if nothing happened. So releases wait in {@code requested} and are only marked at the
+ * start of the tick-end dispatch, before Infiniverse unregisters in the same dispatch: no
+ * player can enter in between. {@link #open} withdraws a request that is still waiting, and
+ * a level with players inside is never marked.
+ * <p>
  * Levels are built with the overworld seed and {@code DerivedLevelData}; the spec's
  * seed is not used, and day time follows the overworld.
  */
 final class InfiniverseDimensions implements RuntimeDimensions {
 
+    // Releases not yet passed to Infiniverse; open() withdraws them
+    private final Map<ResourceKey<Level>, Release> requested = new LinkedHashMap<>();
     // Levels marked for unregistration, waiting to be closed (and maybe deleted)
     private final Map<ResourceKey<Level>, Release> pending = new LinkedHashMap<>();
 
     InfiniverseDimensions() {
+        // Infiniverse unregisters at NORMAL priority, so HIGHEST marks within the same dispatch
+        ForgeEvents.listen(EventPriority.HIGHEST, TickEvent.ServerTickEvent.class, event -> {
+            if (event.phase == TickEvent.Phase.END && !requested.isEmpty()) {
+                markRequested();
+            }
+        });
         ForgeEvents.listen(TickEvent.ServerTickEvent.class, event -> {
             if (event.phase == TickEvent.Phase.END && !pending.isEmpty()) {
                 processPending(event.getServer());
             }
         });
         // Levels still registered at shutdown are closed by the server and stay in level.dat
-        ForgeEvents.listen(ServerStoppedEvent.class, event -> pending.clear());
+        ForgeEvents.listen(ServerStoppedEvent.class, event -> {
+            requested.clear();
+            pending.clear();
+        });
     }
 
     @Override
@@ -56,15 +74,30 @@ final class InfiniverseDimensions implements RuntimeDimensions {
             .registryOrThrow(Registries.DIMENSION_TYPE)
             .getHolderOrThrow(spec.dimensionType());
 
+        // Reopened before the mark: keep the level registered
+        requested.remove(key);
+
         ServerLevel level = InfiniverseAPI.get().getOrCreateLevel(server, key,
             () -> new LevelStem(dimensionType, spec.generator()));
         return new InfiniverseDimension(server, key, level);
     }
 
     private void release(MinecraftServer server, ResourceKey<Level> key, ServerLevel level, boolean deleteFolder) {
-        InfiniverseAPI.get().markDimensionForUnregistration(server, key);
-        pending.merge(key, new Release(level, deleteFolder),
-            (previous, next) -> new Release(previous.level(), previous.deleteFolder() || next.deleteFolder()));
+        requested.merge(key, new Release(server, level, deleteFolder), Release::merge);
+    }
+
+    private void markRequested() {
+        Iterator<Map.Entry<ResourceKey<Level>, Release>> iterator = requested.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ResourceKey<Level>, Release> entry = iterator.next();
+            Release release = entry.getValue();
+            if (!release.level().players().isEmpty()) {
+                continue; // someone got in without open(); DimensionManager reclaims the level
+            }
+            iterator.remove();
+            InfiniverseAPI.get().markDimensionForUnregistration(release.server(), entry.getKey());
+            pending.merge(entry.getKey(), release, Release::merge);
+        }
     }
 
     private void processPending(MinecraftServer server) {
@@ -105,7 +138,11 @@ final class InfiniverseDimensions implements RuntimeDimensions {
         }
     }
 
-    private record Release(ServerLevel level, boolean deleteFolder) {
+    private record Release(MinecraftServer server, ServerLevel level, boolean deleteFolder) {
+
+        Release merge(Release next) {
+            return new Release(server, level, deleteFolder || next.deleteFolder());
+        }
     }
 
     private final class InfiniverseDimension implements RuntimeDimension {
