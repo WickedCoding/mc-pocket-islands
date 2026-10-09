@@ -11,6 +11,7 @@ import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.portal.PortalColor;
+import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
 import net.minecraft.world.level.block.Block;
@@ -38,6 +39,7 @@ import java.util.Optional;
  * - /pi uninvite <player> - Revoke an invitation
  * - /pi invites - Show your invitations
  * - /pi portals - Show all portal types and your island status
+ * - /pi unstuck - Leave a pocket island and clear lingering position data
  */
 public class PlayerCommandExecutor {
 
@@ -131,6 +133,21 @@ public class PlayerCommandExecutor {
     public CommandResult showInvitations(ServerPlayer player) {
         InvitationManager.showInvitations(player);
         return CommandResult.silent();
+    }
+
+    /**
+     * Move the player to their return position (or bed, or world spawn) and clear the
+     * pocket data that decides where they end up: return position, pocket tracking and
+     * portal locks.
+     *
+     * @param player The player who is stuck
+     * @return Command result
+     */
+    public CommandResult unstuck(ServerPlayer player) {
+        if (!CrashRecoveryHandler.unstuck(player)) {
+            return CommandResult.error(Component.translatable("pocketislands.command.unstuck.nothing"));
+        }
+        return CommandResult.success(Component.translatable("pocketislands.command.unstuck.done"));
     }
 
     /**

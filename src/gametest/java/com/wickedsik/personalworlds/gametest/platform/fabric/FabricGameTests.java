@@ -72,6 +72,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
     public void rejoinAfterUnload(GameTestHelper helper) {
         UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
     }
+
+    @GameTest(structure = ARENA, maxTicks = TIMEOUT)
+    public void unstuck(GameTestHelper helper) {
+        UnloadScenarios.unstuckLeavesPocketAndClearsData(helper);
+    }
 }
 *///?} else {
 public class FabricGameTests implements FabricGameTest {
@@ -127,6 +132,11 @@ public class FabricGameTests implements FabricGameTest {
     @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
     public void rejoinAfterUnload(GameTestHelper helper) {
         UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public void unstuck(GameTestHelper helper) {
+        UnloadScenarios.unstuckLeavesPocketAndClearsData(helper);
     }
 }
 //?}

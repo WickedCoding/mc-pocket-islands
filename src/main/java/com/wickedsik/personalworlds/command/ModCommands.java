@@ -22,8 +22,8 @@ import net.minecraft.network.chat.Component;
  * Command registration and delegation for Pocket Islands.
  *
  * This class registers all /pi commands and delegates execution to specialized executors:
- * - {@link DevCommandExecutor} - create, enter, leave (OP 2)
- * - {@link PlayerCommandExecutor} - invite, uninvite, invites, portals (no permission)
+ * - {@link DevCommandExecutor} - create, enter (OP 2), leave (no permission)
+ * - {@link PlayerCommandExecutor} - invite, uninvite, invites, portals, unstuck (no permission)
  * - {@link AdminCommandExecutor} - list, info, delete, tp, reload, sanitize (configurable permission)
  * - {@link DebugCommandExecutor} - perf commands (OP 4)
  */
@@ -74,7 +74,8 @@ public class ModCommands {
                 )
 
                 .then(Commands.literal("leave")
-                    .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
+                    // `/pi leave` does not require permission to prevent getting stuck
+                    // .requires(PermissionHelper.require(PermissionHelper.PLAYER_CREATE, 2))
                     .executes(ctx -> handleLeave(ctx.getSource()))
                 )
 
@@ -99,6 +100,10 @@ public class ModCommands {
 
                 .then(Commands.literal("portals")
                     .executes(ctx -> handlePortals(ctx.getSource()))
+                )
+
+                .then(Commands.literal("unstuck")
+                    .executes(ctx -> handleUnstuck(ctx.getSource()))
                 )
 
                 // === Admin Commands ===
@@ -301,6 +306,14 @@ public class ModCommands {
         }
         playerExecutor.showPortals(player, source);
         return CommandResult.SUCCESS;
+    }
+
+    private static int handleUnstuck(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("pocketislands.command.error.must_be_player"));
+            return CommandResult.FAILURE;
+        }
+        return playerExecutor.unstuck(player).applyTo(source);
     }
 
     private static int handleAdminList(CommandSourceStack source) {

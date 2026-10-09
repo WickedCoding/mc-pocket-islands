@@ -120,6 +120,8 @@ your original location.
 - `/pi uninvite <player>` - Revoke a player's invitation
 - `/pi togglewelcome <player>` - Toggle Always Welcome for an existing invitation (if enabled)
 - `/pi portals` - View all configured portal types and your island status
+- `/pi leave` - Teleport to the spot you entered your pocket island from (your bed or world spawn if there is none). Works from anywhere
+- `/pi unstuck` - Leave a pocket island you are stuck in, or clear pocket island data left over after a failed teleport. Sends you to the spot you entered from, your bed, or world spawn. Does nothing when you are already on solid ground
 
 **Admin commands (op level 2+):**
 

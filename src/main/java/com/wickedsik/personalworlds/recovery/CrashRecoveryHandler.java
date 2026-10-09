@@ -11,6 +11,7 @@ import com.wickedsik.personalworlds.dimension.PlayerDimensionData;
 import com.wickedsik.personalworlds.player.InvitationManager;
 import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.player.ReturnData;
+import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import com.wickedsik.personalworlds.util.SafeSpawnFinder;
 import net.minecraft.resources.ResourceKey;
@@ -327,6 +328,40 @@ public class CrashRecoveryHandler {
         player.displayClientMessage(Component.translatable("pocketislands.message.island_unloading")
             .withStyle(ChatFormatting.GOLD), false);
         teleportToFallbackPosition(player, server, dataManager);
+    }
+
+    /**
+     * Get a player unstuck for /pi unstuck: release their portal lock, clear their
+     * pocket tracking and send them through the fallback chain (return position, bed, spawn).
+     * <p>
+     * Only teleports while the player is in a pocket dimension or has pocket data left over;
+     * otherwise the command would be a free teleport to spawn.
+     *
+     * @param player The player who is stuck
+     * @return false if there was nothing to do
+     */
+    public static boolean unstuck(ServerPlayer player) {
+        MinecraftServer server = EntityCompat.getServer(player);
+        if (server == null) return false;
+
+        UUID playerUuid = player.getUUID();
+        PlayerDataManager dataManager = PlayerDataManager.get(server);
+        ConcurrentPortalGuard.forceRelease(playerUuid);
+
+        boolean inPocket = PortalHelper.isInPersonalDimension(EntityCompat.getServerWorld(player));
+        boolean lingering = dataManager.hasReturnData(playerUuid) || dataManager.isInPocketDimension(playerUuid);
+        if (!inPocket && !lingering) {
+            return false;
+        }
+
+        dataManager.clearCurrentPocketDimension(playerUuid);
+        teleportToFallbackPosition(player, server, dataManager);
+        // The chain skips return data that points at a missing dimension; never keep it
+        dataManager.clearReturnData(playerUuid);
+
+        PersonalWorldsMod.LOGGER.info("Player {} used /pi unstuck (was in pocket: {})",
+            player.getName().getString(), inPocket);
+        return true;
     }
 
     /**

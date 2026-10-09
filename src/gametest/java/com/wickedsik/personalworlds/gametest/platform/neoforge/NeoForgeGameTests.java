@@ -54,6 +54,7 @@ public final class NeoForgeGameTests {
         TESTS.put("reenter_while_unloading", UnloadScenarios::reenterWhileUnloadingKeepsPlayer);
         TESTS.put("rejoin_while_unloading", UnloadScenarios::rejoinWhileUnloadingKeepsPlayer);
         TESTS.put("rejoin_after_unload", UnloadScenarios::rejoinAfterUnloadReturnsToIsland);
+        TESTS.put("unstuck", UnloadScenarios::unstuckLeavesPocketAndClearsData);
 
         // NeoForge has no report switch; GameTestServer flushes the global reporter when it finishes
         String reportFile = System.getProperty("pocketislands.gametest.report-file");

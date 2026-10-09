@@ -91,4 +91,9 @@ public class ForgeGameTests {
     public static void rejoinAfterUnload(GameTestHelper helper) {
         UnloadScenarios.rejoinAfterUnloadReturnsToIsland(helper);
     }
+
+    @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
+    public static void unstuck(GameTestHelper helper) {
+        UnloadScenarios.unstuckLeavesPocketAndClearsData(helper);
+    }
 }

@@ -79,6 +79,8 @@
   "pocketislands.command.invited_always_welcome": "Invited %s to your island (Always Welcome)",
   "pocketislands.command.toggle_welcome_on": "%s is now Always Welcome on your island",
   "pocketislands.command.toggle_welcome_off": "%s now requires you to be home to visit",
+  "pocketislands.command.unstuck.done": "You have been put back on solid ground.",
+  "pocketislands.command.unstuck.nothing": "You are already on solid ground.",
   "pocketislands.command.error.not_invited_by_you": "%s has not been invited by you",
   "pocketislands.invitations.sent.toggle_on_tooltip": "Click to enable Always Welcome",
   "pocketislands.invitations.sent.toggle_off_tooltip": "Click to disable Always Welcome",

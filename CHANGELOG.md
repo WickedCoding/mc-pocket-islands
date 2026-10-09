@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `/pi unstuck`: a player command that gets you out of a pocket island and clears the pocket island data that decides where you end up (return position, island tracking, portal lock). It sends you to the spot you entered from, your bed, or world spawn. It only works while you are in a pocket island or such data is left over, so it is not a free teleport to spawn.
+
+### Changed
+- `/pi leave` no longer requires a permission, so every player can use it. It teleports you to the spot you entered your pocket island from, or to your bed or world spawn if there is none, from anywhere.
+
 ### Fixed
 - Logging back in after your island had unloaded (more than 30 seconds after logging out on it) said "Restored connection to your pocket dimension" but left you half in the overworld: the server kept a second copy of you there, the island never finished loading for your client, and every relog repeated it. On Fabric the restore ran before the server had finished placing the joining player; it now runs once they are placed.
 - Players were sent to world spawn when they entered, left or logged back in to an island that had just been unloaded but was not gone yet. An island that is reopened while it unloads now stays loaded. Affected Fabric 1.20.1 and 1.20.4 (Fantasy before 0.7) and, for one tick, Forge 1.20.1.

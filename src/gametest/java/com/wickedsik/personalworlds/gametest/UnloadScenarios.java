@@ -1,7 +1,9 @@
 package com.wickedsik.personalworlds.gametest;
 
 import com.wickedsik.personalworlds.dimension.DimensionManager;
+import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.portal.PortalHelper;
+import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -12,7 +14,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An island that was just released for unloading must not eject a player who comes back
- * before it is gone, and a player who returns after it is gone must land on it exactly once.
+ * before it is gone, a player who returns after it is gone must land on it exactly once, and
+ * /pi unstuck must get a player out and clear their data.
  */
 public final class UnloadScenarios {
 
@@ -87,6 +90,26 @@ public final class UnloadScenarios {
                 helper.assertTrue(server.overworld().getEntity(player.getUUID()) == null, "restore left a copy of the player in the overworld");
             })
             .thenExecute(() -> MockPlayers.leave(owner.get()))
+            .thenSucceed();
+    }
+
+    public static void unstuckLeavesPocketAndClearsData(GameTestHelper helper) {
+        TestSupport.ensureConfigured();
+        MinecraftServer server = helper.getLevel().getServer();
+        ServerPlayer owner = MockPlayers.join(server, "Unstuck");
+        PlayerDataManager data = PlayerDataManager.get(server);
+
+        helper.startSequence()
+            .thenExecute(() -> helper.assertTrue(PortalHelper.teleportToDimension(owner, server, owner.getUUID()), "teleportToDimension failed"))
+            .thenWaitUntil(() -> helper.assertTrue(TestSupport.inPocketOf(owner, owner), "owner did not arrive on their island"))
+            .thenExecute(() -> {
+                helper.assertTrue(CrashRecoveryHandler.unstuck(owner), "unstuck reported nothing to do on the island");
+                helper.assertTrue(!TestSupport.inPocket(owner), "unstuck left the player in a pocket dimension");
+                helper.assertTrue(!data.hasReturnData(owner.getUUID()), "unstuck kept the return position");
+                helper.assertTrue(!data.isInPocketDimension(owner.getUUID()), "unstuck kept the pocket tracking");
+                helper.assertTrue(!CrashRecoveryHandler.unstuck(owner), "second unstuck did not report nothing to do");
+            })
+            .thenExecute(() -> MockPlayers.leave(owner))
             .thenSucceed();
     }
 }
