@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "1.15.3"
+    id("dev.kikugie.loom-back-compat")
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
     id("pocketislands-harness")
@@ -189,7 +189,7 @@ modrinth {
     projectId.set("pocket-islands")
     versionNumber.set("${property("mod_version")}+${property("minecraft_version")}")
     versionType.set("release")
-    uploadFile.set(tasks.remapJar)
+    uploadFile.set(loomx.modJar)
 
     // Game version from Stonecutter context
     gameVersions.add(property("minecraft_version") as String)
@@ -214,7 +214,7 @@ modrinth {
 }
 
 tasks.modrinth {
-    dependsOn(tasks.remapJar)
+    dependsOn(loomx.modJar)
 }
 
 // Each GameTest run starts from an empty world: islands from a previous run would be
