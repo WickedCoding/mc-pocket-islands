@@ -40,6 +40,9 @@ multi-loader support from a single codebase. Each Stonecutter node is `<mc>-<loa
 # Run Minecraft client with the mod loaded (uses active node)
 ./gradlew runClient
 
+# Run a second client as Dev2 (own game directory run/client2), e.g. to test invitations
+./gradlew :26.3-fabric:runClient2
+
 # Run Minecraft server with the mod loaded
 ./gradlew runServer
 
@@ -419,8 +422,10 @@ pocket tracking) and `world/data/personalworlds_portal_ownership.dat`.
 
 ### Local Testing
 
-Run the Minecraft server with `./gradlew runServer` and multiple clients with
-`./gradlew runClient`. Test:
+Run the Minecraft server with `./gradlew runServer`, the first client with
+`./gradlew runClient` (player `Dev`) and a second client with `./gradlew runClient2`
+(player `Dev2`, game directory `run/client2`). Every node has both runs; the fixed names
+keep each player's offline UUID, and so their island, the same across launches. Test:
 
 1. First portal entry creates dimension
 2. Dimension persists after server restart (`stop` command, then `./gradlew runServer`)
