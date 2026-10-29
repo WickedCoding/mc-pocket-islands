@@ -1,6 +1,7 @@
 package com.wickedsik.personalworlds.portal;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
+import com.wickedsik.personalworlds.compat.EntityCompat;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -104,9 +105,9 @@ public class PersonalPortalBlock extends Block {
 
         // Prevent mounted players from entering portals
         if (player.isPassenger()) {
-            player.displayClientMessage(
-                Component.translatable("pocketislands.portal.dismount_required"),
-                true  // Action bar message (less intrusive)
+            EntityCompat.sendOverlay(
+                player,
+                Component.translatable("pocketislands.portal.dismount_required")
             );
             return;
         }

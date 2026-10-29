@@ -245,8 +245,8 @@ public class AdminCommandExecutor {
                 List<ServerPlayer> playersToEject = new ArrayList<>(dimWorld.players());
                 for (ServerPlayer player : playersToEject) {
                     TeleportCompat.teleport(player, overworld, TeleportHelper.toWorldSpawn(overworld, player));
-                    player.displayClientMessage(Component.translatable("pocketislands.message.admin_ejected")
-                        .withStyle(ChatFormatting.RED), false);
+                    EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.admin_ejected")
+                        .withStyle(ChatFormatting.RED));
                 }
             }
         }

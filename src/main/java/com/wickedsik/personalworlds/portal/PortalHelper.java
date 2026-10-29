@@ -223,7 +223,7 @@ public class PortalHelper {
                 case ALLOWED -> Component.empty(); // Should never happen
             };
 
-            player.displayClientMessage(denialMessage.copy().withStyle(ChatFormatting.RED), false);
+            EntityCompat.sendMessage(player, denialMessage.copy().withStyle(ChatFormatting.RED));
             PersonalWorldsMod.LOGGER.debug("{} denied entry to {}'s portal at {} (reason: {})",
                 player.getName().getString(), ownerName, portalPos, denialReason);
         }
@@ -271,12 +271,12 @@ public class PortalHelper {
             // This means the dimension was deleted - don't recreate it!
             PortalOwnershipManager ownershipManager = PortalOwnershipManager.get(server);
             String deletedOwnerName = ownershipManager.getOwnerName(server, ownerUuid);
-            player.displayClientMessage(
+            EntityCompat.sendMessage(
+                player,
                 Component.literal("This portal's dimension no longer exists. ")
                     .append(Component.literal(deletedOwnerName).withStyle(ChatFormatting.YELLOW))
                     .append("'s world was deleted.")
-                    .withStyle(ChatFormatting.RED),
-                false
+                    .withStyle(ChatFormatting.RED)
             );
             PersonalWorldsMod.LOGGER.info("Player {} tried to enter deleted dimension of {}",
                 player.getName().getString(), deletedOwnerName);
@@ -323,13 +323,13 @@ public class PortalHelper {
 
         // Send appropriate message
         if (isOwnDimension) {
-            player.displayClientMessage(Component.literal("Welcome to your pocket island!"), true);
+            EntityCompat.sendOverlay(player, Component.literal("Welcome to your pocket island!"));
             PersonalWorldsMod.LOGGER.info("Player {} entered their personal dimension",
                 player.getName().getString());
         } else {
-            player.displayClientMessage(Component.literal("Entering ")
+            EntityCompat.sendOverlay(player, Component.literal("Entering ")
                 .append(Component.literal(ownerName).withStyle(ChatFormatting.YELLOW))
-                .append("'s island"), true);
+                .append("'s island"));
             PersonalWorldsMod.LOGGER.info("Player {} entered {}'s personal dimension",
                 player.getName().getString(), ownerName);
         }
@@ -433,7 +433,7 @@ public class PortalHelper {
         // Play arrival effects
         VisualEffects.playTeleportArrivalEffects(player);
 
-        player.displayClientMessage(Component.literal("Returned to the overworld"), true);
+        EntityCompat.sendOverlay(player, Component.literal("Returned to the overworld"));
         PersonalWorldsMod.LOGGER.info("Player {} left personal dimension", player.getName().getString());
     }
 
@@ -455,7 +455,7 @@ public class PortalHelper {
             String dimPath = IdentifierCompat.fromKey(currentWorld.dimension()).getPath();
             String targetPath = "pw_" + ownerUuid.toString();
             if (dimPath.equals(targetPath)) {
-                player.displayClientMessage(Component.literal("You are already in this dimension!").withStyle(ChatFormatting.RED), false);
+                EntityCompat.sendMessage(player, Component.literal("You are already in this dimension!").withStyle(ChatFormatting.RED));
                 return false;
             }
         }

@@ -152,9 +152,9 @@ public class ModEventHandlers {
                 PortalHelper.teleportToReturnPosition(player, server);
 
                 // Notify player
-                player.displayClientMessage(
-                    Component.translatable("pocketislands.void_ejection"),
-                    false
+                EntityCompat.sendMessage(
+                    player,
+                    Component.translatable("pocketislands.void_ejection")
                 );
 
                 PersonalWorldsMod.LOGGER.info("Player {} fell off island and was ejected at Y={}",

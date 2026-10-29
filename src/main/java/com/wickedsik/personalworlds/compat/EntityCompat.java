@@ -1,11 +1,13 @@
 package com.wickedsik.personalworlds.compat;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +20,10 @@ import org.jetbrains.annotations.Nullable;
  * Spawn point access:
  * MC 1.20.x: player.getRespawnPosition(), player.getRespawnDimension()
  * MC 1.21.x: player.getRespawn().respawnData().getPos(), Respawn.getDimension()
+ * <p>
+ * Messages:
+ * MC 1.20.x-1.21.x: player.displayClientMessage(message, overlay)
+ * MC 26.1+: player.sendSystemMessage(message) and player.sendOverlayMessage(message)
  * <p>
  * This class centralizes all entity-related method access to simplify version migration.
  */
@@ -104,6 +110,34 @@ public final class EntityCompat {
         return respawn.respawnData().dimension();
         *///?} else {
         return player.getRespawnDimension();
+        //?}
+    }
+
+    /**
+     * Send a message to the player's chat.
+     *
+     * @param player  The player
+     * @param message The message
+     */
+    public static void sendMessage(Player player, Component message) {
+        //? if >=26.1 {
+        /*player.sendSystemMessage(message);
+        *///?} else {
+        player.displayClientMessage(message, false);
+        //?}
+    }
+
+    /**
+     * Send a message to the player's action bar, above the hotbar.
+     *
+     * @param player  The player
+     * @param message The message
+     */
+    public static void sendOverlay(Player player, Component message) {
+        //? if >=26.1 {
+        /*player.sendOverlayMessage(message);
+        *///?} else {
+        player.displayClientMessage(message, true);
         //?}
     }
 }
