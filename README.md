@@ -500,8 +500,8 @@ delete the vanilla dimension folders:
 Then start the server. Islands, return positions, invitations and portal ownership are
 still there.
 
-A world upgraded from 1.21.11 to 26.3 restores every island from its folder's metadata
-file. Invitations and portal ownership may start empty after the upgrade.
+Upgrading a world from 1.21.11 to 26.3 keeps everything: on the first start the mod moves
+its data files from `world/data/` to `world/data/personalworlds/`.
 
 ### Metadata Recovery
 

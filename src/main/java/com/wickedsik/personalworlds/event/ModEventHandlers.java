@@ -7,10 +7,12 @@ import com.wickedsik.personalworlds.dimension.DimensionManager;
 import com.wickedsik.personalworlds.dimension.DimensionRecoveryScanner;
 import com.wickedsik.personalworlds.dimension.DimensionRegistry;
 import com.wickedsik.personalworlds.dimension.cleanup.ChunkSanitizer;
+import com.wickedsik.personalworlds.player.PlayerDataManager;
 import com.wickedsik.personalworlds.platform.Platform;
 import com.wickedsik.personalworlds.platform.PlatformEvents;
 import com.wickedsik.personalworlds.portal.ConcurrentPortalGuard;
 import com.wickedsik.personalworlds.portal.PortalHelper;
+import com.wickedsik.personalworlds.portal.PortalOwnershipManager;
 import com.wickedsik.personalworlds.recovery.CrashRecoveryHandler;
 import com.wickedsik.personalworlds.registry.ModBlocks;
 import com.wickedsik.personalworlds.registry.ModItems;
@@ -69,6 +71,13 @@ public class ModEventHandlers {
     }
 
     private static void onServerStarted(MinecraftServer server) {
+        // Load every SavedData now, before anything reads one: on a world upgraded to 26.1 or
+        // newer this moves all pre-26.1 data files together (PersistentStateCompat), instead of
+        // each on its first use, which could leave old-looking files behind until a player joins
+        DimensionRegistry.get(server);
+        PlayerDataManager.get(server);
+        PortalOwnershipManager.get(server);
+
         PersonalWorldsMod.LOGGER.info("Server started - scanning for orphaned dimensions");
 
         // Scan filesystem for orphaned dimensions and recover them before normal restore
