@@ -80,7 +80,11 @@ public final class NeoForgeGameTests {
 
     @SubscribeEvent
     public static void registerTests(RegisterGameTestsEvent event) {
+        //? if >=26.3 {
+        /*Holder<TestEnvironmentDefinition<?>> environment = event.registerEnvironment(IdentifierCompat.modId("default"));
+        *///?} else {
         Holder<TestEnvironmentDefinition> environment = event.registerEnvironment(IdentifierCompat.modId("default"));
+        //?}
         TESTS.keySet().forEach(name -> {
             ResourceLocation id = IdentifierCompat.modId(name);
             event.registerTest(id, new FunctionGameTestInstance(

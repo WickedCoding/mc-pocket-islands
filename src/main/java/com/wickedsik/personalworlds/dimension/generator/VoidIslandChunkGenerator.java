@@ -18,6 +18,12 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.levelgen.RandomState;
+//? if >=26.3 {
+/*import net.minecraft.core.Holder;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+import java.util.Set;
+*///?}
 
 import java.util.Arrays;
 import java.util.List;
@@ -85,8 +91,23 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     /**
      * Main terrain generation. For void world, we only place blocks in island chunks.
+     * 26.3 merged noise, surface and carvers into buildTerrain; before that the void
+     * world fills the island here and leaves buildSurface and applyCarvers empty.
      */
-    //? if >=1.21 {
+    //? if >=26.3 {
+    /*@Override
+    public CompletableFuture<ChunkAccess> buildTerrain(
+            ChunkAccess chunk,
+            Blender blender,
+            RandomState noiseConfig,
+            StructureManager structureAccessor,
+            BiomeManager biomeAccess,
+            WorldGenRegion region,
+            Set<Holder<Biome>> possibleBiomes
+    ) {
+        return CompletableFuture.completedFuture(fillIsland(chunk));
+    }
+    *///?} else if >=1.21 {
     /*@Override
     public CompletableFuture<ChunkAccess> fillFromNoise(
             Blender blender,
@@ -94,16 +115,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             StructureManager structureAccessor,
             ChunkAccess chunk
     ) {
-        int chunkX = chunk.getPos().x;
-        int chunkZ = chunk.getPos().z;
-
-        // Only generate island in the designated chunk range
-        if (isIslandChunk(chunkX, chunkZ)) {
-            generateIslandSection(chunk);
-        }
-        // All other chunks remain empty (void)
-
-        return CompletableFuture.completedFuture(chunk);
+        return CompletableFuture.completedFuture(fillIsland(chunk));
     }
     *///?} else {
     @Override
@@ -114,8 +126,13 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
             StructureManager structureAccessor,
             ChunkAccess chunk
     ) {
-        int chunkX = chunk.getPos().x;
-        int chunkZ = chunk.getPos().z;
+        return CompletableFuture.completedFuture(fillIsland(chunk));
+    }
+    //?}
+
+    private ChunkAccess fillIsland(ChunkAccess chunk) {
+        int chunkX = WorldCompat.chunkX(chunk.getPos());
+        int chunkZ = WorldCompat.chunkZ(chunk.getPos());
 
         // Only generate island in the designated chunk range
         if (isIslandChunk(chunkX, chunkZ)) {
@@ -123,9 +140,8 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
         }
         // All other chunks remain empty (void)
 
-        return CompletableFuture.completedFuture(chunk);
+        return chunk;
     }
-    //?}
 
     /**
      * Check if this chunk is part of the 8x8 island area.
@@ -162,6 +178,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     // ==================== SURFACE & CARVING (NO-OP) ====================
 
+    //? if <26.3 {
     @Override
     public void buildSurface(
             WorldGenRegion region,
@@ -171,8 +188,9 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     ) {
         // No surface generation for void world
     }
+    //?}
 
-    //? if >=1.21 {
+    //? if >=1.21 && <26.3 {
     /*@Override
     public void applyCarvers(
             WorldGenRegion chunkRegion,
@@ -184,7 +202,7 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
     ) {
         // No carving for void world
     }
-    *///?} else {
+    *///?} else if <1.21 {
     @Override
     public void applyCarvers(
             WorldGenRegion chunkRegion,
@@ -285,9 +303,9 @@ public class VoidIslandChunkGenerator extends ChunkGenerator {
 
     // ==================== DEBUG ====================
 
-    //? if >=1.21 {
+    //? if >=26.3 {
     /*@Override
-    public void addDebugScreenInfo(List<String> text, RandomState noiseConfig, BlockPos pos) {
+    public void addDebugScreenInfo(List<String> text, RandomState noiseConfig, BlockPos pos, SamplerContext context) {
         text.add("VoidIsland Generator");
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;

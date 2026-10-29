@@ -1,5 +1,6 @@
 package com.wickedsik.personalworlds.gametest;
 
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -52,13 +53,13 @@ public final class GameRuleScenarios {
                     "overworld randomTickSpeed picked up the pocket override");
                 helper.assertTrue(Rules.keepInventory(island), "pocket keepInventory is false");
                 helper.assertTrue(!Rules.keepInventory(overworld), "overworld keepInventory is true");
-                pocketTime.set(island.getDayTime());
-                overworldTime.set(overworld.getDayTime());
+                pocketTime.set(WorldCompat.getDayTime(island));
+                overworldTime.set(WorldCompat.getDayTime(overworld));
             })
             .thenIdle(CLOCK_TICKS)
             .thenExecute(() -> {
-                long overworldNow = server.overworld().getDayTime();
-                long pocketNow = pocket.get().getDayTime();
+                long overworldNow = WorldCompat.getDayTime(server.overworld());
+                long pocketNow = WorldCompat.getDayTime(pocket.get());
                 helper.assertTrue(overworldNow > overworldTime.get(), "overworld clock did not advance");
                 if (pocketHasOwnClock) {
                     helper.assertTrue(pocketNow == pocketTime.get(), "pocket clock advanced with daylight cycle off: " + pocketTime.get() + " -> " + pocketNow);

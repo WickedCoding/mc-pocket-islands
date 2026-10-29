@@ -8,7 +8,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -133,9 +132,8 @@ public class DimensionRegistry extends SavedData {
     // --- Static Access ---
 
     public static DimensionRegistry get(MinecraftServer server) {
-        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
-            stateManager,
+            server,
             DATA_NAME,
             DimensionRegistry::new,
             DimensionRegistry::fromNbt

@@ -71,7 +71,12 @@ final class FabricEvents implements PlatformEvents {
 
     @Override
     public void onChunkLoad(BiConsumer<ServerLevel, LevelChunk> handler) {
+        //? if >=26.3 {
+        /*// Fabric API for 26.x adds whether the chunk was just generated
+        ServerChunkEvents.CHUNK_LOAD.register((level, chunk, generated) -> handler.accept(level, chunk));
+        *///?} else {
         ServerChunkEvents.CHUNK_LOAD.register(handler::accept);
+        //?}
     }
 
     @Override

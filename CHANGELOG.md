@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Minecraft 26.3 support on Fabric (Fabric API 0.165.0, Fantasy 0.8.4) and NeoForge (26.3.0.99, Infiniverse 26.3.0.2). Minecraft 26.3 needs Java 25.
+
+### Changed
+- On Minecraft 26.3 the island registry, return positions, invitations and portal ownership are stored in `world/data/personalworlds/`. Minecraft 26.1 moved the overworld to `world/dimensions/minecraft/overworld/`, so data kept with the overworld would be lost in a world reset.
+- On Minecraft 26.3, a world reset deletes `world/dimensions/minecraft/` instead of `region/`, `entities/`, `poi/`, `DIM-1/` and `DIM1/`. See the README's World Reset Procedure.
+
 ## [1.0.1] - 2026-10-09
 
 ### Added
