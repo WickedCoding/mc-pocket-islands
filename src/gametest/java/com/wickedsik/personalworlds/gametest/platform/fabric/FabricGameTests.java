@@ -21,7 +21,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 /*public class FabricGameTests {
 
     private static final String ARENA = "personalworlds:arena";
-    private static final int TIMEOUT = 400;
+    // Ticks. Unloading an island waits for its chunks (about 16 s on 1.21.11 with Fantasy 0.7),
+    // and CI servers tick slower; a passing test still ends at its last step
+    private static final int TIMEOUT = 1200;
 
     @GameTest(structure = ARENA, maxTicks = TIMEOUT)
     public void portalActivationAndFirstEntry(GameTestHelper helper) {
@@ -82,7 +84,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 public class FabricGameTests implements FabricGameTest {
 
     private static final String ARENA = "personalworlds:arena";
-    private static final int TIMEOUT = 400;
+    // Ticks. Unloading an island waits for its chunks (about 16 s on 1.21.11 with Fantasy 0.7),
+    // and CI servers tick slower; a passing test still ends at its last step
+    private static final int TIMEOUT = 1200;
 
     @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
     public void portalActivationAndFirstEntry(GameTestHelper helper) {

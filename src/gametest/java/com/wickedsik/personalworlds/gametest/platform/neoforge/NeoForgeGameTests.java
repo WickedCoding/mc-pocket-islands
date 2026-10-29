@@ -39,7 +39,9 @@ import java.util.function.Consumer;
 public final class NeoForgeGameTests {
 
     private static final ResourceLocation ARENA = IdentifierCompat.modId("arena");
-    private static final int TIMEOUT = 400;
+    // Ticks. Unloading an island waits for its chunks (about 16 s on 1.21.11 with Fantasy 0.7),
+    // and CI servers tick slower; a passing test still ends at its last step
+    private static final int TIMEOUT = 1200;
 
     private static final Map<String, Consumer<GameTestHelper>> TESTS = new LinkedHashMap<>();
 

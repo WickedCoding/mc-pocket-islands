@@ -25,7 +25,9 @@ import java.io.File;
 public class ForgeGameTests {
 
     private static final String ARENA = "arena";
-    private static final int TIMEOUT = 400;
+    // Ticks. Unloading an island waits for its chunks (about 16 s on 1.21.11 with Fantasy 0.7),
+    // and CI servers tick slower; a passing test still ends at its last step
+    private static final int TIMEOUT = 1200;
 
     // Forge has no report switch; the scan loads this class before tests run, and
     // GameTestServer flushes the global reporter when it finishes
