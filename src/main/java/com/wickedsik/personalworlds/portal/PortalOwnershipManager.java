@@ -11,7 +11,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
@@ -271,9 +270,8 @@ public class PortalOwnershipManager extends SavedData {
      * @return The PortalOwnershipManager instance
      */
     public static PortalOwnershipManager get(MinecraftServer server) {
-        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
-            stateManager,
+            server,
             DATA_NAME,
             PortalOwnershipManager::new,
             PortalOwnershipManager::fromNbt

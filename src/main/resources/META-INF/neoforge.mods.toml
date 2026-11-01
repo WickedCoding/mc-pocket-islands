@@ -9,6 +9,8 @@ version = "${version}"
 displayName = "Pocket Islands"
 displayURL = "https://modrinth.com/mod/pocket-islands"
 logoFile = "assets/personalworlds/icon.png"
+# NeoForge 26.x reads iconFile (square icon) and warns about logoFile without it; 21.11 only reads logoFile
+iconFile = "assets/personalworlds/icon.png"
 authors = "Jurriën"
 description = '''Give each player their own pocket dimension island that survives world resets'''
 

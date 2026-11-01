@@ -2,6 +2,7 @@ pluginManagement {
     repositories {
         maven("https://maven.fabricmc.net/")
         maven("https://maven.neoforged.net/releases/")
+        maven("https://maven.kikugie.dev/releases")
         mavenCentral()
         gradlePluginPortal()
     }
@@ -9,6 +10,8 @@ pluginManagement {
 
 plugins {
     id("dev.kikugie.stonecutter") version "0.9.8"
+    // Applies fabric-loom-remap below 26 and the unobfuscated fabric-loom from 26 (loomx.* properties)
+    id("dev.kikugie.loom-back-compat") version "0.4.3"
     // Downloads a missing JDK for the per-version Java toolchain
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
@@ -27,6 +30,7 @@ stonecutter {
         match("1.20.1", "fabric", "forge")
         match("1.20.4", "fabric")
         match("1.21.11", "fabric", "neoforge")
+        match("26.3", "fabric", "neoforge")
 
         vcsVersion = "1.20.1-fabric" // Active node for VCS (commit with this active)
     }

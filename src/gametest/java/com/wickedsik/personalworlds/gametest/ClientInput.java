@@ -24,6 +24,9 @@ public final class ClientInput {
 
     private static final Field AWAITING_TELEPORT = field("awaitingTeleport");
     private static final Field AWAITING_POSITION = field("awaitingPositionFromClient");
+    //? if >=26.3 {
+    /*private static final Field RECEIVED_POSITION_THIS_TICK = field("receivedPositionThisTick");
+    *///?}
 
     private ClientInput() {
     }
@@ -32,11 +35,21 @@ public final class ClientInput {
     public static void acceptPendingTeleport(ServerPlayer player) {
         ServerGamePacketListenerImpl connection = player.connection;
         try {
-            if (AWAITING_POSITION.get(connection) == null) {
+            Vec3 awaiting = (Vec3) AWAITING_POSITION.get(connection);
+            if (awaiting == null) {
                 return;
             }
             int id = AWAITING_TELEPORT.getInt(connection);
+            //? if >=26.3 {
+            /*// 26.x clients echo the position they were sent, and the server checks it as a move
+            // from the position it reset at its last connection tick. Mock connections are not
+            // ticked, so reset here as that tick would; otherwise the confirm "moved too quickly"
+            connection.resetPosition();
+            connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(
+                id, awaiting.x, awaiting.y, awaiting.z, player.getYRot(), player.getXRot()));
+            *///?} else {
             connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
+            //?}
         } catch (IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
@@ -54,6 +67,15 @@ public final class ClientInput {
         /*// 1.21.4+ ignores movement until the client reports the level as loaded (sent after
         // joining, respawning and changing dimension)
         player.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+        *///?}
+        //? if >=26.3 {
+        /*// 26.3 disconnects a second position packet within one connection tick. The connection
+        // tick clears the flag, and mock connections are not ticked, so clear it here
+        try {
+            RECEIVED_POSITION_THIS_TICK.setBoolean(player.connection, false);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
         *///?}
         //? if >=1.21.2 {
         /*player.connection.handleMovePlayer(new ServerboundMovePlayerPacket.Pos(target.x, target.y, target.z, true, false));

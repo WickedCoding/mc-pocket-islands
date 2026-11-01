@@ -12,7 +12,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.Level;
 
 import java.util.*;
@@ -546,9 +545,8 @@ public class PlayerDataManager extends SavedData {
      * @return The PlayerDataManager instance
      */
     public static PlayerDataManager get(MinecraftServer server) {
-        DimensionDataStorage stateManager = server.overworld().getDataStorage();
         return PersistentStateCompat.getOrCreate(
-            stateManager,
+            server,
             DATA_NAME,
             PlayerDataManager::new,
             PlayerDataManager::fromNbt

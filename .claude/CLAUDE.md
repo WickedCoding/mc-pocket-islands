@@ -5,7 +5,7 @@ code in this repository.
 
 ## Project Overview
 
-**Pocket Islands** — A Fabric, Forge and NeoForge mod for Minecraft (Fabric 1.20.1, 1.20.4, 1.21.11; Forge 1.20.1; NeoForge 1.21.11) that provides each player
+**Pocket Islands** — A Fabric, Forge and NeoForge mod for Minecraft (Fabric 1.20.1, 1.20.4, 1.21.11, 26.3; Forge 1.20.1; NeoForge 1.21.11, 26.3) that provides each player
 with their own isolated, persistent pocket dimension island. The primary use
 case is dimension survival through world resets: when the overworld/nether/end
 are deleted and regenerated, each player's pocket island remains intact.
@@ -27,7 +27,8 @@ multi-loader support from a single codebase. Each Stonecutter node is `<mc>-<loa
 ./gradlew :1.20.1-forge:build
 ./gradlew :1.20.1-forge:runServer
 
-# Switch active node (nodes: 1.20.1-fabric, 1.20.1-forge, 1.20.4-fabric, 1.21.11-fabric, 1.21.11-neoforge)
+# Switch active node (nodes: 1.20.1-fabric, 1.20.1-forge, 1.20.4-fabric, 1.21.11-fabric, 1.21.11-neoforge,
+# 26.3-fabric, 26.3-neoforge)
 ./gradlew "Set active project to 1.21.11-fabric"
 
 # Switch back to the committed node (1.20.1-fabric)
@@ -38,6 +39,9 @@ multi-loader support from a single codebase. Each Stonecutter node is `<mc>-<loa
 
 # Run Minecraft client with the mod loaded (uses active node)
 ./gradlew runClient
+
+# Run a second client as Dev2 (own game directory run/client2), e.g. to test invitations
+./gradlew :26.3-fabric:runClient2
 
 # Run Minecraft server with the mod loaded
 ./gradlew runServer
@@ -123,6 +127,7 @@ after mod construction, so never build or read them in static initializers.
 | 1.20.1-fabric  | 17   | 2023.09.03 | 0.16.10       | 0.92.6+1.20.1   | 0.4.11+1.20-rc1 |
 | 1.20.4-fabric  | 17   | 2024.04.14 | 0.15.11       | 0.97.0+1.20.4   | 0.5.0+1.20.4    |
 | 1.21.11-fabric | 21   | 2025.12.20 | 0.18.4        | 0.141.1+1.21.11 | 0.7.0+1.21.11   |
+| 26.3-fabric    | 25   | —          | 0.20.1        | 0.165.0+26.3    | 0.8.4+26.3      |
 
 | Node         | Java | Parchment  | Forge  | ModDevGradle         | Infiniverse | MixinExtras |
 |--------------|------|------------|--------|----------------------|-------------|-------------|
@@ -131,9 +136,17 @@ after mod construction, so never build or read them in static initializers.
 | Node             | Java | Parchment  | NeoForge | ModDevGradle       | Infiniverse | MixinExtras          |
 |------------------|------|------------|----------|--------------------|-------------|----------------------|
 | 1.21.11-neoforge | 21   | 2025.12.20 | 21.11.45 | 2.0.148 (`moddev`) | 21.11.1     | 0.5.3 (in NeoForge)  |
+| 26.3-neoforge    | 25   | —          | 26.3.0.99 | 2.0.148 (`moddev`) | 26.3.0.2   | in NeoForge          |
 
 Mappings are Mojang's official mappings layered with Parchment (parameter names and Javadoc),
 set per node by `parchment_version` in `versions/<node>/gradle.properties`.
+
+From 26.1 Minecraft is unobfuscated and ships Mojang's names and parameter names: 26.x nodes
+have no mappings and no Parchment (both buildscripts skip them `<26`). Fabric needs a different
+Loom plugin per side: `dev.kikugie.loom-back-compat` (settings plugin, `loomx.loom_version` in
+`gradle.properties`) applies `net.fabricmc.fabric-loom-remap` below 26 and `net.fabricmc.fabric-loom`
+from 26, keeps the `mod*` configurations, and `loomx.modJar` is `remapJar` or `jar`. Gradle runs
+on JDK 25 (`gradle/gradle-daemon-jvm.properties`), which Loom 1.19 requires.
 
 ModDevGradle applies Parchment only when it recompiles Minecraft, which it skips with `CI=true`.
 The Forge node forces recompilation (`isDisableRecompilation = false`): the patched jar's stale
@@ -155,6 +168,8 @@ Parchment names. Reproduce CI locally with `CI=true ./gradlew ...`.
 | 1.20.4-fabric  | Supported |             |
 | 1.21.11-fabric | Supported |             |
 | 1.21.11-neoforge | Supported |           |
+| 26.3-fabric    | Supported |             |
+| 26.3-neoforge  | Supported |             |
 
 Always switch back to 1.20.1-fabric before committing; `./gradlew "Reset active project"`
 does this (it switches to `vcsVersion` = 1.20.1-fabric in `settings.gradle.kts`).
@@ -207,6 +222,17 @@ from 1.21.11 would turn it into `ResourceLocation` and leave a diff.
 - **GameRulesCompat.java** — Builds a pocket dimension's rule set (overworld copy + config overrides)
 - **BlockSettingsCompat.java** — Block settings and registration updates
 - **RegistryCompat.java** — `Registry.get(id)` → `Registry.getValue(id)`
+
+**1.21.x vs 26.x** (same `compat/` approach; predicates name the release that changed the API,
+from the NeoForge porting primers):
+
+- 26.1: `ChunkPos` is a record (`WorldCompat.chunkX/chunkZ/packChunk/unpackChunk`); `displayClientMessage`
+  split into `sendSystemMessage`/`sendOverlayMessage` (`EntityCompat.sendMessage/sendOverlay`); day time
+  became world clocks (`WorldCompat.getDayTime` reads `getDefaultClockTime()`); `DimensionDataStorage` →
+  `SavedDataStorage` with `Identifier` ids, and mod data moved to `server.getDataStorage()` (`PersistentStateCompat`)
+- 26.3: `ChunkGenerator#buildTerrain` replaces `fillFromNoise`/`buildSurface`/`applyCarvers`;
+  `addDebugScreenInfo` takes a `SamplerContext`; Fantasy 0.8 renamed World → Level; Fabric's
+  `CHUNK_LOAD` passes a `generated` flag
 
 ### Adding a New Version
 
@@ -271,6 +297,11 @@ and survive world resets because they are separate from the main world folders
 A `DimensionRegistry` (SavedData saved to `world/data/personalworlds_registry.dat`)
 tracks all player dimensions for restoration on server start.
 
+From 26.1 vanilla stores the overworld in `world/dimensions/minecraft/overworld/` (nether and end in
+`the_nether/`, `the_end/`), and each level's SavedData lives under its own folder. The mod's SavedData
+uses the server's storage on 26.x (`world/data/personalworlds/<name>.dat`), so a reset that deletes
+`world/dimensions/minecraft/` keeps it.
+
 ### Runtime Dimensions (Fantasy on Fabric, Infiniverse on Forge and NeoForge)
 
 `DimensionManager` opens dimensions through `Platform.get().dimensions()` (`RuntimeDimensions`),
@@ -313,7 +344,9 @@ in `DimensionGameRules` (keyed by dimension) **before** opening the level; mixin
 - All: `ServerPlayerMixin` makes `restoreFrom` read `keepInventory` in the level the player
   died in, matching the death-drop decision (otherwise items vanish)
 
-Fantasy's own `setGameRule` is not used. The mixins are common code; Forge loads them through
+Fantasy's own `setGameRule` is not used. Fantasy 0.8 (26.x) gives `RuntimeLevel` its own rule set
+unless the config mirrors the overworld with no rules set, so `FantasyDimensions` sets
+`setMirrorOverworldGameRules(true)` and must not call `setShouldTickTime` (it sets `advance_time`). The mixins are common code; Forge loads them through
 the `MixinConfigs` manifest attribute with an SRG refmap from the mixin annotation processor;
 NeoForge loads them from `[[mixins]]` in `neoforge.mods.toml` (Mojang names, no refmap).
 Known limits: on 1.20.x `/gamerule` always reads and writes the overworld; on 1.21.x it acts on the pocket, but edits are lost when the pocket
@@ -389,8 +422,10 @@ pocket tracking) and `world/data/personalworlds_portal_ownership.dat`.
 
 ### Local Testing
 
-Run the Minecraft server with `./gradlew runServer` and multiple clients with
-`./gradlew runClient`. Test:
+Run the Minecraft server with `./gradlew runServer`, the first client with
+`./gradlew runClient` (player `Dev`) and a second client with `./gradlew runClient2`
+(player `Dev2`, game directory `run/client2`). Every node has both runs; the fixed names
+keep each player's offline UUID, and so their island, the same across launches. Test:
 
 1. First portal entry creates dimension
 2. Dimension persists after server restart (`stop` command, then `./gradlew runServer`)
@@ -401,7 +436,8 @@ Run the Minecraft server with `./gradlew runServer` and multiple clients with
 
 1. Stop server
 2. Delete `world/region/`, `world/entities/`, `world/poi/`, `world/DIM-1/`, `world/DIM1/`
-   (`entities/` and `poi/` hold overworld mobs and points of interest since 1.17)
+   (`entities/` and `poi/` hold overworld mobs and points of interest since 1.17).
+   On 26.x delete `world/dimensions/minecraft/` instead
 3. Start server
 4. Verify personal dimensions still exist and are accessible
 
@@ -442,6 +478,9 @@ behaves like the real game through that path:
   mock connections are not ticked by the server, so `ClientInput` runs `doTick()` itself
 - 1.21.4+ ignores movement until `ServerboundPlayerLoadedPacket`
 - Pending teleports must be confirmed with the current id (read by reflection; dev only)
+- 26.3 checks a teleport confirm as a move from the position reset at the last connection tick, and
+  disconnects a second position packet within one tick (`receivedPositionThisTick`): `ClientInput`
+  does what the tick would (`resetPosition()` before confirming, clears the flag before moving)
 - 1.21.9+ loads saved player data in the configuration phase (`PrepareSpawnTask`), so `MockPlayers.join`
   does that itself; a rejoin then lands in the saved level like a real client
 
@@ -460,15 +499,17 @@ Run with `./gradlew test`. Tests cover:
 
 ## Minecraft Version Notes
 
-The mod targets **Minecraft 1.20.1, 1.20.4, and 1.21.11** using Stonecutter for
+The mod targets **Minecraft 1.20.1, 1.20.4, 1.21.11 and 26.3** using Stonecutter for
 multi-version support.
 
 **Java Requirements:**
 - MC 1.20.1 & 1.20.4: Java 17
 - MC 1.21.11: Java 21
+- MC 26.3: Java 25 (Gradle itself also runs on 25)
 
 **Mapping Preferences:**
-- All versions use Mojang mappings layered with Parchment (Yarn ended at 1.21.11)
+- 1.20.x and 1.21.11 use Mojang mappings layered with Parchment (Yarn ended at 1.21.11)
+- 26.x is unobfuscated: Mojang names at runtime, no mappings or Parchment
 
 **Teleports** go through `Platform.get().teleport()`:
 - Fabric 1.20.x: `FabricDimensions.teleport()`

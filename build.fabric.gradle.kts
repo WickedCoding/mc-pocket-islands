@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "1.15.3"
+    id("dev.kikugie.loom-back-compat")
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
     id("pocketislands-harness")
@@ -92,10 +92,13 @@ loom {
 dependencies {
     // Minecraft and mappings
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${property("minecraft_version")}:${property("parchment_version")}@zip")
-    })
+    // From 26.1 the game is unobfuscated and ships Mojang's parameter names: no mappings, no Parchment
+    if (stonecutter.eval(stonecutter.current.version, "<26")) {
+        mappings(loom.layered {
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${property("minecraft_version")}:${property("parchment_version")}@zip")
+        })
+    }
     modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
     // Fabric API
@@ -107,7 +110,8 @@ dependencies {
     // fabric-permissions-api — optional soft dependency for LuckPerms integration
     // NOT bundled: users install LuckPerms which provides a compatible version
     // Falls back to vanilla OP levels when no permission plugin is installed
-    modCompileOnly("me.lucko:fabric-permissions-api:0.3.3")
+    // Builds for 1.21.11 and older do not compile against 26.x, so the version is per node
+    modCompileOnly("me.lucko:fabric-permissions-api:${property("permissions_api_version")}")
 
     // Testing — JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
@@ -115,8 +119,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Testing — Mockito for mocking
-    testImplementation("org.mockito:mockito-core:5.8.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+    testImplementation("org.mockito:mockito-core:5.24.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.24.0")
 }
 
 val minecraft_version: String by project
@@ -189,7 +193,7 @@ modrinth {
     projectId.set("pocket-islands")
     versionNumber.set("${property("mod_version")}+${property("minecraft_version")}")
     versionType.set("release")
-    uploadFile.set(tasks.remapJar)
+    uploadFile.set(loomx.modJar)
 
     // Game version from Stonecutter context
     gameVersions.add(property("minecraft_version") as String)
@@ -214,7 +218,7 @@ modrinth {
 }
 
 tasks.modrinth {
-    dependsOn(tasks.remapJar)
+    dependsOn(loomx.modJar)
 }
 
 // Each GameTest run starts from an empty world: islands from a previous run would be

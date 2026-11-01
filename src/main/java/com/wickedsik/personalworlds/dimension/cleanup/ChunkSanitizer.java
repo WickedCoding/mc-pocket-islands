@@ -2,6 +2,7 @@ package com.wickedsik.personalworlds.dimension.cleanup;
 
 import com.wickedsik.personalworlds.PersonalWorldsMod;
 import com.wickedsik.personalworlds.compat.IdentifierCompat;
+import com.wickedsik.personalworlds.compat.WorldCompat;
 import com.wickedsik.personalworlds.config.ModConfig;
 import com.wickedsik.personalworlds.portal.PortalHelper;
 import net.minecraft.server.MinecraftServer;
@@ -159,7 +160,7 @@ public final class ChunkSanitizer {
             return;
         }
 
-        PENDING.enqueue(world, chunk.getPos().toLong());
+        PENDING.enqueue(world, WorldCompat.packChunk(chunk.getPos()));
     }
 
     /**
@@ -173,10 +174,10 @@ public final class ChunkSanitizer {
         boolean removeOrphans = ModConfig.get().sanitizeRemoveOrphanBlocks;
         PENDING.drain((world, chunkPos) -> {
             try {
-                runDeferredSanitize(world, new ChunkPos(chunkPos), removeOrphans);
+                runDeferredSanitize(world, WorldCompat.unpackChunk(chunkPos), removeOrphans);
             } catch (RuntimeException e) {
                 PersonalWorldsMod.LOGGER.warn("Failed to sanitize chunk {} in {}",
-                    new ChunkPos(chunkPos), IdentifierCompat.fromKey(world.dimension()), e);
+                    WorldCompat.unpackChunk(chunkPos), IdentifierCompat.fromKey(world.dimension()), e);
             }
         });
     }
@@ -214,7 +215,7 @@ public final class ChunkSanitizer {
         // The chunk may have unloaded since the load event (player left,
         // server flushed the ticket). getChunkNow never waits on a load:
         // it returns null unless the chunk is fully loaded right now.
-        LevelChunk worldChunk = world.getChunkSource().getChunkNow(pos.x, pos.z);
+        LevelChunk worldChunk = world.getChunkSource().getChunkNow(WorldCompat.chunkX(pos), WorldCompat.chunkZ(pos));
         if (worldChunk == null) {
             return;
         }

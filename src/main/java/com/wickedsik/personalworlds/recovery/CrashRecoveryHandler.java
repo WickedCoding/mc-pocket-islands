@@ -107,8 +107,8 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} no longer has permission to {}'s dimension, evacuating",
                 player.getName().getString(), ownerUuid);
 
-            player.displayClientMessage(Component.translatable("pocketislands.message.ejected_offline")
-                .withStyle(ChatFormatting.GOLD), false);
+            EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.ejected_offline")
+                .withStyle(ChatFormatting.GOLD));
 
             // Clear tracking and evacuate
             PlayerDataManager dataManager = PlayerDataManager.get(server);
@@ -171,8 +171,8 @@ public class CrashRecoveryHandler {
             PersonalWorldsMod.LOGGER.info("Player {} lost permission to dimension {}, using fallback",
                 player.getName().getString(), ownerUuid);
             dataManager.clearCurrentPocketDimension(playerUuid);
-            player.displayClientMessage(Component.translatable("pocketislands.message.ejected_offline")
-                .withStyle(ChatFormatting.GOLD), false);
+            EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.ejected_offline")
+                .withStyle(ChatFormatting.GOLD));
             teleportToFallbackPosition(player, server, dataManager);
             return;
         }
@@ -212,7 +212,7 @@ public class CrashRecoveryHandler {
 
             PersonalWorldsMod.LOGGER.info("Restored player {} to pocket dimension after fallback spawn",
                 player.getName().getString());
-            player.displayClientMessage(Component.translatable("pocketislands.message.dimension_restored"), false);
+            EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.dimension_restored"));
 
         } catch (Exception e) {
             PersonalWorldsMod.LOGGER.error("Failed to restore dimension for {}: {}",
@@ -312,7 +312,7 @@ public class CrashRecoveryHandler {
             float pitch
     ) {
         TeleportCompat.teleport(player, world, pos, yaw, pitch);
-        player.displayClientMessage(Component.translatable("pocketislands.message.returned_overworld"), true);
+        EntityCompat.sendOverlay(player, Component.translatable("pocketislands.message.returned_overworld"));
     }
 
     /**
@@ -325,8 +325,8 @@ public class CrashRecoveryHandler {
 
         PlayerDataManager dataManager = PlayerDataManager.get(server);
         dataManager.clearCurrentPocketDimension(player.getUUID());
-        player.displayClientMessage(Component.translatable("pocketislands.message.island_unloading")
-            .withStyle(ChatFormatting.GOLD), false);
+        EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.island_unloading")
+            .withStyle(ChatFormatting.GOLD));
         teleportToFallbackPosition(player, server, dataManager);
     }
 
@@ -373,8 +373,8 @@ public class CrashRecoveryHandler {
 
         TeleportCompat.teleportToBlockPreserveRotation(player, overworld, safePos);
 
-        player.displayClientMessage(Component.translatable("pocketislands.message.emergency_teleport", reason)
-            .withStyle(ChatFormatting.RED), false);
+        EntityCompat.sendMessage(player, Component.translatable("pocketislands.message.emergency_teleport", reason)
+            .withStyle(ChatFormatting.RED));
 
         // Clear any corrupt data
         PlayerDataManager dataManager = PlayerDataManager.get(server);

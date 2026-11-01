@@ -10,6 +10,7 @@ pocket dimension island.
 | 1.20.1    | ✓      | ✓     |          |
 | 1.20.4    | ✓      |       |          |
 | 1.21.11   | ✓      |       | ✓        |
+| 26.3      | ✓      |       | ✓        |
 
 ## Features
 
@@ -21,10 +22,11 @@ pocket dimension island.
 
 ## Requirements
 
-- Minecraft 1.20.1, 1.20.4, or 1.21.11
-- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x) and Fabric API
+- Minecraft 1.20.1, 1.20.4, 1.21.11, or 26.3
+- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x, 0.20.1+ for 26.3) and Fabric API
 - **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
-- **NeoForge (1.21.11):** NeoForge 21.11.45 or newer. Nothing else: Infiniverse is bundled in the jar
+- **NeoForge (1.21.11, 26.3):** NeoForge 21.11.45 or newer for 1.21.11, 26.3.0.99 or newer for 26.3. Nothing else: Infiniverse is bundled in the jar
+- **Java:** 17 for 1.20.x, 21 for 1.21.11, 25 for 26.3
 - **Both client and server must have the mod installed**
 
 ## Installation
@@ -37,6 +39,8 @@ Download the version matching your Minecraft version from
 - `pocketislands-X.X.X+1.20.4-fabric.jar` for Minecraft 1.20.4 on Fabric
 - `pocketislands-X.X.X+1.21.11-fabric.jar` for Minecraft 1.21.11 on Fabric
 - `pocketislands-X.X.X+1.21.11-neoforge.jar` for Minecraft 1.21.11 on NeoForge
+- `pocketislands-X.X.X+26.3-fabric.jar` for Minecraft 26.3 on Fabric
+- `pocketislands-X.X.X+26.3-neoforge.jar` for Minecraft 26.3 on NeoForge
 
 ### Server
 
@@ -61,7 +65,7 @@ Download the version matching your Minecraft version from
 
 Islands work the same on every loader, with these exceptions:
 
-| | Fabric | Forge 1.20.1 / NeoForge 1.21.11 |
+| | Fabric | Forge / NeoForge |
 |---|---|---|
 | Runtime dimensions | Fantasy (bundled) | Infiniverse (bundled) |
 | Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through the loader's PermissionAPI, else OP levels |
@@ -478,6 +482,26 @@ world/dimensions/personalworlds/pw_<uuid>/
 ```
 
 Where `<uuid>` is the player's UUID without dashes.
+
+The island registry, return positions, invitations and portal ownership are stored in
+`world/data/`: as `personalworlds_*.dat` up to Minecraft 1.21.11, and in
+`world/data/personalworlds/` from 26.3.
+
+### World Reset Procedure
+
+To reset the overworld, nether and end but keep every island, stop the server and
+delete the vanilla dimension folders:
+
+| Minecraft | Delete | Keep |
+|---|---|---|
+| 1.20.x, 1.21.11 | `world/region/`, `world/entities/`, `world/poi/`, `world/DIM-1/`, `world/DIM1/` | `world/dimensions/personalworlds/`, `world/data/`, `world/level.dat` |
+| 26.3 | `world/dimensions/minecraft/` | `world/dimensions/personalworlds/`, `world/data/`, `world/level.dat` |
+
+Then start the server. Islands, return positions, invitations and portal ownership are
+still there.
+
+Upgrading a world from 1.21.11 to 26.3 keeps everything: on the first start the mod moves
+its data files from `world/data/` to `world/data/personalworlds/`.
 
 ### Metadata Recovery
 

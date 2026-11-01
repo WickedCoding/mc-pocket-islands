@@ -30,12 +30,19 @@ val prepareHarness = tasks.register("prepareHarness") {
 }
 
 // A world reset as server owners do it: delete the overworld, nether and end, keep
-// dimensions/ (islands) and data/ (registry, return positions, invitations)
+// dimensions/personalworlds/ (islands) and data/ (registry, return positions, invitations).
+// From 26.1 the vanilla dimensions live under dimensions/minecraft/.
+val vanillaDimensionDirs =
+    if ((property("minecraft_version") as String).substringBefore('.').toInt() >= 26)
+        listOf("dimensions/minecraft/overworld", "dimensions/minecraft/the_nether", "dimensions/minecraft/the_end")
+    else
+        listOf("region", "entities", "poi", "DIM-1", "DIM1")
+
 val resetHarnessWorld = tasks.register("resetHarnessWorld") {
     group = "verification"
     description = "Deletes the harness world's overworld, nether and end"
     doLast {
-        listOf("region", "entities", "poi", "DIM-1", "DIM1").forEach {
+        vanillaDimensionDirs.forEach {
             harnessDir.get().dir("world/$it").asFile.deleteRecursively()
         }
     }

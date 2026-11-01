@@ -49,9 +49,12 @@ sourceSets.test {
 neoForge {
     version = neoforge_version
 
-    parchment {
-        minecraftVersion = minecraft_version
-        mappingsVersion = property("parchment_version") as String
+    // From 26.1 the game ships Mojang's parameter names, so Parchment only applies before 26
+    if (stonecutter.eval(stonecutter.current.version, "<26")) {
+        parchment {
+            minecraftVersion = minecraft_version
+            mappingsVersion = property("parchment_version") as String
+        }
     }
 
     // The gametest source set joins the mod in dev runs so its test registration is loaded
@@ -117,8 +120,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Testing — Mockito for mocking
-    testImplementation("org.mockito:mockito-core:5.8.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+    testImplementation("org.mockito:mockito-core:5.24.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.24.0")
 }
 
 tasks.named<ProcessResources>("processGametestResources") {

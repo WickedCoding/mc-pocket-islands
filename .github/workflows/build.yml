@@ -21,7 +21,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v6
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'microsoft'
 
       # v5 on purpose: v6 moved caching into a proprietary, non-MIT component
@@ -34,13 +34,13 @@ jobs:
         run: ./gradlew chiseledBuild
 
       - name: Run tests for all versions
-        run: ./gradlew chiseledTest
+        run: ./gradlew chiseledTest --continue
 
       - name: Run in-game tests for all versions
-        run: ./gradlew chiseledGameTest
+        run: ./gradlew chiseledGameTest --continue
 
       - name: Run restart and world-reset harness for all versions
-        run: ./gradlew chiseledHarnessTest
+        run: ./gradlew chiseledHarnessTest --continue
 
       - name: Capture in-game test reports
         if: always()
