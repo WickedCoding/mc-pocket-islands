@@ -113,14 +113,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `/pi go <player>` command - players must now use physical portals to visit other islands
 
-## [0.4.2] - 2025-01-13
+## [0.4.2] - 2026-01-13
 
 ### Fixed
 - Compatibility with Xaero's Minimap/World Map mods
   - Removed bundled `fabric-permissions-api` (was compiled against MC 1.21.3, causing crashes on 1.20.x)
   - Permission API now optional: install LuckPerms for permission node support, otherwise falls back to OP levels
 
-## [0.4.1] - 2025-01-13
+## [0.4.1] - 2026-01-13
 
 ### Added
 - Visit access control system for personal islands
@@ -132,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - UUID parsing in dimension ownership check (dashless UUIDs now handled correctly)
 
-## [0.4.0] - 2025-01-13
+## [0.4.0] - 2026-01-13
 
 ### Added
 - Multi-version support using Stonecutter (1.20.1 and 1.20.4 from single codebase)
@@ -145,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Dimension time no longer resets to noon when entering; now syncs with overworld time
 
-## [0.3.0] - 2025-01-11
+## [0.3.0] - 2026-01-11
 
 ### Added
 - Configurable portal colors per portal type (`portalColor` property)
@@ -161,7 +161,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deprecated configuration fields (frameBlock, activationItem, message fields, worldType fields)
 - Old portal model files replaced with color-specific variants
 
-## [0.2.0] - 2025-01-10
+## [0.2.1] - 2026-01-11
+
+### Added
+- Releases are built and published to GitHub Releases automatically when a version is tagged. The mod itself is unchanged from 0.2.0.
+
+## [0.2.0] - 2026-01-10
 
 ### Changed
 - **Rebrand**: PersonalWorlds → Pocket Islands
@@ -176,7 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `/pi leave` command now correctly respects stored return position
 
-## [0.1.0] - 2025-01-08
+## [0.1.0] - 2026-01-08
 
 ### Added
 - Personal dimension creation via portal system
