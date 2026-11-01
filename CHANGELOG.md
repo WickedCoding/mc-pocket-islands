@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - On Minecraft 26.3 the island registry, return positions, invitations and portal ownership are stored in `world/data/personalworlds/`. Minecraft 26.1 moved the overworld to `world/dimensions/minecraft/overworld/`, so data kept with the overworld would be lost in a world reset. A world upgraded from an older Minecraft version keeps its data: the mod moves the files from `world/data/` on the first start.
 - On Minecraft 26.3, a world reset deletes `world/dimensions/minecraft/` instead of `region/`, `entities/`, `poi/`, `DIM-1/` and `DIM1/`. See the README's World Reset Procedure.
+- Fabric jars now require the Fabric Loader and Java versions they are built against: Loader 0.16.10 for 1.20.1, 0.15.11 for 1.20.4, 0.18.4 for 1.21.11 and 0.20.1 for 26.3; Java 17, 17, 21 and 25. Before, every jar asked for Loader 0.15.0 and Java 17, so an older Loader or Java started the game and failed later instead of showing a clear message at launch.
 
 ## [1.0.1] - 2026-10-09
 

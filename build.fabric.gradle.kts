@@ -124,6 +124,8 @@ dependencies {
 }
 
 val minecraft_version: String by project
+val loader_version: String by project
+val java_version: String by project
 
 tasks.named<ProcessResources>("processGametestResources") {
     inputs.property("version", project.version)
@@ -135,11 +137,15 @@ tasks.named<ProcessResources>("processGametestResources") {
 tasks.processResources {
     inputs.property("version", project.version)
     inputs.property("minecraft_version", minecraft_version)
+    inputs.property("loader_version", loader_version)
+    inputs.property("java_version", java_version)
 
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
-            "minecraft_version" to minecraft_version
+            "minecraft_version" to minecraft_version,
+            "loader_version" to loader_version,
+            "java_version" to java_version
         )
     }
 

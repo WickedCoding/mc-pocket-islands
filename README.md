@@ -23,7 +23,8 @@ pocket dimension island.
 ## Requirements
 
 - Minecraft 1.20.1, 1.20.4, 1.21.11, or 26.3
-- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x, 0.20.1+ for 26.3) and Fabric API
+- **Fabric:** Fabric API and Fabric Loader 0.16.10+ for 1.20.1, 0.15.11+ for 1.20.4,
+  0.18.4+ for 1.21.11, 0.20.1+ for 26.3
 - **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
 - **NeoForge (1.21.11, 26.3):** NeoForge 21.11.45 or newer for 1.21.11, 26.3.0.99 or newer for 26.3. Nothing else: Infiniverse is bundled in the jar
 - **Java:** 17 for 1.20.x, 21 for 1.21.11, 25 for 26.3
