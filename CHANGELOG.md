@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-02
+
 ### Added
 - Minecraft 26.3 support on Fabric (Fabric API 0.165.0, Fantasy 0.8.4) and NeoForge (26.3.0.99, Infiniverse 26.3.0.2). Minecraft 26.3 needs Java 25.
 
