@@ -1,16 +1,20 @@
 # Pocket Islands
 
 A Minecraft mod for Fabric, Forge and NeoForge that gives each player their own persistent
-pocket dimension island.
+pocket dimension island. Build a portal, step through, and the island is yours. When the
+server resets the overworld, nether and end, every island stays exactly as it was (see
+[World Reset Procedure](#world-reset-procedure)).
 
 **Supported Versions:**
 
 | Minecraft | Fabric | Forge | NeoForge |
 |-----------|--------|-------|----------|
 | 1.20.1    | ✓      | ✓     |          |
-| 1.20.4    | ✓      |       |          |
+| 1.20.4 ¹  | ✓      |       |          |
 | 1.21.11   | ✓      |       | ✓        |
 | 26.3      | ✓      |       | ✓        |
+
+¹ Fabric only. There are no plans to add Forge or NeoForge support for 1.20.4.
 
 ## Features
 
@@ -18,48 +22,30 @@ pocket dimension island.
 - **Persistence**: Islands survive main world resets
 - **Portal-Based Access**: Build a portal frame, activate with emerald
 - **Invitation System**: Invite friends to visit your island
-- **Void Generation**: Clean slate void worlds with a starter island
+- **Void Generation**: An empty void world with a starter island
 
 ## Requirements
 
-- Minecraft 1.20.1, 1.20.4, 1.21.11, or 26.3
-- **Fabric:** Fabric Loader (0.15.0+ for 1.20.x, 0.18.4+ for 1.21.x, 0.20.1+ for 26.3) and Fabric API
+- **Fabric:** Fabric API and Fabric Loader 0.16.10+ for 1.20.1, 0.15.11+ for 1.20.4,
+  0.18.4+ for 1.21.11, 0.20.1+ for 26.3
 - **Forge (1.20.1):** Forge 47 or newer. Nothing else: Infiniverse is bundled in the jar
 - **NeoForge (1.21.11, 26.3):** NeoForge 21.11.45 or newer for 1.21.11, 26.3.0.99 or newer for 26.3. Nothing else: Infiniverse is bundled in the jar
 - **Java:** 17 for 1.20.x, 21 for 1.21.11, 25 for 26.3
-- **Both client and server must have the mod installed**
+- **Both client and server must have the mod installed** (see [FAQ](#faq))
 
 ## Installation
 
-Download the version matching your Minecraft version from
-[Releases](https://github.com/wickedsik/pocket-islands/releases):
+Download the jar for your Minecraft version and loader from
+[Releases](https://github.com/WickedCoding/mc-pocket-islands/releases). Jars are named
+`pocketislands-<version>+<minecraft>-<loader>.jar`, for example
+`pocketislands-1.0.1+1.20.1-forge.jar`.
 
-- `pocketislands-X.X.X+1.20.1-fabric.jar` for Minecraft 1.20.1 on Fabric
-- `pocketislands-X.X.X+1.20.1-forge.jar` for Minecraft 1.20.1 on Forge
-- `pocketislands-X.X.X+1.20.4-fabric.jar` for Minecraft 1.20.4 on Fabric
-- `pocketislands-X.X.X+1.21.11-fabric.jar` for Minecraft 1.21.11 on Fabric
-- `pocketislands-X.X.X+1.21.11-neoforge.jar` for Minecraft 1.21.11 on NeoForge
-- `pocketislands-X.X.X+26.3-fabric.jar` for Minecraft 26.3 on Fabric
-- `pocketislands-X.X.X+26.3-neoforge.jar` for Minecraft 26.3 on NeoForge
-
-### Server
-
-1. Install Fabric Loader, Forge or NeoForge on your server
-2. Download the Pocket Islands JAR for your MC version and loader
-3. Place in the server's `mods/` folder
-    - On Fabric, make sure Fabric API is also installed here
-4. Start the server
-
-### Client
+Install it on the server and on every client:
 
 1. Install Fabric Loader, Forge or NeoForge
-2. Download the Pocket Islands JAR for your MC version and loader
-3. Place in your `mods/` folder
-    - On Fabric, make sure Fabric API is also installed here
-4. Launch Minecraft
-
-**Important:** The mod must be installed on both client and server. See
-[FAQ](#faq) for details.
+2. Place the Pocket Islands jar in the `mods/` folder
+    - On Fabric, make sure Fabric API is also installed there
+3. Start the server or launch Minecraft
 
 ### Loader Differences
 
@@ -69,25 +55,20 @@ Islands work the same on every loader, with these exceptions:
 |---|---|---|
 | Runtime dimensions | Fantasy (bundled) | Infiniverse (bundled) |
 | Permissions | LuckPerms through fabric-permissions-api, else OP levels | LuckPerms through the loader's PermissionAPI, else OP levels |
-| Island clock | Own clock; `doDaylightCycle: false` freezes it | Follows the overworld; `doDaylightCycle` has no effect on the island |
-| World seed (`OVERWORLD`/`FLAT` islands) | Per island | The overworld's seed. Void islands are not affected |
+| Island clock | Own clock; `doDaylightCycle` / `advance_time` set to `false` freezes it | Follows the overworld; `doDaylightCycle` / `advance_time` has no effect on the island |
 
 Console and command blocks always use OP levels for `/pi` permissions.
 
 Moving a whole world between loaders is not supported: switching loaders replaces
 the entire modpack. Individual islands can move: copy `world/dimensions/personalworlds/` to
 the other server (same Minecraft version) and the islands open without conversion. The
-island registry, return positions and invitations stay with each server's own world. New
-chunks of `OVERWORLD`/`FLAT` islands then generate with the other loader's seed (see the
-table above).
+island registry, return positions and invitations stay with each server's own world.
 
 ## Usage
 
 ### Creating a Portal
 
-> This can be configured, this explanation uses the default configuration.
-
-Build a frame using Nether Bricks (4 wide x 5 tall):
+With the default config, build a frame from Nether Bricks (4 wide x 5 tall):
 
 ```
 N N N N
@@ -97,7 +78,8 @@ N     N
 N N N N
 ```
 
-Right-click the inside of the frame with an Emerald to activate.
+Right-click the inside of the frame with an Emerald to activate it. Server owners can
+change the frame block and activation item in the [configuration](#portal-types-island-customization).
 
 ### Entering Your Island
 
@@ -108,7 +90,7 @@ on a new island.
 ### Returning
 
 The quickest way back is to jump off your island: below Y=0 you're teleported back to
-where you entered, before taking any void damage.
+where you entered, before taking any void damage. Your items stay with you.
 
 To return by portal instead, build a frame on your island and activate it like the
 first one (bring the frame blocks and activation item). Entering it takes you back to
@@ -127,12 +109,26 @@ your original location.
 - `/pi leave` - Teleport to the spot you entered your pocket island from (your bed or world spawn if there is none). Works from anywhere
 - `/pi unstuck` - Leave a pocket island you are stuck in, or clear pocket island data left over after a failed teleport. Sends you to the spot you entered from, your bed, or world spawn. Does nothing when you are already on solid ground
 
-**Admin commands (op level 2+):**
+**Admin commands:**
 
-- `/pi admin list` - List all islands
-- `/pi admin info <player>` - View island details
-- `/pi admin tp <player>` - Teleport to an island
-- `/pi admin delete <player> [confirm]` - Delete an island (op 4)
+| Command | Description | OP level |
+|---------|-------------|----------|
+| `/pi admin list` | List all islands | 2 |
+| `/pi admin info <player>` | View island details | 2 |
+| `/pi admin tp <player>` | Teleport to an island | 2 |
+| `/pi admin reload` | Reload `config/pocketislands.json` without a restart | 3 |
+| `/pi admin sanitize <player> [radius]` | Load a player's island and run the chunk sanitizer on a chunk radius around spawn (default `4`, max `16`). Runs even when `sanitizeChunksOnLoad` is `false` | 3 |
+| `/pi admin delete <player> [confirm]` | Delete an island | 4 |
+
+With LuckPerms installed, permission nodes replace these OP levels. See
+[LuckPerms](#luckperms).
+
+**Testing commands (op level 2+):**
+
+- `/pi create [type]` - Create your island without a portal and teleport to it.
+  `type` is `OVERWORLD` (default), `FLAT` or `VOID`; an unknown type gives `VOID`.
+  The island uses the first portal type in the config
+- `/pi enter` - Teleport to your existing island
 
 **Debug commands (op level 4):**
 
@@ -141,16 +137,43 @@ your original location.
 - `/pi debug perf status` - Show performance status
 - `/pi debug perf reset` - Reset performance counters
 
-**Note:** You should not need the debug commands, but they may be useful for
-checking.
+## LuckPerms
+
+With [LuckPerms](https://luckperms.net/) installed, these permission nodes control the
+admin and testing commands. Without it, or when LuckPerms does not set a node, the OP level
+applies.
+
+```
+pocketislands
+├── admin
+│   ├── list        /pi admin list         OP 2
+│   ├── info        /pi admin info         OP 2
+│   ├── teleport    /pi admin tp           OP 2
+│   ├── reload      /pi admin reload       OP 3
+│   ├── sanitize    /pi admin sanitize     OP 3
+│   └── delete      /pi admin delete       OP 4
+└── player
+    └── create      /pi create, /pi enter  OP 2
+```
+
+Grant a node to a group:
+
+```
+/lp group moderator permission set pocketislands.admin.reload true
+```
+
+- Player commands (`invite`, `uninvite`, `invites`, `togglewelcome`, `portals`, `leave`,
+  `unstuck`) need no node: every player can use them
+- `pocketislands.player.invite` and `pocketislands.player.visit` are registered but not
+  checked yet. Setting them has no effect
+- Debug commands (OP 4) and bypassing visit restrictions (OP 2) use OP levels only
 
 ## Configuration
 
 **Config file:** `config/pocketislands.json`
 
-Pocket Islands offers extensive customization options, particularly for **island
-composition**. You can define multiple portal types, each creating islands with
-different materials and properties.
+You can define several portal types, each building islands from its own layers of
+blocks, and tune invitations, unloading and effects.
 
 ### Example Configuration
 
@@ -171,6 +194,7 @@ different materials and properties.
     "consumeActivationItem": false,
     "maxInvitationsPerPlayer": 20,
     "enableAlwaysWelcome": false,
+    "allowVisitWhenHostNotHome": false,
     "unloadEmptyDimensionDelayTicks": 600,
     "cleanupIntervalTicks": 600,
     "sanitizeChunksOnLoad": false,
@@ -185,6 +209,11 @@ different materials and properties.
 }
 ```
 
+The mod also writes a `configVersion` field to the file. Do not edit it by hand.
+
+The example shows the 1.20.x default for `dimensionGameRules`. On 1.21.11 and 26.3 the default is
+`{"spawn_mobs": false}`. See [Dimension Game Rules](#dimension-game-rules).
+
 ### Configuration Options
 
 #### Portal Types (Island Customization)
@@ -193,25 +222,54 @@ Define multiple portal types to create islands with different materials:
 
 - **`frameBlock`** — Block used for portal frames (e.g., `"minecraft:nether_bricks"`)
 - **`activationItem`** — Item used to activate portals (e.g., `"minecraft:emerald"`)
-- **`islandLayers`** — **Customize your starter island platform** (up to 5 layers, top to bottom)
+- **`islandLayers`** — **Customize your starter island platform** (up to 5 layers, top to bottom; extra layers are dropped)
     - Example: `["minecraft:grass_block", "minecraft:dirt", "minecraft:stone"]`
     - Create themed islands: grass/dirt/stone, netherrack/soul_sand/basalt, end_stone, etc.
     - Each portal type creates a unique island composition
-    - Each layer is 1 block thick, for 2 dirt block layers, repeat the material in the array
+    - Each layer is 1 block thick. For 2 layers of dirt, list the block twice
 - **`portalColor`** — Color of the portal effect (default: `"red"`)
     - Available colors: `"white"`, `"light_gray"`, `"gray"`, `"black"`, `"brown"`, `"red"`, `"orange"`, `"yellow"`, `"lime"`, `"green"`, `"cyan"`, `"light_blue"`, `"blue"`, `"purple"`, `"magenta"`, `"pink"`
     - Helps visually distinguish different portal types
 
+Islands and portals refer to a portal type by its position in `portalTypes`. Add new
+portal types at the end of the list, and do not remove or reorder existing ones.
+
+If two portal types use the same `frameBlock`, the first one in the list is used.
+
 #### Invitations
 
-- **`maxInvitationsPerPlayer`** — Maximum invitations per player (`-1` for unlimited)
-- **`enableAlwaysWelcome`** — Enable the Always Welcome feature (default: `false`, requires restart)
+- **`maxInvitationsPerPlayer`** — Maximum invitations per player (default: `20`, `-1` for unlimited)
+- **`enableAlwaysWelcome`** — Enable the [Always Welcome](#always-welcome-feature) feature (default: `false`, requires restart)
+- **`allowVisitWhenHostNotHome`** — Let invited visitors enter while the host is online
+  but not on their own island (default: `false`: the host must be on their island)
+
+#### Unloading
+
+- **`unloadEmptyDimensionDelayTicks`** — Delay before unloading empty dimensions (default: `600` = 30 seconds)
+- **`cleanupIntervalTicks`** — How often to check for empty dimensions (default: `600` = 30 seconds, minimum `20`)
+
+#### Chunk Sanitizer
+
+- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `false`; opt-in)
+- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `false`; only used when `sanitizeChunksOnLoad` is enabled)
+
+#### Visual Effects
+
+- **`enableTeleportParticles`** — Show particle effects during teleportation (default: `true`)
+- **`enableTeleportSounds`** — Play sound effects during teleportation (default: `true`)
+- **`enablePortalActivationEffects`** — Show effects when activating portals (default: `true`)
+- **`enableInvitationNotifications`** — Play sounds for invitation notifications (default: `true`)
+
+#### Advanced Options
+
+- **`consumeActivationItem`** — Whether the activation item is consumed on portal activation (default: `false`)
 
 ### Always Welcome Feature
 
 By default, visitors can only enter your island when you are online and present
-on your island. The **Always Welcome** feature allows island owners to grant
-specific guests permanent access, bypassing these restrictions.
+on your island (see `allowVisitWhenHostNotHome` to drop the second condition). The
+**Always Welcome** feature allows island owners to grant specific guests permanent
+access, bypassing these restrictions.
 
 #### Enabling the Feature
 
@@ -223,8 +281,8 @@ Set `enableAlwaysWelcome` to `true` in your config and restart the server:
 }
 ```
 
-**Note:** This setting requires a server restart to take effect. When disabled,
-all Always Welcome commands are hidden and existing flags are ignored.
+This setting requires a server restart to take effect. When disabled, all Always
+Welcome commands are hidden and existing flags are ignored.
 
 #### Using Always Welcome
 
@@ -262,37 +320,15 @@ Click the star to toggle the status directly from the chat.
 
 #### Access Control Behavior
 
-| Invitation Type | Host Online + Home | Host Online + Away | Host Offline |
-|-----------------|--------------------|--------------------|--------------|
-| Standard        | ✓ Allowed          | ✗ Denied           | ✗ Denied     |
-| Always Welcome  | ✓ Allowed          | ✓ Allowed          | ✓ Allowed    |
-
-**Notes:**
+| Invitation Type                                | Host Online + Home | Host Online + Away | Host Offline |
+|------------------------------------------------|--------------------|--------------------|--------------|
+| Standard                                       | ✓ Allowed          | ✗ Denied           | ✗ Denied     |
+| Standard, `allowVisitWhenHostNotHome: true`    | ✓ Allowed          | ✓ Allowed          | ✗ Denied     |
+| Always Welcome                                 | ✓ Allowed          | ✓ Allowed          | ✓ Allowed    |
 
 - Admins (OP level 2+) always bypass all visit restrictions
 - The island owner can always access their own island
 - Always Welcome guests still need an active invitation (uninviting removes access)
-
-#### Performance
-
-- **`unloadEmptyDimensionDelayTicks`** — Delay before unloading empty dimensions (default: `600` = 30 seconds)
-- **`cleanupIntervalTicks`** — How often to check for empty dimensions (default: `600` = 30 seconds)
-
-#### Chunk Sanitizer
-
-- **`sanitizeChunksOnLoad`** — Purge orphaned block entities and unknown container items on chunk load (default: `false`; opt-in)
-- **`sanitizeRemoveOrphanBlocks`** — Also remove blocks left without valid support (fires, torches, redstone, snow layers) during sanitization (default: `false`; only used when `sanitizeChunksOnLoad` is enabled)
-
-#### Visual Effects
-
-- **`enableTeleportParticles`** — Show particle effects during teleportation
-- **`enableTeleportSounds`** — Play sound effects during teleportation
-- **`enablePortalActivationEffects`** — Show effects when activating portals
-- **`enableInvitationNotifications`** — Play sounds for invitation notifications
-
-#### Advanced Options
-
-- **`consumeActivationItem`** — Whether the activation item is consumed on portal activation (default: `false`)
 
 ### Dimension Game Rules
 
@@ -316,10 +352,10 @@ This configuration will:
 
 **Version-Specific Game Rule Names:**
 
-Minecraft 1.21.x renamed many game rules. Use the appropriate names for your server version:
+Minecraft 1.21.11 renamed many game rules, and 26.3 uses the same new names. Use the names for your server version:
 
-| Feature                 | 1.20.x (camelCase)   | 1.21.x (snake_case) |
-|-------------------------|----------------------|---------------------|
+| Feature                 | 1.20.x (camelCase)   | 1.21.11, 26.3 (snake_case) |
+|-------------------------|----------------------|----------------------------|
 | Keep inventory on death | `keepInventory`      | `keep_inventory`    |
 | Mob spawning            | `doMobSpawning`      | `spawn_mobs`        |
 | Crop/plant growth speed | `randomTickSpeed`    | `random_tick_speed` |
@@ -327,17 +363,15 @@ Minecraft 1.21.x renamed many game rules. Use the appropriate names for your ser
 | Block drops             | `doTileDrops`        | `block_drops`       |
 | Mob griefing            | `mobGriefing`        | `mob_griefing`      |
 | Immediate respawn       | `doImmediateRespawn` | `immediate_respawn` |
+| Daylight cycle          | `doDaylightCycle`    | `advance_time`      |
 
 **Default behavior:**
-- 1.20.x: `{"doMobSpawning": false}` — Creates void islands with no mobs
-- 1.21.x: `{"spawn_mobs": false}` — Same behavior with renamed rule
+- 1.20.x: `{"doMobSpawning": false}` — No natural mob spawning on islands
+- 1.21.11, 26.3: `{"spawn_mobs": false}` — The same rule under its new name
 
-> **NOTE:** The intended behavior is that mob spawning is disabled in the 
-> pocket dimension, it makes no sense to enable it as it is a `VOID` type world
-> but if you want to, you can enable it. Just set `doMobSpawning` / `spawn_mobs`
-> to `true` in the configuration.
-> 
-> _This is an unsupported feature, and will not be accepted as a bug._
+Islands are void worlds, so mob spawning is off by default. You can turn it on by
+setting `doMobSpawning` / `spawn_mobs` to `true`, but this is unsupported: bug reports
+about mob spawning on islands will be closed.
 
 To inherit all rules from the overworld without changes, use an empty map:
 
@@ -387,89 +421,12 @@ can choose which type of island they want by using different portal materials:
 }
 ```
 
-**Note:** The first portal type a player uses determines their island
-composition permanently.
+The first portal type a player uses decides their island's layers for good.
 
 ### Reloading Configuration
 
 Use `/pi admin reload` to reload the configuration without restarting the
 server. Changes to portal types only affect newly created islands.
-
-## Translations
-
-Pocket Islands uses Fabric's standard language file system for all user-facing
-messages. This allows server admins and modpack creators to customize messages
-or add translations for different languages.
-
-### Language File Location
-
-Language files are located at:
-
-```
-src/main/resources/assets/personalworlds/lang/
-```
-
-The mod includes an English (US) translation by default:
-
-```
-lang/en_us.json
-```
-
-### Adding Custom Languages
-
-To add support for another language (e.g., German, Dutch, Spanish):
-
-1. Create a new language file with the appropriate locale code:
-    - `de_de.json` for German
-    - `nl_nl.json` for Dutch
-    - `es_es.json` for Spanish
-    - See [Minecraft Wiki - Language](https://minecraft.wiki/w/Language) for all locale codes
-
-2. Copy the contents of `en_us.json` as a template
-
-3. Translate the message values (keep the keys unchanged):
-
-```json lines
-{
-    "pocketislands.message.invite_sent": "Eingeladen %s zu deiner Dimension",
-    "pocketislands.message.invite_received": "%s hat dich zu ihrer Dimension eingeladen",
-    // ...
-}
-```
-
-4. Place the file in `assets/personalworlds/lang/` in your resource pack or mod JAR
-
-### Customizing Messages
-
-To customize messages while keeping the English language:
-
-1. Create a resource pack or edit `assets/personalworlds/lang/en_us.json` directly
-2. Modify the translation values (right side of each line)
-3. Keep translation keys (left side) unchanged
-4. Use `%s` for string parameters, `%d` for numbers
-
-**Example:**
-
-```json
-{
-    "pocketislands.message.invite_sent": "You invited %s to your island!",
-    "pocketislands.message.invite_received": "%s wants you to visit their island!"
-}
-```
-
-### Available Translation Keys
-
-All translation keys are documented in `lang/en_us.json`. Key categories include:
-
-- **`pocketislands.message.*`** — Player-facing messages (invitations, ejections, teleports)
-- **`pocketislands.command.*`** — Command feedback and info
-- **`pocketislands.command.error.*`** — Error messages
-- **`pocketislands.invitations.*`** — Invitation list UI text
-- **`pocketislands.command.perf.*`** — Performance monitoring messages
-- **`pocketislands.command.list.*`** — Admin list command output
-- **`pocketislands.command.info.*`** — Admin info command output
-- **`pocketislands.command.delete.*`** — Admin delete command warnings
-- **`pocketislands.command.portals.*`** — Portal types listing and island status
 
 ## Technical Details
 
@@ -505,34 +462,28 @@ its data files from `world/data/` to `world/data/personalworlds/`.
 
 ### Metadata Recovery
 
-Each dimension folder contains a `.metadata` file that enables recovery if the
-main registry is corrupted. This file contains:
+Each island folder holds a `personalworlds_metadata.json` file with the island's owner,
+spawn point and portal type. On every server start, the mod checks for island folders
+missing from the island registry and registers them again from this file. If the
+registry file is lost or damaged, islands come back on their own.
 
-- Owner UUID
-- Owner name
-- Dimension ID
-- Creation timestamp
-- Spawn point
-- Generator type
+### What Happens When...
 
-### Edge Cases Handled
-
-- **Player disconnects in pocket island**: Position preserved, dimension restored on reconnect even if unloaded
-- **Dimension unloaded while offline**: Player is restored to their island with fallback to bed spawn or world spawn if restoration fails
-- **Server crashes**: Recovery handler checks permissions and evacuates if needed
-- **Two players enter portal simultaneously**: Concurrent portal guard prevents race conditions
-- **Return position is blocked**: Safe spawn finder locates nearby safe position
-- **Invitation revoked while offline**: Player evacuated on next login with fallback chain (return data → bed → spawn)
-- **Player falls off island**: Automatically teleported back before taking void damage
-- **Unknown blocks or container items**: With `sanitizeChunksOnLoad` enabled, chunks are sanitized on load — orphaned block entities (backing block is now air) are purged, unknown items in containers are cleared. Alternatively, run `/pi admin sanitize` on demand.
+- **You log out on your island**: You log back in on your island, even if it was unloaded while you were away
+- **Your island cannot be loaded when you log in**: You are sent to your bed, or to world spawn
+- **The server crashes while you are on an island**: At your next login you stay on the island if you are still allowed there. Otherwise you are moved off it
+- **Two players walk into a portal at the same time**: Each player is teleported once, and a new island is created only once
+- **Your return spot is blocked**: You are placed at the nearest safe spot
+- **Your invitation is revoked while you are offline**: At your next login you are moved to where you entered from, your bed, or world spawn
+- **A mod was removed and left unknown blocks or items behind** (server owners): Enable `sanitizeChunksOnLoad` to clean chunks as they load, or run `/pi admin sanitize` on one island. This removes leftover block entities whose block is gone, and clears unknown items from containers
 
 ## Performance
 
-The mod is designed to handle 15+ concurrent islands efficiently:
+Pocket Islands is built for small and medium servers. It has not been tested on large
+servers with hundreds of players, so expect to tune or test it yourself there.
 
-- Islands unload automatically when empty (after 30s delay)
-- Memory-efficient chunk generation for void worlds
-- Performance monitoring available via debug commands
+- Empty islands unload after 30 seconds (see [Unloading](#unloading))
+- Performance monitoring is available through the debug commands
 
 ## FAQ
 
@@ -551,8 +502,8 @@ Chunks will fail to load properly, causing:
 - Visual glitches and flickering
 - Potential client crashes
 
-This happens because the client can not properly load the textures and thus can
-not show the chunks properly.
+This happens because the client cannot properly load the textures and so cannot
+show the chunks properly.
 
 ### Can I use this on a vanilla client?
 
@@ -563,8 +514,7 @@ use pocket island portals.
 ### What happens to my island if the main world is reset?
 
 Your island is safe. Pocket islands are stored separately from the main world.
-See [World Reset Procedure](#world-reset-procedure) for details on which
-folders to keep.
+See [World Reset Procedure](#world-reset-procedure) for the folders to delete and keep.
 
 ### Can I visit other players' islands?
 
@@ -573,15 +523,7 @@ enter their portal to visit their island.
 
 ### How do I get back from my island?
 
-Jump off the island: below Y=0 you're teleported back to the exact location you
-entered from. Or build and activate a portal frame on your island and walk into it,
-which takes you to the same place.
-
-### What happens if I fall off my island?
-
-You're safe. When you fall below Y=0, you're automatically teleported back to
-your original entry location before taking any void damage. Your items and
-progress are preserved.
+Jump off the edge or build a return portal. See [Returning](#returning).
 
 ## License
 
@@ -592,5 +534,8 @@ MIT License
 > First of all I want to credit my friend, Bktwone, for inspiring this mod as well
 > as providing a platform to test this mod.
 
-- Built with [Fantasy](https://github.com/NucleoidMC/fantasy) for runtime dimension creation
-- Fabric API for mod hooks
+- [Fantasy](https://github.com/NucleoidMC/fantasy) for runtime dimension creation on Fabric
+- [Infiniverse](https://github.com/Commoble/infiniverse) for runtime dimension creation on Forge and NeoForge
+- [MixinExtras](https://github.com/LlamaLad7/MixinExtras), bundled in the Forge jar
+- [Fabric API](https://github.com/FabricMC/fabric) for mod hooks on Fabric
+- [fabric-permissions-api](https://github.com/lucko/fabric-permissions-api) for LuckPerms support on Fabric
